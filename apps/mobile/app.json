@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Conceptly",
+    "slug": "conceptly-mobile",
+    "scheme": "conceptly",
+    "privacy": "public",
+    "platforms": ["ios", "android", "web"],
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "jsEngine": "hermes",
+    "assetBundlePatterns": ["**/*"],
+    "plugins": ["expo-router"],
+    "experiments": {
+      "tsconfigPaths": true,
+      "typedRoutes": true
+    },
+    "extra": {
+      "useMockData": true,
+      "apiBaseUrl": "http://localhost:3000"
+    }
+  }
+}
+

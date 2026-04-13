@@ -1,0 +1,20 @@
+{
+  "name": "conceptly-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:mobile": "pnpm --filter mobile start",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "build": "echo \"Use per-app build scripts\"",
+    "lint": "echo \"Add a root linter when needed\"",
+    "typecheck": "echo \"Use per-app typecheck\""
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
+  }
+}
