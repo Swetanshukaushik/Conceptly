@@ -5,7 +5,7 @@
 Conceptly is a first-principles visual micro-learning platform designed to make the world concept-clear with crystal-clear explanations of complex topics. Through ultra-dense short-form video reels (45–60 seconds), ASCII architecture diagrams, interactive cheat sheets, checkpoint progress tracking, and rapid quizzes, Conceptly enables learners to build deep intuition and mental models when it matters most.
 
 The repository is built as a monorepo with:
-- `apps/mobile`: Expo React Native mobile app with FlashList vertical swipe reels, interactive checkpoint tracks, and bottom tabs.
+- `apps/frontend`: Expo React Native cross-platform web and mobile app with FlashList vertical swipe reels, interactive checkpoint tracks, bottom tabs, and desktop navigation.
 - `apps/backend`: NestJS modular API backend.
 
 ## Domains Covered

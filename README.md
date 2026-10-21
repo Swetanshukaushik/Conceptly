@@ -11,7 +11,7 @@ Open the project root folder in VS Code. Use the integrated terminal for all com
 
 Run the following command to start the mobile web preview:
 ```bash
-cd apps/mobile
+cd apps/frontend
 npm run web
 ```
 Or to run Expo for iOS / Android simulator:

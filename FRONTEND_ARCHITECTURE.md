@@ -2,7 +2,7 @@
 
 ## Document purpose
 
-This document is the frontend architecture reference for the Conceptly mobile app. It is intended to reflect the actual `apps/mobile` implementation, route and state design, and API integration patterns currently used in the repo.
+This document is the frontend architecture reference for the Conceptly mobile app. It is intended to reflect the actual `apps/frontend` implementation, route and state design, and API integration patterns currently used in the repo.
 
 The frontend is built as an Expo React Native app using Expo Router and must remain API-driven, modular, and easy to evolve.
 
@@ -28,7 +28,7 @@ This app is designed to feel mobile-native, student-friendly, and easy to extend
 The frontend lives in:
 
 ```txt
-apps/mobile
+apps/frontend
 ```
 
 ### Hard boundary rules
@@ -51,17 +51,17 @@ apps/mobile
 - NativeWind for styling
 
 ### Support and runtime
-- `apps/mobile/src/app` contains Expo Router entry points and layouts
-- `apps/mobile/src/services/api` holds backend client shape and optional mock fallbacks
-- `apps/mobile/src/store/useAppStore.ts` stores onboarding and selection state
-- `apps/mobile/src/constants/runtimeConfig.ts` toggles between mock and real backend behavior
+- `apps/frontend/src/app` contains Expo Router entry points and layouts
+- `apps/frontend/src/services/api` holds backend client shape and optional mock fallbacks
+- `apps/frontend/src/store/useAppStore.ts` stores onboarding and selection state
+- `apps/frontend/src/constants/runtimeConfig.ts` toggles between mock and real backend behavior
 
 ---
 
 ## Current structure
 
 ```txt
-apps/mobile/
+apps/frontend/
   app/
     _layout.tsx
     index.tsx
@@ -171,9 +171,9 @@ TanStack Query handles:
 ## Current data flow
 
 ### API integration layer
-- `apps/mobile/src/services/api/educationApi.ts` centralizes backend routes and fetch logic
-- `apps/mobile/src/services/api/mockEducationApi.ts` holds mock fallback responses
-- `apps/mobile/src/constants/runtimeConfig.ts` toggles mock vs real backend
+- `apps/frontend/src/services/api/educationApi.ts` centralizes backend routes and fetch logic
+- `apps/frontend/src/services/api/mockEducationApi.ts` holds mock fallback responses
+- `apps/frontend/src/constants/runtimeConfig.ts` toggles mock vs real backend
 
 ### UI data flow
 - onboarding writes selection into `useAppStore`
@@ -248,7 +248,7 @@ TanStack Query handles:
 
 ## Development commands
 
-From `apps/mobile`:
+From `apps/frontend`:
 
 ```bash
 npm install
@@ -284,8 +284,8 @@ npm run ios
 
 ## Repo-specific notes
 
-- `apps/mobile/src/app/index.tsx` redirects based on onboarding and app state
-- `apps/mobile/src/app/(app)/_layout.tsx` defines the tab shell layout
-- `apps/mobile/src/app/(onboarding)/_layout.tsx` defines onboarding layout
-- `apps/mobile/src/services/api/educationApi.ts` is the main backend API client
-- `apps/mobile/src/store/useAppStore.ts` stores onboarding and selection state
+- `apps/frontend/src/app/index.tsx` redirects based on onboarding and app state
+- `apps/frontend/src/app/(app)/_layout.tsx` defines the tab shell layout
+- `apps/frontend/src/app/(onboarding)/_layout.tsx` defines onboarding layout
+- `apps/frontend/src/services/api/educationApi.ts` is the main backend API client
+- `apps/frontend/src/store/useAppStore.ts` stores onboarding and selection state

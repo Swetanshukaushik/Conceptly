@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:mobile": "pnpm --filter mobile start",
+    "dev:frontend": "pnpm --filter frontend start",
     "dev:backend": "pnpm --filter backend start:dev",
     "build": "echo \"Use per-app build scripts\"",
     "lint": "echo \"Add a root linter when needed\"",

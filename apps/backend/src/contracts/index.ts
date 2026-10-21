@@ -1,7 +1,7 @@
 /**
  * @conceptly/contracts
  * Shared API contracts and data models between Conceptly backend and mobile client.
- * Keep this file synchronized with apps/mobile/src/contracts/index.ts
+ * Keep this file synchronized with apps/frontend/src/contracts/index.ts
  */
 
 // ==========================================
