@@ -6,36 +6,43 @@ import { useQuery } from '@tanstack/react-query';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { AppHeader } from '@/components/ui/AppHeader';
 import { AppText } from '@/components/ui/AppText';
-import { AppButton } from '@/components/ui/AppButton';
-import { ReelPlayer } from '@/components/ui/ReelPlayer';
 import { Loader } from '@/components/ui/Loader';
+import { VerticalReelPlayer } from '@/components/ui/VerticalReelPlayer';
 
 import { educationApi } from '@/services/api/educationApi';
 import { queryKeys } from '@/services/api/queryKeys';
+import { useReelsByTopicQuery } from '@/services/api/hooks/useReelsByTopicQuery';
 
 export default function ReelPlayerScreen() {
   const router = useRouter();
-  const { id, topicId } = useLocalSearchParams<{ id: string; topicId: string }>();
+  const { id, topicId } = useLocalSearchParams<{ id: string; topicId?: string }>();
 
-  const { data: reel, isLoading } = useQuery({
+  // Fetch specific reel first if topicId is not passed
+  const { data: singleReel, isLoading: reelLoading } = useQuery({
     queryKey: queryKeys.reel(id || ''),
     queryFn: () => educationApi.getReelById(id || ''),
-    enabled: !!id
+    enabled: !!id,
   });
 
+  const effectiveTopicId = topicId || singleReel?.topicId || '';
+
+  // Fetch all reels for the topic so user can vertically swipe through them
+  const { data: topicReels, isLoading: topicReelsLoading } = useReelsByTopicQuery(effectiveTopicId);
+
   useEffect(() => {
-    if (reel) {
+    if (singleReel) {
       educationApi.trackAnalyticsEvent('reel_viewed', {
-        reelId: reel.id,
-        topicId: reel.topicId
+        reelId: singleReel.id,
+        topicId: singleReel.topicId
       });
     }
-  }, [reel]);
+  }, [singleReel]);
+
+  const isLoading = reelLoading || (effectiveTopicId ? topicReelsLoading : false);
 
   if (isLoading) {
     return (
-      <ScreenContainer>
-        <AppHeader title="Learning Video" onBack={() => router.back()} />
+      <ScreenContainer className="bg-black">
         <View className="flex-1 justify-center items-center">
           <Loader />
         </View>
@@ -43,56 +50,37 @@ export default function ReelPlayerScreen() {
     );
   }
 
-  if (!reel) {
+  // Combine either all reels for the topic or single reel as fallback
+  const reelsToDisplay =
+    topicReels && topicReels.length > 0
+      ? topicReels
+      : singleReel
+      ? [singleReel]
+      : [];
+
+  if (reelsToDisplay.length === 0) {
     return (
       <ScreenContainer>
-        <AppHeader title="Learning Video" onBack={() => router.back()} />
+        <AppHeader title="Lesson Reel" onBack={() => router.back()} />
         <View className="flex-1 justify-center items-center px-4">
-          <AppText className="text-text-muted text-center">Reel not found</AppText>
+          <AppText tone="muted">No video reel found</AppText>
         </View>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer scroll>
-      <AppHeader title="Learning Video" onBack={() => router.back()} />
-      <ReelPlayer
-        videoUrl={reel.videoUrl}
-        title={reel.title}
-        duration={reel.durationSec}
-        onComplete={() => {
-          educationApi.trackAnalyticsEvent('reel_completed', {
-            reelId: reel.id,
-            topicId: reel.topicId
-          });
-        }}
-      />
-
-      <View className="px-4 py-4">
-        <AppText className="text-text-primary text-lg font-bold mb-2">
-          {reel.title}
-        </AppText>
-
-        <AppText className="text-text-secondary mb-4">
-          {reel.topic.title} • {reel.chapter.title}
-        </AppText>
-
-        <AppButton
-          label="Take Quiz"
-          variant="primary"
-          onPress={() => {
-            router.push(`/quiz/${reel.topicId}`);
-          }}
-          className="mb-4"
-        />
-
-        <AppButton
-          label="Back to Topic"
-          variant="secondary"
-          onPress={() => router.back()}
-        />
-      </View>
-    </ScreenContainer>
+    <VerticalReelPlayer
+      key={`${id}-${effectiveTopicId}`}
+      reels={reelsToDisplay}
+      initialReelId={id}
+      onBack={() => router.back()}
+      onQuizPress={(targetTopicId) => {
+        router.push(`/quiz/${targetTopicId}`);
+      }}
+      onFlashcardPress={(targetTopicId) => {
+        router.push(`/topic/${targetTopicId}`);
+      }}
+    />
   );
 }

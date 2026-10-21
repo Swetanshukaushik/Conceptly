@@ -1,103 +1,89 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { TopicProgressDto } from './dto/topic-progress.dto';
-import { CreateProgressDto } from './dto/create-progress.dto';
+import {
+  TopicProgressDto,
+  UpdateProgressRequestDto,
+  DifficultyLevel,
+} from '../../contracts';
 
 @Injectable()
 export class ProgressService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getUserProgress(): Promise<TopicProgressDto[]> {
-    // For MVP, assume user ID is hardcoded (would come from auth in real app)
-    const userId = 'student@example.com';
+  private mapProgressToDto(p: any): TopicProgressDto {
+    return {
+      id: p.id,
+      topicId: p.topicId,
+      completionPercent: p.completionPercent,
+      quizScore: p.quizScore ?? undefined,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+      topic: {
+        id: p.topic.id,
+        title: p.topic.title,
+        difficulty: (p.topic.difficulty as DifficultyLevel) || 'medium',
+      },
+      chapter: {
+        id: p.topic.chapter.id,
+        title: p.topic.chapter.titleEn,
+      },
+      subject: {
+        id: p.topic.chapter.subject.id,
+        name: p.topic.chapter.subject.name,
+        classLevel: p.topic.chapter.subject.classLevel ?? undefined,
+        examType: p.topic.chapter.subject.examType as any,
+      },
+    };
+  }
 
+  async getUserProgress(userId: string): Promise<TopicProgressDto[]> {
     const progress = await this.prisma.topicProgress.findMany({
       where: { userId },
       include: {
         topic: {
           include: {
             chapter: {
-              include: { subject: true }
-            }
-          }
-        }
+              include: { subject: true },
+            },
+          },
+        },
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
     });
 
-    return progress.map((p) => ({
-      id: p.id,
-      topicId: p.topicId,
-      completionPercent: p.completionPercent,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-      topic: {
-        id: p.topic.id,
-        title: p.topic.title,
-        difficulty: p.topic.difficulty
-      },
-      chapter: {
-        id: p.topic.chapter.id,
-        title: p.topic.chapter.title
-      },
-      subject: {
-        id: p.topic.chapter.subject.id,
-        name: p.topic.chapter.subject.name,
-        classLevel: p.topic.chapter.subject.classLevel
-      }
-    }));
+    return progress.map((p) => this.mapProgressToDto(p));
   }
 
-  async updateProgress(createProgressDto: CreateProgressDto): Promise<TopicProgressDto> {
-    // For MVP, assume user ID is hardcoded (would come from auth in real app)
-    const userId = 'student@example.com';
-
+  async updateProgress(
+    userId: string,
+    dto: UpdateProgressRequestDto
+  ): Promise<TopicProgressDto> {
     const progress = await this.prisma.topicProgress.upsert({
       where: {
         userId_topicId: {
           userId,
-          topicId: createProgressDto.topicId
-        }
+          topicId: dto.topicId,
+        },
       },
       update: {
-        completionPercent: createProgressDto.completionPercent
+        completionPercent: dto.completionPercent,
       },
       create: {
         userId,
-        topicId: createProgressDto.topicId,
-        completionPercent: createProgressDto.completionPercent
+        topicId: dto.topicId,
+        completionPercent: dto.completionPercent,
       },
       include: {
         topic: {
           include: {
             chapter: {
-              include: { subject: true }
-            }
-          }
-        }
-      }
+              include: { subject: true },
+            },
+          },
+        },
+      },
     });
 
-    return {
-      id: progress.id,
-      topicId: progress.topicId,
-      completionPercent: progress.completionPercent,
-      createdAt: progress.createdAt,
-      updatedAt: progress.updatedAt,
-      topic: {
-        id: progress.topic.id,
-        title: progress.topic.title,
-        difficulty: progress.topic.difficulty
-      },
-      chapter: {
-        id: progress.topic.chapter.id,
-        title: progress.topic.chapter.title
-      },
-      subject: {
-        id: progress.topic.chapter.subject.id,
-        name: progress.topic.chapter.subject.name,
-        classLevel: progress.topic.chapter.subject.classLevel
-      }
-    };
+    return this.mapProgressToDto(progress);
   }
 }

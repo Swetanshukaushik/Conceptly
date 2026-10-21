@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ViewProps } from "react-native";
+import { Pressable, View, ViewProps } from "react-native";
 import { cn } from "../../utils/cn";
 
 type Tone = "default" | "muted" | "primarySoft" | "accentSoft" | "successSoft";
@@ -14,19 +14,28 @@ const toneClasses: Record<Tone, string> = {
 
 export type AppCardProps = ViewProps & {
   tone?: Tone;
+  onPress?: () => void;
 };
 
 export function AppCard({
   tone = "default",
+  onPress,
   className,
   children,
   ...props
 }: AppCardProps) {
+  const cardClassName = cn("rounded-[24px] p-4 shadow-sm", toneClasses[tone], className);
+
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} className={cardClassName}>
+        {children}
+      </Pressable>
+    );
+  }
+
   return (
-    <View
-      className={cn("rounded-[24px] p-4 shadow-sm", toneClasses[tone], className)}
-      {...props}
-    >
+    <View className={cardClassName} {...props}>
       {children}
     </View>
   );

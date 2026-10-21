@@ -1,101 +1,107 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { BookmarkDto } from './dto/bookmark.dto';
-import { CreateBookmarkDto } from './dto/create-bookmark.dto';
+import {
+  BookmarkDto,
+  ToggleBookmarkRequestDto,
+  ToggleBookmarkResultDto,
+  DifficultyLevel,
+} from '../../contracts';
 
 @Injectable()
 export class BookmarksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getUserBookmarks(): Promise<BookmarkDto[]> {
-    // For MVP, assume user ID is hardcoded (would come from auth in real app)
-    const userId = 'student@example.com';
+  private mapBookmarkToDto(b: any): BookmarkDto {
+    return {
+      id: b.id,
+      topicId: b.topicId,
+      reelId: b.reelId ?? undefined,
+      createdAt: b.createdAt.toISOString(),
+      topic: {
+        id: b.topic.id,
+        title: b.topic.title,
+        difficulty: (b.topic.difficulty as DifficultyLevel) || 'medium',
+      },
+      chapter: {
+        id: b.topic.chapter.id,
+        title: b.topic.chapter.titleEn,
+      },
+      subject: {
+        id: b.topic.chapter.subject.id,
+        name: b.topic.chapter.subject.name,
+        classLevel: b.topic.chapter.subject.classLevel ?? undefined,
+        examType: b.topic.chapter.subject.examType as any,
+      },
+    };
+  }
 
+  async getUserBookmarks(userId: string): Promise<BookmarkDto[]> {
     const bookmarks = await this.prisma.bookmark.findMany({
       where: { userId },
       include: {
         topic: {
           include: {
             chapter: {
-              include: { subject: true }
-            }
-          }
-        }
+              include: { subject: true },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
-    return bookmarks.map((bookmark) => ({
-      id: bookmark.id,
-      topicId: bookmark.topicId,
-      reelId: bookmark.reelId,
-      createdAt: bookmark.createdAt,
-      topic: {
-        id: bookmark.topic.id,
-        title: bookmark.topic.title,
-        difficulty: bookmark.topic.difficulty
-      },
-      chapter: {
-        id: bookmark.topic.chapter.id,
-        title: bookmark.topic.chapter.title
-      },
-      subject: {
-        id: bookmark.topic.chapter.subject.id,
-        name: bookmark.topic.chapter.subject.name,
-        classLevel: bookmark.topic.chapter.subject.classLevel
-      }
-    }));
+    return bookmarks.map((b) => this.mapBookmarkToDto(b));
   }
 
-  async createBookmark(createBookmarkDto: CreateBookmarkDto): Promise<BookmarkDto> {
-    // For MVP, assume user ID is hardcoded (would come from auth in real app)
-    const userId = 'student@example.com';
+  async toggleBookmark(
+    userId: string,
+    dto: ToggleBookmarkRequestDto
+  ): Promise<ToggleBookmarkResultDto> {
+    const reelId = dto.reelId || null;
 
-    const bookmark = await this.prisma.bookmark.create({
+    const existing = await this.prisma.bookmark.findFirst({
+      where: {
+        userId,
+        topicId: dto.topicId,
+        reelId,
+      },
+    });
+
+    if (existing) {
+      await this.prisma.bookmark.delete({
+        where: { id: existing.id },
+      });
+      return {
+        bookmarked: false,
+      };
+    }
+
+    const created = await this.prisma.bookmark.create({
       data: {
         userId,
-        topicId: createBookmarkDto.topicId,
-        reelId: createBookmarkDto.reelId
+        topicId: dto.topicId,
+        reelId,
       },
       include: {
         topic: {
           include: {
             chapter: {
-              include: { subject: true }
-            }
-          }
-        }
-      }
+              include: { subject: true },
+            },
+          },
+        },
+      },
     });
 
     return {
-      id: bookmark.id,
-      topicId: bookmark.topicId,
-      reelId: bookmark.reelId,
-      createdAt: bookmark.createdAt,
-      topic: {
-        id: bookmark.topic.id,
-        title: bookmark.topic.title,
-        difficulty: bookmark.topic.difficulty
-      },
-      chapter: {
-        id: bookmark.topic.chapter.id,
-        title: bookmark.topic.chapter.title
-      },
-      subject: {
-        id: bookmark.topic.chapter.subject.id,
-        name: bookmark.topic.chapter.subject.name,
-        classLevel: bookmark.topic.chapter.subject.classLevel
-      }
+      bookmarked: true,
+      bookmark: this.mapBookmarkToDto(created),
     };
   }
 
-  async deleteBookmark(bookmarkId: string): Promise<BookmarkDto> {
-    // For MVP, assume user ID is hardcoded (would come from auth in real app)
-    const userId = 'student@example.com';
-
+  async deleteBookmark(userId: string, bookmarkId: string): Promise<{ deleted: boolean }> {
     const bookmark = await this.prisma.bookmark.findFirst({
-      where: { id: bookmarkId, userId }
+      where: { id: bookmarkId, userId },
     });
 
     if (!bookmark) {
@@ -103,42 +109,9 @@ export class BookmarksService {
     }
 
     await this.prisma.bookmark.delete({
-      where: { id: bookmarkId }
+      where: { id: bookmarkId },
     });
 
-    // Return the deleted bookmark data
-    const topic = await this.prisma.topic.findUnique({
-      where: { id: bookmark.topicId },
-      include: {
-        chapter: {
-          include: { subject: true }
-        }
-      }
-    });
-
-    if (!topic) {
-      throw new NotFoundException(`Topic not found for bookmark: ${bookmarkId}`);
-    }
-
-    return {
-      id: bookmark.id,
-      topicId: bookmark.topicId,
-      reelId: bookmark.reelId,
-      createdAt: bookmark.createdAt,
-      topic: {
-        id: topic.id,
-        title: topic.title,
-        difficulty: topic.difficulty
-      },
-      chapter: {
-        id: topic.chapter.id,
-        title: topic.chapter.title
-      },
-      subject: {
-        id: topic.chapter.subject.id,
-        name: topic.chapter.subject.name,
-        classLevel: topic.chapter.subject.classLevel
-      }
-    };
+    return { deleted: true };
   }
 }

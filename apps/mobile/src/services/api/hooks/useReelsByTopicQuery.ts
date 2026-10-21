@@ -5,6 +5,7 @@ import { queryKeys } from '../queryKeys';
 export function useReelsByTopicQuery(topicId: string) {
   return useQuery({
     queryKey: queryKeys.reelsByTopic(topicId),
-    queryFn: () => educationApi.getReelsByTopic(topicId)
+    queryFn: () => educationApi.getReelsByTopic(topicId),
+    enabled: Boolean(topicId),
   });
 }

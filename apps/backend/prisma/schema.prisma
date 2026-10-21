@@ -3,102 +3,136 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
-
-model User {
-  id          String      @id @default(cuid())
-  email       String      @unique
-  displayName String
-  examType    ExamType    @default(SCHOOL)
-  classLevel  Int?        // Keep for backward compatibility, but make optional
-  language    String      @default("en")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  progress    TopicProgress[]
-  bookmarks   Bookmark[]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum ExamType {
-  SCHOOL
+  TECH
+  PM
+  FINANCE
   UPSC
   IIT_JEE
   NEET
+  SCHOOL
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String?         @unique
+  passwordHash String?
+  displayName  String
+  isGuest      Boolean         @default(false)
+  examType     ExamType        @default(SCHOOL)
+  classLevel   Int?
+  language     String          @default("en")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  progress     TopicProgress[]
+  bookmarks    Bookmark[]
 }
 
 model Subject {
-  id        String    @id
-  name      String
-  examType  ExamType  @default(SCHOOL)
-  classLevel Int?     // Keep for school subjects
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chapters  Chapter[]
+  id         String    @id
+  name       String
+  labelEn    String
+  labelHi    String
+  examType   ExamType  @default(SCHOOL)
+  classLevel Int?
+  iconName   String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  chapters   Chapter[]
 }
 
 model Chapter {
   id        String   @id
   subjectId String
-  title     String
+  titleEn   String
+  titleHi   String
   order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subject Subject @relation(fields: [subjectId], references: [id])
-  topics  Topic[]
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  topics    Topic[]
 }
 
 model Topic {
-  id        String   @id
-  chapterId String
-  title     String
-  difficulty String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String          @id
+  chapterId      String
+  title          String
+  difficulty     String          @default("medium")
+  cheatSheetJson String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  chapter Chapter @relation(fields: [chapterId], references: [id])
-  reels   Reel[]
-  progress TopicProgress[]
-  bookmarks Bookmark[]
+  chapter        Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  reels          Reel[]
+  quizzes        QuizQuestion[]
+  flashcards     Flashcard[]
+  progress       TopicProgress[]
+  bookmarks      Bookmark[]
 }
 
 model Reel {
-  id        String   @id
-  topicId   String
-  title     String
-  videoUrl  String
-  durationSec Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String   @id
+  topicId             String
+  title               String
+  videoUrl            String
+  durationSec         Int      @default(45)
+  keyTakeaway         String?
+  summaryNotesJson    String?
+  architectureDiagram String?
+  interviewPitch      String?
+  pitfallsJson        String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  topic Topic @relation(fields: [topicId], references: [id])
-  quizzes QuizQuestion[]
+  topic               Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }
 
 model QuizQuestion {
-  id           String   @id
-  reelId       String
-  prompt       String
-  optionsJson  String
-  answerKey    String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id
+  topicId         String
+  reelId          String?
+  text            String
+  optionsJson     String
+  correctOptionId String
+  explanation     String?
+  order           Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  reel Reel @relation(fields: [reelId], references: [id])
+  topic           Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+
+model Flashcard {
+  id            String   @id
+  topicId       String
+  frontQuestion String
+  backAnswer    String
+  bulletsJson   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  topic         Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }
 
 model TopicProgress {
   id                String   @id @default(cuid())
   userId            String
   topicId           String
-  completionPercent Int
+  completionPercent Int      @default(0)
+  quizScore         Int?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user  User  @relation(fields: [userId], references: [id])
-  topic Topic @relation(fields: [topicId], references: [id])
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic             Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@unique([userId, topicId])
 }
@@ -110,8 +144,8 @@ model Bookmark {
   reelId    String?
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
-  topic Topic @relation(fields: [topicId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@unique([userId, topicId, reelId])
 }
@@ -123,4 +157,3 @@ model AnalyticsEvent {
   payload   String
   createdAt DateTime @default(now())
 }
-

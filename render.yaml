@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: conceptly-api
+    runtime: node
+    rootDir: apps/backend
+    region: singapore
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/src/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

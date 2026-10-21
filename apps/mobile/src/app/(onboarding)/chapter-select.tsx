@@ -53,7 +53,7 @@ export default function ChapterSelectScreen() {
             (data ?? []).map((item) => (
               <Chip
                 key={item.id}
-                label={item.title[language]}
+                label={typeof item.title === 'object' ? (item.title[language] ?? item.title.en) : item.title}
                 variant={chapterId === item.id ? "selected" : "default"}
                 onPress={() => setChapterId(item.id)}
               />

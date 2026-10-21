@@ -13,10 +13,10 @@
     "experiments": {
       "tsconfigPaths": true,
       "typedRoutes": true
-    }
-    ,
+    },
     "extra": {
-      "useMockData": true
+      "useMockData": true,
+      "apiBaseUrl": "http://localhost:3000"
     }
   }
 }

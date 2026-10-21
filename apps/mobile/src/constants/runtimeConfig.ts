@@ -11,8 +11,8 @@ function bool(value: unknown, fallback: boolean) {
 export const runtimeConfig = {
   useMockData:
     typeof process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'string'
-      ? bool(process.env.EXPO_PUBLIC_USE_MOCK_DATA, true)
-      : bool(extra.useMockData, true),
+      ? bool(process.env.EXPO_PUBLIC_USE_MOCK_DATA, false)
+      : bool(extra.useMockData, false),
   apiBaseUrl:
     typeof process.env.EXPO_PUBLIC_API_BASE_URL === 'string'
       ? process.env.EXPO_PUBLIC_API_BASE_URL

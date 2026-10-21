@@ -11,3 +11,5 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
+export default AppProviders;
+

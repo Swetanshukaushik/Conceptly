@@ -1,50 +1,29 @@
-# About the Project
+# About Conceptly
 
 ## Summary
 
-Conceptly is a mobile-first educational reels app designed to help students learn NCERT curriculum topics through short-form video-style lessons, quick quizzes, and progress tracking. The goal is to provide a modern, engaging learning experience that blends structured curriculum discovery with interactive content and retention tools.
+Conceptly is a first-principles visual micro-learning platform designed to make the world concept-clear with crystal-clear explanations of complex topics. Through ultra-dense short-form video reels (45–60 seconds), ASCII architecture diagrams, interactive cheat sheets, checkpoint progress tracking, and rapid quizzes, Conceptly enables learners to build deep intuition and mental models when it matters most.
 
 The repository is built as a monorepo with:
-- `apps/mobile` for the Expo React Native mobile app
-- `apps/backend` for the NestJS backend API
+- `apps/mobile`: Expo React Native mobile app with FlashList vertical swipe reels, interactive checkpoint tracks, and bottom tabs.
+- `apps/backend`: NestJS modular API backend.
 
-The mobile app should support onboarding, class and subject selection, topic discovery, reel viewing, quizzes, bookmarks, and progress tracking.
+## Domains Covered
 
-## Planned items to build
+- **Tech & Software Engineering:** System Design, Distributed Systems, Algorithms & Data Structures, Frontend (React), Backend & Databases.
+- **Product Management:** CIRCLES framework, Metrics, Product Sense, Behavioral.
+- **Finance & Consulting:** Market Entry, Profitability Frameworks, Valuation.
+- **Competitive Exams:** UPSC Civil Services, IIT JEE, NEET.
+- **NCERT Curriculum:** Class 6–10 Mathematics & Science.
 
-- Onboarding flow with class and subject selection
-- Curriculum navigation: classes, subjects, chapters, topics
-- Home feed with learning recommendations and continue learning section
-- Topic detail pages
-- Reel player and interactive reel experience
-- Quiz screens tied to topic content
-- Bookmark creation, listing, and removal
-- Progress tracking and resume learning support
-- Backend API to serve curriculum, feed, reels, quizzes, progress, bookmarks, and analytics
-- Local development support for mock data and real backend connectivity
-- Documentation for running locally and architecture
+## Frontend Features Implemented
 
-## What is implemented
-
-- Expo mobile app structure under `apps/mobile`
-- Expo Router-based navigation and route layouts
-- Onboarding and selection flows in the mobile app
-- Main app tabs: feed, explore, bookmarks, progress, profile
-- Detail screens for topic, reel, and quiz
-- Backend NestJS app under `apps/backend`
-- Prisma-based database schema with local SQLite support
-- Backend routes for curriculum, feed, reels, quizzes, progress, bookmarks, analytics, and health
-- API client layer for mobile backend integration
-- Local dev README guidance and architecture documentation files
-
-## What is left
-
-- polish reel media playback experience
-- enrich home feed personalization and recommendation logic
-- improve offline persistence for progress and bookmarks
-- add analytics instrumentation in the frontend
-- complete profile/settings and user preference flows
-- harden error/loading states across screens
-- add production-ready backend auth and user management
-- migrate from local SQLite to production database if needed
-- refine docs and developer setup as the app evolves
+- **Vertical Swipe Reel Player:** Full-screen TikTok-style micro-lessons powered by `@shopify/flash-list` and `expo-av`.
+- **Live Checkpoints Progress Track:** Dynamic checkpoint bar on each reel showing watched vs remaining reels for the topic.
+- **Playback Speed Switcher:** 1x, 1.25x, 1.5x, 2x playback speed control for fast revisers.
+- **Interactive Cheat-Sheet Drawer:** Modal overlay with key interview takeaways and bullet notes.
+- **Pre-Interview 5-Minute Speed Run:** Instant curated high-yield revision queue from the home screen.
+- **Search & Filter Explorer:** Instant live search across concepts, chapters, and difficulty levels.
+- **Flashcard Mode:** Interactive flip cards for rapid self-testing.
+- **Topic Practice Quizzes:** End-of-reel retention checkpoint with scoring, answers review, and mastery tracking.
+- **Native Tabs Navigation:** Home, Explore, Saved, Progress, and Profile.

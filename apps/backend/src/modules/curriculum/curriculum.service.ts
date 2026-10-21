@@ -1,23 +1,72 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { ExamType } from '@prisma/client';
-import { ClassLevelDto } from './dto/class-level.dto';
-import { SubjectSummaryDto } from './dto/subject-summary.dto';
-import { ChapterDto } from './dto/chapter.dto';
-import { TopicDto } from './dto/topic.dto';
-import { TopicDetailDto } from './dto/topic-detail.dto';
+import {
+  ExamTypeInfoDto,
+  ClassLevelDto,
+  SubjectSummaryDto,
+  ChapterSummaryDto,
+  TopicSummaryDto,
+  TopicDetailDto,
+  FlashcardDto,
+  DifficultyLevel,
+} from '../../contracts';
 
 @Injectable()
 export class CurriculumService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getExamTypes(): Promise<{ examType: string; label: string }[]> {
-    // Return available exam types
+  async getExamTypes(): Promise<ExamTypeInfoDto[]> {
     return [
-      { examType: 'SCHOOL', label: 'School Curriculum' },
-      { examType: 'UPSC', label: 'UPSC Preparation' },
-      { examType: 'IIT_JEE', label: 'IIT JEE Preparation' },
-      { examType: 'NEET', label: 'NEET Preparation' }
+      {
+        id: 'TECH',
+        label: 'Software Engineering & System Design',
+        description: 'Distributed systems, consensus, caching, low-latency architectures.',
+        icon: '💻',
+        popularTopics: ['CAP Theorem', 'Cache Invalidation', 'Raft Consensus'],
+      },
+      {
+        id: 'PM',
+        label: 'Product Management & Strategy',
+        description: 'CIRCLES framework, North Star metrics, A/B experiment design.',
+        icon: '🎯',
+        popularTopics: ['CIRCLES Framework', 'North Star Metric', 'GTM Strategy'],
+      },
+      {
+        id: 'FINANCE',
+        label: 'Quantitative Finance & Valuation',
+        description: 'Discounted Cash Flow (DCF), LBO multiples, option pricing.',
+        icon: '📈',
+        popularTopics: ['DCF Valuation', 'WACC Mechanics', 'LBO Modeling'],
+      },
+      {
+        id: 'UPSC',
+        label: 'UPSC Civil Services',
+        description: 'Polity & Constitution, Macroeconomics, Indian Modern History.',
+        icon: '🏛️',
+        popularTopics: ['Article 32 & Writs', 'Fiscal Deficit', '1857 Revolt'],
+      },
+      {
+        id: 'IIT_JEE',
+        label: 'IIT-JEE (Advanced)',
+        description: 'Rotational dynamics, organic synthesis, calculus proofs.',
+        icon: '⚛️',
+        popularTopics: ['Moment of Inertia', 'SN1 vs SN2', 'Definite Integrals'],
+      },
+      {
+        id: 'NEET',
+        label: 'NEET Medical Entrance',
+        description: 'Cardiac cycle, Mendelian genetics, chemical bonding.',
+        icon: '🧬',
+        popularTopics: ['Cardiac Cycle ECG', 'DNA Transcription', 'Glycolysis'],
+      },
+      {
+        id: 'SCHOOL',
+        label: 'CBSE Foundations (Class 6-10)',
+        description: 'NCERT aligned high-yield video summaries and flashcards.',
+        icon: '📚',
+        popularTopics: ['Real Numbers', 'Light & Optics', 'Acids & Bases'],
+      },
     ];
   }
 
@@ -25,20 +74,26 @@ export class CurriculumService {
     const subjects = await this.prisma.subject.findMany({
       where: { examType: 'SCHOOL' },
       distinct: ['classLevel'],
-      select: {
-        classLevel: true
-      },
-      orderBy: {
-        classLevel: 'asc'
-      }
+      select: { classLevel: true },
+      orderBy: { classLevel: 'asc' },
     });
 
-    return subjects
-      .filter(subject => subject.classLevel !== null)
-      .map((subject) => ({
-        classLevel: subject.classLevel!,
-        label: `Class ${subject.classLevel}`
-      }));
+    const existingLevels = subjects
+      .filter((s) => s.classLevel !== null)
+      .map((s) => s.classLevel as number);
+
+    // Ensure 6, 7, 8, 9, 10 are represented
+    const allLevels = Array.from(new Set([...existingLevels, 6, 7, 8, 9, 10])).sort(
+      (a, b) => a - b
+    );
+
+    return allLevels.map((lvl) => ({
+      id: lvl,
+      label: {
+        en: `Class ${lvl}`,
+        hi: `कक्षा ${lvl}`,
+      },
+    }));
   }
 
   async getSubjectsByClassLevel(classLevel: number): Promise<SubjectSummaryDto[]> {
@@ -47,82 +102,97 @@ export class CurriculumService {
       orderBy: { name: 'asc' },
       include: {
         chapters: {
-          select: {
-            id: true
-          }
-        }
-      }
+          select: { id: true },
+        },
+      },
     });
 
     return subjects.map((subject) => ({
       id: subject.id,
       name: subject.name,
-      classLevel: subject.classLevel,
-      chapterCount: subject.chapters.length
+      label: {
+        en: subject.labelEn || subject.name,
+        hi: subject.labelHi || subject.name,
+      },
+      examType: subject.examType as any,
+      classLevel: subject.classLevel ?? undefined,
+      chapterCount: subject.chapters.length,
+      iconName: subject.iconName ?? 'book-outline',
     }));
   }
 
-  async getSubjectsByExamType(examType: string): Promise<SubjectSummaryDto[]> {
+  async getSubjectsByExamType(examTypeStr: string): Promise<SubjectSummaryDto[]> {
+    // Normalize aliases like TECH_INTERVIEW -> TECH
+    let normalizedExamType = examTypeStr.toUpperCase();
+    if (normalizedExamType.includes('TECH')) normalizedExamType = 'TECH';
+    if (normalizedExamType.includes('PM')) normalizedExamType = 'PM';
+    if (normalizedExamType.includes('FIN')) normalizedExamType = 'FINANCE';
+    if (normalizedExamType.includes('JEE')) normalizedExamType = 'IIT_JEE';
+
     const subjects = await this.prisma.subject.findMany({
-      where: { examType: examType as ExamType },
+      where: { examType: normalizedExamType as ExamType },
       orderBy: { name: 'asc' },
       include: {
         chapters: {
-          select: {
-            id: true
-          }
-        }
-      }
+          select: { id: true },
+        },
+      },
     });
 
     return subjects.map((subject) => ({
       id: subject.id,
       name: subject.name,
+      label: {
+        en: subject.labelEn || subject.name,
+        hi: subject.labelHi || subject.name,
+      },
+      examType: subject.examType as any,
       classLevel: subject.classLevel ?? undefined,
-      chapterCount: subject.chapters.length
+      chapterCount: subject.chapters.length,
+      iconName: subject.iconName ?? 'school-outline',
     }));
   }
 
-  async getChaptersBySubject(subjectId: string): Promise<ChapterDto[]> {
+  async getChaptersBySubject(subjectId: string): Promise<ChapterSummaryDto[]> {
     const chapters = await this.prisma.chapter.findMany({
       where: { subjectId },
       orderBy: { order: 'asc' },
       include: {
         topics: {
-          select: {
-            id: true
-          }
-        }
-      }
+          select: { id: true },
+        },
+      },
     });
 
-    return chapters.map((chapter) => ({
-      id: chapter.id,
-      title: chapter.title,
-      order: chapter.order,
-      topicCount: chapter.topics.length
+    return chapters.map((c) => ({
+      id: c.id,
+      subjectId: c.subjectId,
+      title: {
+        en: c.titleEn,
+        hi: c.titleHi,
+      },
+      order: c.order,
+      topicCount: c.topics.length,
     }));
   }
 
-  async getTopicsByChapter(chapterId: string): Promise<TopicDto[]> {
+  async getTopicsByChapter(chapterId: string): Promise<TopicSummaryDto[]> {
     const topics = await this.prisma.topic.findMany({
       where: { chapterId },
       orderBy: { title: 'asc' },
       include: {
         reels: {
-          select: {
-            id: true
-          }
-        }
-      }
+          select: { id: true },
+        },
+      },
     });
 
-    return topics.map((topic) => ({
-      id: topic.id,
-      title: topic.title,
-      difficulty: topic.difficulty,
-      chapterId: topic.chapterId,
-      reelCount: topic.reels.length
+    return topics.map((t) => ({
+      id: t.id,
+      chapterId: t.chapterId,
+      title: t.title,
+      difficulty: (t.difficulty as DifficultyLevel) || 'medium',
+      reelCount: t.reels.length,
     }));
   }
 
@@ -132,35 +202,69 @@ export class CurriculumService {
       include: {
         chapter: {
           include: {
-            subject: true
-          }
-        }
-      }
+            subject: true,
+          },
+        },
+        reels: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!topic) {
       throw new NotFoundException(`Topic not found for id: ${topicId}`);
     }
 
-    const reelCount = await this.prisma.reel.count({
-      where: { topicId }
-    });
+    let cheatSheetSummary: string[] | undefined;
+    if (topic.cheatSheetJson) {
+      try {
+        cheatSheetSummary = JSON.parse(topic.cheatSheetJson);
+      } catch {
+        cheatSheetSummary = undefined;
+      }
+    }
 
     return {
       id: topic.id,
       title: topic.title,
-      difficulty: topic.difficulty,
+      difficulty: (topic.difficulty as DifficultyLevel) || 'medium',
       chapterId: topic.chapterId,
-      reelCount,
+      reelCount: topic.reels.length,
       chapter: {
         id: topic.chapter.id,
-        title: topic.chapter.title
+        title: topic.chapter.titleEn,
       },
       subject: {
         id: topic.chapter.subject.id,
         name: topic.chapter.subject.name,
-        classLevel: topic.chapter.subject.classLevel
-      }
+        classLevel: topic.chapter.subject.classLevel ?? undefined,
+        examType: topic.chapter.subject.examType as any,
+      },
+      cheatSheetSummary,
     };
+  }
+
+  async getTopicFlashcards(topicId: string): Promise<FlashcardDto[]> {
+    const flashcards = await this.prisma.flashcard.findMany({
+      where: { topicId },
+    });
+
+    return flashcards.map((fc) => {
+      let bullets: string[] | undefined;
+      if (fc.bulletsJson) {
+        try {
+          bullets = JSON.parse(fc.bulletsJson);
+        } catch {
+          bullets = undefined;
+        }
+      }
+      return {
+        id: fc.id,
+        topicId: fc.topicId,
+        frontQuestion: fc.frontQuestion,
+        backAnswer: fc.backAnswer,
+        bullets,
+      };
+    });
   }
 }

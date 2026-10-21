@@ -11,6 +11,12 @@ android/.gradle/
 android/app/build/
 ios/build/
 
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # Env
 .env
 .env.*

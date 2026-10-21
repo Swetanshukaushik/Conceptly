@@ -6,6 +6,7 @@ export type ClassLevelDto = {
 export type SubjectDto = {
   id: string;
   label: { en: string; hi: string };
+  iconName?: string;
 };
 
 export type ChapterDto = {
@@ -30,6 +31,7 @@ export type TopicDetailDto = {
   reelCount: number;
   chapter: { id: string; title: string };
   subject: { id: string; name: string; classLevel: number };
+  cheatSheetSummary?: string[];
 };
 
 export type ReelDto = {
@@ -42,6 +44,11 @@ export type ReelDto = {
   topic: { id: string; title: string; difficulty: string };
   chapter: { id: string; title: string };
   subject: { id: string; name: string; classLevel: number };
+  keyTakeaway?: string;
+  summaryNotes?: string[];
+  architectureDiagram?: string;
+  interviewPitch?: string;
+  pitfalls?: string[];
 };
 
 export type QuizOptionDto = {
@@ -61,6 +68,38 @@ export type QuizDto = {
   topicId: string;
   topicTitle: string;
   questions: QuizQuestionDto[];
+};
+
+export type QuizQuestionResultDto = {
+  questionId: string;
+  selectedOptionId: string;
+  correctOptionId: string;
+  isCorrect: boolean;
+  explanation: string;
+};
+
+export type QuizSubmissionResultDto = {
+  topicId: string;
+  totalQuestions: number;
+  correctCount: number;
+  scorePercent: number;
+  passed: boolean;
+  results: QuizQuestionResultDto[];
+  progressUpdated: boolean;
+};
+
+export type ReelViewEventDto = {
+  reelId: string;
+  watchDurationSec: number;
+  completed: boolean;
+};
+
+export type FlashcardDto = {
+  id: string;
+  topicId: string;
+  frontQuestion: string;
+  backAnswer: string;
+  bullets?: string[];
 };
 
 export type TopicProgressDto = {
@@ -90,4 +129,3 @@ export type HomeFeedDto = {
   recommended: TopicDetailDto[];
   quickRevision: TopicDetailDto[];
 };
-

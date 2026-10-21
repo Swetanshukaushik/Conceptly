@@ -11,13 +11,19 @@ import { AppCard } from '@/components/ui/AppCard';
 
 import { useQuizByTopicQuery } from '@/services/api/hooks/useQuizByTopicQuery';
 import { educationApi } from '@/services/api/educationApi';
+import { queryKeys } from '@/services/api/queryKeys';
+import { useQueryClient } from '@tanstack/react-query';
+import type { QuizSubmissionResultDto } from '@/services/api/types';
 
 export default function QuizScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { id: topicId } = useLocalSearchParams<{ id: string }>();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<QuizSubmissionResultDto | null>(null);
 
   const { data: quiz, isLoading } = useQuizByTopicQuery(topicId || '');
 
@@ -33,9 +39,9 @@ export default function QuizScreen() {
   if (!topicId) {
     return (
       <ScreenContainer>
-        <AppHeader title="Quiz" onBack={() => router.back()} />
+        <AppHeader title="Practice Quiz" onBack={() => router.back()} />
         <View className="flex-1 justify-center items-center px-4">
-          <AppText className="text-text-muted text-center">Quiz not found</AppText>
+          <AppText tone="muted">Quiz not found</AppText>
         </View>
       </ScreenContainer>
     );
@@ -44,20 +50,22 @@ export default function QuizScreen() {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <AppHeader title="Quiz" onBack={() => router.back()} />
-        <View className="flex-1 justify-center items-center">
+        <AppHeader title="Practice Quiz" onBack={() => router.back()} />
+        <View className="py-20">
           <Loader />
         </View>
       </ScreenContainer>
     );
   }
 
-  if (!quiz) {
+  if (!quiz || !quiz.questions || quiz.questions.length === 0) {
     return (
       <ScreenContainer>
-        <AppHeader title="Quiz" onBack={() => router.back()} />
-        <View className="flex-1 justify-center items-center px-4">
-          <AppText className="text-text-muted text-center">Quiz not available</AppText>
+        <AppHeader title="Practice Quiz" onBack={() => router.back()} />
+        <View className="flex-1 justify-center items-center px-4 py-20">
+          <AppText tone="muted" className="text-center">
+            No quiz questions currently available for this topic.
+          </AppText>
         </View>
       </ScreenContainer>
     );
@@ -89,124 +97,158 @@ export default function QuizScreen() {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitted(true);
-    
-    // Calculate score
-    let correctCount = 0;
-    quiz.questions.forEach((q: typeof quiz.questions[0]) => {
-      if (selectedAnswers[q.id] === q.correctOptionId) {
-        correctCount++;
-      }
-    });
-    const score = Math.round((correctCount / totalQuestions) * 100);
+    setIsSubmitting(true);
+    const answersPayload = Object.entries(selectedAnswers).map(
+      ([questionId, selectedOptionId]) => ({
+        questionId,
+        selectedOptionId,
+      })
+    );
 
-    educationApi.trackAnalyticsEvent('quiz_submitted', {
-      topicId,
-      score,
-      totalQuestions,
-      correctAnswers: correctCount
-    });
-
-    // Update progress
     try {
-      await educationApi.updateProgress(topicId, score);
+      const result = await educationApi.submitQuiz(topicId, answersPayload);
+      setSubmissionResult(result);
+      setIsSubmitted(true);
+      queryClient.invalidateQueries({ queryKey: queryKeys.progress() });
+
+      educationApi.trackAnalyticsEvent('quiz_submitted', {
+        topicId,
+        score: result.scorePercent,
+        totalQuestions: result.totalQuestions,
+        correctAnswers: result.correctCount,
+      });
     } catch (err) {
-      console.error('Progress update error:', err);
+      console.error('Quiz submission error:', err);
+      // Fallback
+      setIsSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (isSubmitted) {
-    const correctCount = Object.entries(selectedAnswers).filter(([qId, selectedOptionId]) => {
-      const question = quiz.questions.find((q: typeof quiz.questions[0]) => q.id === qId);
-      return question && selectedOptionId === question.correctOptionId;
-    }).length;
+    const totalQ = submissionResult?.totalQuestions ?? totalQuestions;
+    const correctCount =
+      submissionResult?.correctCount ??
+      Object.entries(selectedAnswers).filter(([qId, selectedOptionId]) => {
+        const question = quiz.questions.find((q) => q.id === qId);
+        return question && selectedOptionId === question.correctOptionId;
+      }).length;
 
-    const score = Math.round((correctCount / totalQuestions) * 100);
+    const score =
+      submissionResult?.scorePercent ?? Math.round((correctCount / Math.max(totalQ, 1)) * 100);
 
     return (
       <ScreenContainer>
         <AppHeader title="Quiz Results" onBack={() => router.back()} />
-        <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-          <AppCard className="mb-6 p-6 bg-bg-secondary items-center">
-            <AppText className="text-text-primary text-4xl font-bold">{score}%</AppText>
-            <AppText className="text-text-muted mt-2">
-              {correctCount} of {totalQuestions} correct
+        <ScrollView className="flex-1 py-2" showsVerticalScrollIndicator={false}>
+          <AppCard className="mb-6 p-6 bg-slate-50 border-slate-200 items-center">
+            <AppText className="text-4xl font-extrabold text-indigo-600">{score}%</AppText>
+            <AppText variant="body" tone="secondary" className="mt-2">
+              {correctCount} of {totalQ} questions correct
             </AppText>
           </AppCard>
 
           {score >= 70 ? (
-            <AppCard className="mb-6 p-4 bg-accent/10 border border-accent">
-              <AppText className="text-accent font-semibold">Great job! You passed! 🎉</AppText>
+            <AppCard tone="successSoft" className="mb-6 p-4 border-green-200">
+              <AppText variant="bodyMedium" tone="success" className="font-bold text-center">
+                Outstanding work! You have passed this topic! 🎉
+              </AppText>
             </AppCard>
           ) : (
-            <AppCard className="mb-6 p-4 bg-red-500/10 border border-red-500">
-              <AppText className="text-red-500 font-semibold">Keep practicing to improve!</AppText>
+            <AppCard className="mb-6 p-4 bg-amber-50 border border-amber-200">
+              <AppText variant="bodyMedium" className="text-amber-800 font-semibold text-center">
+                Good effort! Watch the video reels again and retry to improve.
+              </AppText>
             </AppCard>
           )}
 
-          <AppText className="text-text-primary text-lg font-bold mb-3">Review Answers</AppText>
+          <AppText variant="h3" className="mb-3">
+            Review Answers
+          </AppText>
+
           <FlatList
             scrollEnabled={false}
             data={quiz.questions}
             keyExtractor={(item) => item.id}
             renderItem={({ item: question, index }) => {
               const userAnswer = selectedAnswers[question.id];
-              const isCorrect = userAnswer === question.correctOptionId;
+              const resultItem = submissionResult?.results.find((r) => r.questionId === question.id);
+              const isCorrect = resultItem
+                ? resultItem.isCorrect
+                : userAnswer === question.correctOptionId;
+              const correctOptId = resultItem
+                ? resultItem.correctOptionId
+                : question.correctOptionId;
 
               return (
-                <AppCard className="mb-3 p-3">
-                  <AppText className="text-text-primary font-semibold text-sm">
+                <AppCard className="mb-3 p-4 border-slate-200" tone="default">
+                  <AppText variant="caption" tone="primary" className="font-bold">
                     Question {index + 1}
                   </AppText>
-                  <AppText className="text-text-primary mt-2">{question.text}</AppText>
+                  <AppText variant="bodyMedium" className="font-semibold text-slate-900 mt-1">
+                    {question.text}
+                  </AppText>
                   <FlatList
                     scrollEnabled={false}
                     data={question.options}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item: option }) => {
                       const isSelected = userAnswer === option.id;
-                      const isCorrectAnswer = option.id === question.correctOptionId;
-                      const showAsCorrect = isCorrectAnswer && isCorrect;
+                      const isCorrectAnswer = option.id === correctOptId;
+                      const showAsCorrect = isCorrectAnswer;
                       const showAsIncorrect = isSelected && !isCorrect;
 
                       return (
                         <View
-                          className={`mt-2 p-3 rounded border ${
+                          className={`mt-2 p-3 rounded-xl border ${
                             showAsCorrect
-                              ? 'border-accent bg-accent/10'
+                              ? 'border-green-500 bg-green-50'
                               : showAsIncorrect
-                                ? 'border-red-500 bg-red-500/10'
-                                : 'border-bg-tertiary'
+                              ? 'border-red-400 bg-red-50'
+                              : 'border-slate-200 bg-white'
                           }`}
                         >
                           <AppText
-                            className={`text-sm ${
+                            variant="caption"
+                            className={`font-medium ${
                               showAsCorrect
-                                ? 'text-accent'
+                                ? 'text-green-700 font-bold'
                                 : showAsIncorrect
-                                  ? 'text-red-500'
-                                  : 'text-text-muted'
+                                ? 'text-red-600'
+                                : 'text-slate-700'
                             }`}
                           >
-                            {option.text}
-                            {showAsCorrect && ' ✓'}
-                            {showAsIncorrect && ' ✗'}
+                            {option.text} {showAsCorrect && '✓ (Correct)'} {showAsIncorrect && '✗ (Your answer)'}
                           </AppText>
                         </View>
                       );
                     }}
                   />
+
+                  {/* 💡 Concept Insight / Explanation */}
+                  {resultItem?.explanation && (
+                    <View className="mt-3 p-3 bg-indigo-50/70 rounded-xl border border-indigo-100">
+                      <AppText variant="micro" tone="primary" className="font-bold">
+                        💡 Conceptual Takeaway:
+                      </AppText>
+                      <AppText variant="caption" tone="secondary" className="mt-0.5 text-slate-700 leading-relaxed">
+                        {resultItem.explanation}
+                      </AppText>
+                    </View>
+                  )}
                 </AppCard>
               );
             }}
           />
 
-          <AppButton
-            label="Back to Topic"
-            variant="primary"
-            onPress={() => router.back()}
-            className="mb-4 mt-4"
-          />
+          <View className="my-6">
+            <AppButton
+              label="Back to Topic"
+              variant="primary"
+              onPress={() => router.back()}
+            />
+          </View>
         </ScrollView>
       </ScreenContainer>
     );
@@ -214,31 +256,37 @@ export default function QuizScreen() {
 
   return (
     <ScreenContainer>
-      <AppHeader title={`Quiz - Question ${currentQuestionIndex + 1}/${totalQuestions}`} onBack={() => router.back()} />
-      <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-        <AppCard className="mb-4 p-3 bg-bg-secondary">
-          <AppText className="text-text-muted text-xs">Progress</AppText>
-          <View className="mt-2 w-full bg-bg-tertiary rounded-full overflow-hidden">
+      <AppHeader
+        title={`Quiz (${currentQuestionIndex + 1}/${totalQuestions})`}
+        onBack={() => router.back()}
+      />
+      <ScrollView className="flex-1 py-2" showsVerticalScrollIndicator={false}>
+        {/* Progress indicator */}
+        <AppCard className="mb-4 p-3 bg-slate-50 border-slate-200">
+          <View className="flex-row items-center justify-between">
+            <AppText variant="micro" tone="muted">Progress</AppText>
+            <AppText variant="micro" tone="muted">
+              {answeredQuestions} of {totalQuestions} answered
+            </AppText>
+          </View>
+          <View className="mt-2 w-full bg-slate-200 rounded-full h-2 overflow-hidden">
             <View
-              className="h-2 bg-accent"
+              className="h-full bg-indigo-600 rounded-full"
               style={{
                 width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`
               }}
             />
           </View>
-          <AppText className="text-text-muted text-xs mt-2">
-            {answeredQuestions} of {totalQuestions} answered
-          </AppText>
         </AppCard>
 
-        <AppCard className="mb-6 p-4">
-          <AppText className="text-text-primary text-lg font-bold">{currentQuestion.text}</AppText>
+        {/* Current Question */}
+        <AppCard className="mb-6 p-5 border-slate-200">
+          <AppText variant="h3" className="text-slate-900 leading-snug">
+            {currentQuestion.text}
+          </AppText>
 
-          <FlatList
-            scrollEnabled={false}
-            data={currentQuestion.options}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item: option }) => {
+          <View className="mt-4 gap-2.5">
+            {currentQuestion.options.map((option) => {
               const isSelected = selectedAnswers[currentQuestion.id] === option.id;
               return (
                 <AppButton
@@ -246,37 +294,39 @@ export default function QuizScreen() {
                   label={option.text}
                   variant={isSelected ? 'primary' : 'secondary'}
                   onPress={() => handleAnswerSelect(option.id)}
-                  className="mt-3"
                 />
               );
-            }}
-          />
+            })}
+          </View>
         </AppCard>
 
-        <View className="flex-row gap-2 mb-4">
-          <AppButton
-            label="Previous"
-            variant="secondary"
-            onPress={handlePrevious}
-            disabled={currentQuestionIndex === 0}
-            className="flex-1"
-          />
+        <View className="flex-row gap-3 mb-8">
+          <View className="flex-1">
+            <AppButton
+              label="Previous"
+              variant="secondary"
+              onPress={handlePrevious}
+              disabled={currentQuestionIndex === 0}
+            />
+          </View>
 
-          {currentQuestionIndex === totalQuestions - 1 ? (
-            <AppButton
-              label="Submit"
-              variant="primary"
-              onPress={handleSubmit}
-              className="flex-1"
-            />
-          ) : (
-            <AppButton
-              label="Next"
-              variant="primary"
-              onPress={handleNext}
-              className="flex-1"
-            />
-          )}
+          <View className="flex-1">
+            {currentQuestionIndex === totalQuestions - 1 ? (
+              <AppButton
+                label={isSubmitting ? 'Evaluating...' : 'Submit Quiz'}
+                variant="primary"
+                onPress={handleSubmit}
+                disabled={!selectedAnswers[currentQuestion.id] || isSubmitting}
+              />
+            ) : (
+              <AppButton
+                label="Next"
+                variant="primary"
+                onPress={handleNext}
+                disabled={!selectedAnswers[currentQuestion.id]}
+              />
+            )}
+          </View>
         </View>
       </ScrollView>
     </ScreenContainer>

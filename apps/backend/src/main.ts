@@ -15,7 +15,7 @@ async function bootstrap() {
   app.enableCors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-user-id']
   });
 
   app.setGlobalPrefix('v1');
@@ -42,9 +42,9 @@ async function bootstrap() {
   await prisma.enableShutdownHooks(app);
 
   const port = configService.get<number>('port') ?? 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   // eslint-disable-next-line no-console
-  console.log(`Backend listening on http://localhost:${port}`);
+  console.log(`Backend listening on port ${port}`);
 }
 
 bootstrap();

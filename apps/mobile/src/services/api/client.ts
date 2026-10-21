@@ -1,11 +1,48 @@
 import { runtimeConfig } from '@/constants/runtimeConfig';
+import { useAppStore } from '@/store/useAppStore';
 
-export async function apiGet<T>(path: string): Promise<T> {
-  if (!runtimeConfig.apiBaseUrl) {
-    throw new Error('API base URL is not configured');
+function getApiBaseUrl(): string {
+  if (runtimeConfig.apiBaseUrl && runtimeConfig.apiBaseUrl.trim() !== '') {
+    return runtimeConfig.apiBaseUrl;
+  }
+  return 'http://localhost:3000/v1';
+}
+
+function normalizePath(path: string): string {
+  if (path.startsWith('/v1/')) {
+    return path.substring(3);
+  }
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const store = useAppStore.getState();
+    if (store.authToken) {
+      headers['Authorization'] = `Bearer ${store.authToken}`;
+    } else {
+      headers['x-user-id'] = 'usr_demo_student';
+    }
+  } catch {
+    // In environments where Zustand store isn't ready
   }
 
-  const response = await fetch(`${runtimeConfig.apiBaseUrl}${path}`);
+  return headers;
+}
+
+export async function apiGet<T>(path: string): Promise<T> {
+  const baseUrl = getApiBaseUrl();
+  const headers = getAuthHeaders();
+
+  const response = await fetch(`${baseUrl}${normalizePath(path)}`, {
+    method: 'GET',
+    headers,
+  });
+
   if (!response.ok) {
     let errorMessage = `API error: ${response.status}`;
     try {
@@ -19,7 +56,6 @@ export async function apiGet<T>(path: string): Promise<T> {
     throw new Error(errorMessage);
   }
 
-  // Check if response has content before parsing JSON
   const contentLength = response.headers.get('content-length');
   if (contentLength === '0' || response.status === 204) {
     return undefined as T;
@@ -33,15 +69,15 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiPost<T>(path: string, body: Record<string, any>): Promise<T> {
-  if (!runtimeConfig.apiBaseUrl) {
-    throw new Error('API base URL is not configured');
-  }
+  const baseUrl = getApiBaseUrl();
+  const headers = getAuthHeaders();
 
-  const response = await fetch(`${runtimeConfig.apiBaseUrl}${path}`, {
+  const response = await fetch(`${baseUrl}${normalizePath(path)}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    headers,
+    body: JSON.stringify(body),
   });
+
   if (!response.ok) {
     let errorMessage = `API error: ${response.status}`;
     try {
@@ -55,7 +91,6 @@ export async function apiPost<T>(path: string, body: Record<string, any>): Promi
     throw new Error(errorMessage);
   }
 
-  // Check if response has content before parsing JSON
   const contentLength = response.headers.get('content-length');
   if (contentLength === '0' || response.status === 204) {
     return undefined as T;
@@ -69,15 +104,15 @@ export async function apiPost<T>(path: string, body: Record<string, any>): Promi
 }
 
 export async function apiDelete(path: string): Promise<void> {
-  if (!runtimeConfig.apiBaseUrl) {
-    throw new Error('API base URL is not configured');
-  }
+  const baseUrl = getApiBaseUrl();
+  const headers = getAuthHeaders();
 
-  const response = await fetch(`${runtimeConfig.apiBaseUrl}${path}`, {
-    method: 'DELETE'
+  const response = await fetch(`${baseUrl}${normalizePath(path)}`, {
+    method: 'DELETE',
+    headers,
   });
+
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
   }
 }
-

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Conceptly",
-    "slug": "conceptly-mobile",
+    "slug": "conceptly",
     "scheme": "conceptly",
     "privacy": "public",
     "platforms": ["ios", "android", "web"],
@@ -20,4 +20,3 @@
     }
   }
 }
-

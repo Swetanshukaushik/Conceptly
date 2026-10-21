@@ -3,12 +3,13 @@ import { Pressable, PressableProps } from "react-native";
 import { cn } from "../../utils/cn";
 import { Icon } from "./Icon";
 
-type Tone = "default" | "primary" | "inverse";
+type Tone = "default" | "primary" | "inverse" | "ghost";
 
 const toneClasses: Record<Tone, string> = {
   default: "bg-white border border-slate-200",
   primary: "bg-indigo-600 border border-indigo-600",
   inverse: "bg-black/20 border border-white/20",
+  ghost: "bg-transparent border-0",
 };
 
 export type IconButtonProps = PressableProps & {
