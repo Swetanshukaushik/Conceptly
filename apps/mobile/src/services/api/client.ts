@@ -5,7 +5,7 @@ function getApiBaseUrl(): string {
   if (runtimeConfig.apiBaseUrl && runtimeConfig.apiBaseUrl.trim() !== '') {
     return runtimeConfig.apiBaseUrl;
   }
-  return 'http://localhost:3000/v1';
+  return 'https://conceptly-api.onrender.com/v1';
 }
 
 function normalizePath(path: string): string {

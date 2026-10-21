@@ -15,8 +15,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "useMockData": true,
-      "apiBaseUrl": "http://localhost:3000"
+      "useMockData": false,
+      "apiBaseUrl": "https://conceptly-api.onrender.com/v1"
     }
   }
 }
