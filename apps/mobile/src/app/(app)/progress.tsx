@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -12,11 +12,13 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { QuickStatsRow } from '@/components/patterns/QuickStatsRow';
 import { Icon } from '@/components/ui/Icon';
 
+import { useTheme } from '@/app/providers/ThemeProvider';
 import { useProgressQuery } from '@/services/api/hooks/useProgressQuery';
 import { educationApi } from '@/services/api/educationApi';
 
 export default function ProgressScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { data: progress, isLoading } = useProgressQuery();
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function ProgressScreen() {
     return (
       <ScreenContainer>
         <AppHeader title="Learning Journey" subtitle="Track your mastery" />
-        <View className="py-20">
+        <View style={{ paddingVertical: 80 }}>
           <Loader />
         </View>
       </ScreenContainer>
@@ -48,7 +50,7 @@ export default function ProgressScreen() {
     return (
       <ScreenContainer>
         <AppHeader title="Learning Journey" subtitle="Track your mastery" />
-        <View className="mt-8">
+        <View style={{ marginTop: 32 }}>
           <EmptyState
             title="No progress yet"
             description="Start watching educational reels and taking quizzes to track your mastery here."
@@ -63,17 +65,29 @@ export default function ProgressScreen() {
       <AppHeader title="Learning Journey" subtitle="Track your mastery" />
 
       {/* Main Overall Progress Card */}
-      <AppCard tone="primarySoft" className="mt-4 mb-4 border-indigo-100">
-        <View className="flex-row items-center justify-between">
+      <AppCard tone="primarySoft" style={{ marginTop: 12, marginBottom: 16 }}>
+        <View style={styles.heroRow}>
           <View>
-            <AppText variant="caption" tone="primary">Overall Curriculum Mastery</AppText>
-            <AppText variant="hero" className="text-indigo-600 mt-1">{overallProgress}%</AppText>
-            <AppText variant="caption" tone="secondary" className="mt-1">
+            <AppText variant="caption" tone="primary" style={{ fontWeight: '600' }}>
+              Overall Curriculum Mastery
+            </AppText>
+            <AppText variant="hero" tone="primary" style={{ marginTop: 4 }}>
+              {overallProgress}%
+            </AppText>
+            <AppText variant="caption" tone="secondary" style={{ marginTop: 4 }}>
               {completedTopics} of {progress.length} topics fully mastered
             </AppText>
           </View>
-          <View className="h-16 w-16 rounded-full bg-indigo-600 items-center justify-center shadow-md">
-            <Icon name="trophy" size={28} color="#FFFFFF" />
+          <View
+            style={[
+              styles.trophyBadge,
+              {
+                backgroundColor: colors.primary,
+                shadowColor: colors.primary,
+              },
+            ]}
+          >
+            <Icon name="trophy" size={26} color={colors.textInverse} />
           </View>
         </View>
       </AppCard>
@@ -82,78 +96,125 @@ export default function ProgressScreen() {
         stats={[
           { label: 'Mastered', value: completedTopics.toString() },
           { label: 'In Progress', value: inProgressTopics.toString() },
-          { label: 'Active Topics', value: progress.length.toString() }
+          { label: 'Active Topics', value: progress.length.toString() },
         ]}
       />
 
-      <View className="mt-6 mb-8">
+      <View style={{ marginTop: 24, marginBottom: 32 }}>
         <SectionHeader title="Topic-wise Progress" />
-        <View className="gap-3 mt-3">
-          {progress.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => {
-                router.push(`/topic/${item.topicId}`);
-              }}
-            >
-              <AppCard tone="default" className="border-slate-200">
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1 mr-2">
-                    <AppText variant="caption" tone="secondary">
-                      {item.subject?.name ?? 'Subject'} • {item.chapter?.title ?? 'Chapter'}
-                    </AppText>
-                    <AppText variant="title" className="mt-1">
-                      {item.topic?.title ?? 'Topic'}
-                    </AppText>
-                  </View>
-                  <View
-                    className={`px-2.5 py-1 rounded-full ${
-                      item.completionPercent >= 100
-                        ? 'bg-green-100'
-                        : item.completionPercent > 50
-                        ? 'bg-indigo-100'
-                        : 'bg-amber-100'
-                    }`}
-                  >
-                    <AppText
-                      variant="micro"
-                      tone={
-                        item.completionPercent >= 100
-                          ? 'success'
-                          : item.completionPercent > 50
-                          ? 'primary'
-                          : 'default'
-                      }
-                      className="font-bold"
+        <View style={{ gap: 12, marginTop: 12 }}>
+          {progress.map((item) => {
+            const isDone = item.completionPercent >= 100;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => {
+                  router.push(`/topic/${item.topicId}`);
+                }}
+              >
+                <AppCard tone="default">
+                  <View style={styles.topicHeader}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <AppText variant="caption" tone="secondary">
+                        {item.subject?.name ?? 'Subject'} • {item.chapter?.title ?? 'Chapter'}
+                      </AppText>
+                      <AppText variant="title" style={{ marginTop: 4 }}>
+                        {item.topic?.title ?? 'Topic'}
+                      </AppText>
+                    </View>
+                    <View
+                      style={[
+                        styles.percentBadge,
+                        {
+                          backgroundColor: isDone ? colors.successSoft : colors.primarySoft,
+                          borderColor: isDone ? colors.successText : colors.primaryBorder,
+                        },
+                      ]}
                     >
-                      {item.completionPercent}%
+                      <AppText
+                        variant="micro"
+                        style={{
+                          fontWeight: '700',
+                          color: isDone ? colors.successText : colors.primaryText,
+                        }}
+                      >
+                        {item.completionPercent}%
+                      </AppText>
+                    </View>
+                  </View>
+
+                  {/* Progress bar */}
+                  <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          backgroundColor: isDone ? colors.success : colors.primary,
+                          width: `${Math.min(100, Math.max(5, item.completionPercent))}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+
+                  <View style={styles.topicFooter}>
+                    <AppText variant="micro" tone="muted">
+                      Difficulty: {item.topic?.difficulty ?? 'Medium'}
+                    </AppText>
+                    <AppText variant="micro" tone="primary" style={{ fontWeight: '600' }}>
+                      {isDone ? 'Mastered ✓' : 'Tap to continue →'}
                     </AppText>
                   </View>
-                </View>
-
-                {/* Progress bar */}
-                <View className="mt-3 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                  <View
-                    className={`h-full rounded-full ${
-                      item.completionPercent >= 100 ? 'bg-green-600' : 'bg-indigo-600'
-                    }`}
-                    style={{ width: `${Math.min(100, Math.max(5, item.completionPercent))}%` }}
-                  />
-                </View>
-
-                <View className="flex-row items-center justify-between mt-2">
-                  <AppText variant="micro" tone="muted">
-                    {item.completionPercent >= 100 ? 'Completed & Passed' : 'In Progress'}
-                  </AppText>
-                  <AppText variant="micro" tone="primary" className="font-semibold">
-                    Review Topic →
-                  </AppText>
-                </View>
-              </AppCard>
-            </Pressable>
-          ))}
+                </AppCard>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  trophyBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  topicHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  percentBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  progressTrack: {
+    marginTop: 12,
+    borderRadius: 999,
+    height: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  topicFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+});

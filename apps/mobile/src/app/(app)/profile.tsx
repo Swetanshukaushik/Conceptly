@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Pressable, Modal, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -12,14 +12,55 @@ import { QuickStatsRow } from '@/components/patterns/QuickStatsRow';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
+import { ThemeMode } from '@/theme/types';
 import { educationApi } from '@/services/api/educationApi';
 import { useProgressQuery } from '@/services/api/hooks/useProgressQuery';
 import { useBookmarksQuery } from '@/services/api/hooks/useBookmarksQuery';
 import { useQueryClient } from '@tanstack/react-query';
 
+const THEME_OPTIONS: Array<{
+  id: ThemeMode;
+  name: string;
+  tagline: string;
+  icon: string;
+  bgPreview: string;
+  cardPreview: string;
+  accentPreview: string;
+}> = [
+  {
+    id: 'light',
+    name: 'Light',
+    tagline: 'Pure Focus Alabaster',
+    icon: '☀️',
+    bgPreview: '#F8FAFC',
+    cardPreview: '#FFFFFF',
+    accentPreview: '#0F172A',
+  },
+  {
+    id: 'dark',
+    name: 'Dark',
+    tagline: 'Obsidian Midnight',
+    icon: '🌙',
+    bgPreview: '#0B0F17',
+    cardPreview: '#111722',
+    accentPreview: '#38BDF8',
+  },
+  {
+    id: 'grey',
+    name: 'Grey',
+    tagline: 'Studio Graphite',
+    icon: '🔘',
+    bgPreview: '#1B1C20',
+    cardPreview: '#23252A',
+    accentPreview: '#F59E0B',
+  },
+];
+
 export default function ProfileScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors, theme, setTheme, isDark } = useTheme();
   const {
     selectedExamType,
     selectedClassId,
@@ -99,7 +140,6 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     logout();
     queryClient.invalidateQueries();
-    // Bootstrap fresh guest session if in live mode
     if (apiDataSource === 'live') {
       try {
         const res = await educationApi.createGuestSession();
@@ -130,26 +170,37 @@ export default function ProfileScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader title="Profile & Preferences" subtitle="Your Conceptly Learning Dashboard" />
+      <AppHeader
+        title="Profile & Settings"
+        subtitle="Customization & Study Preferences"
+      />
 
       {/* User Card */}
-      <AppCard tone="primarySoft" className="mt-4 mb-4 border-indigo-100">
-        <View className="flex-row items-center gap-4">
-          <View className="h-16 w-16 rounded-full bg-indigo-600 items-center justify-center shadow-sm">
+      <AppCard tone="primarySoft" style={{ marginTop: 12, marginBottom: 16 }}>
+        <View style={styles.userCardRow}>
+          <View
+            style={[
+              styles.avatarBadge,
+              {
+                backgroundColor: colors.primary,
+                shadowColor: colors.primary,
+              },
+            ]}
+          >
             <AppText variant="h2" tone="inverse">
               ⚡
             </AppText>
           </View>
-          <View className="flex-1">
+          <View style={{ flex: 1 }}>
             <AppText variant="h3">
               {userName || (userEmail ? userEmail.split('@')[0] : 'Conceptly Member')}
             </AppText>
-            <AppText variant="caption" tone="primary" className="mt-0.5 font-semibold">
+            <AppText variant="caption" tone="primary" style={{ marginTop: 2, fontWeight: '600' }}>
               Target: {domainLabel}
             </AppText>
-            <View className="flex-row items-center gap-1.5 mt-1.5">
-              <Icon name="flame" size={16} color="#EA580C" />
-              <AppText variant="micro" className="text-orange-600 font-bold">
+            <View style={styles.streakRow}>
+              <Icon name="flame" size={15} color="#EA580C" />
+              <AppText variant="micro" style={{ color: '#EA580C', fontWeight: '700' }}>
                 5 Day Interview Streak
               </AppText>
             </View>
@@ -166,34 +217,113 @@ export default function ProfileScreen() {
         ]}
       />
 
+      {/* 🎨 Theme & Appearance Switcher */}
+      <View style={{ marginTop: 24, marginBottom: 8 }}>
+        <SectionHeader title="Color Theme & Appearance" />
+        <AppText variant="caption" tone="secondary" style={{ marginTop: 2, marginBottom: 12 }}>
+          Choose an engineered palette designed for extreme focus and low eye strain.
+        </AppText>
+
+        <View style={styles.themeGrid}>
+          {THEME_OPTIONS.map((opt) => {
+            const isSelected = theme === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setTheme(opt.id)}
+                style={[
+                  styles.themeCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: isSelected ? colors.primary : colors.border,
+                    borderWidth: isSelected ? 2 : 1,
+                  },
+                ]}
+              >
+                {/* Visual Swatch Preview */}
+                <View
+                  style={[
+                    styles.swatchPreview,
+                    { backgroundColor: opt.bgPreview, borderColor: colors.border },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.swatchCard,
+                      { backgroundColor: opt.cardPreview, borderColor: colors.border },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.swatchDot,
+                        { backgroundColor: opt.accentPreview },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                {/* Option Details */}
+                <View style={styles.themeDetails}>
+                  <View style={styles.themeTitleRow}>
+                    <AppText variant="bodyMedium" style={{ fontWeight: '700' }}>
+                      {opt.icon} {opt.name}
+                    </AppText>
+                    {isSelected && (
+                      <View
+                        style={[
+                          styles.checkBadge,
+                          { backgroundColor: colors.primary },
+                        ]}
+                      >
+                        <AppText variant="micro" tone="inverse" style={{ fontSize: 9 }}>
+                          ✓
+                        </AppText>
+                      </View>
+                    )}
+                  </View>
+                  <AppText variant="micro" tone="muted" numberOfLines={1}>
+                    {opt.tagline}
+                  </AppText>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
       {/* 🔐 Account & Cloud Sync */}
-      <View className="mt-6 mb-2">
+      <View style={{ marginTop: 20, marginBottom: 8 }}>
         <SectionHeader title="Account & Cloud Sync" />
-        <AppCard tone="default" className="mt-3 border-slate-200">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center gap-2">
-              <Icon name="person-circle-outline" size={20} color="#6366F1" />
+        <AppCard tone="default" style={{ marginTop: 8 }}>
+          <View style={styles.accountRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icon name="person-circle-outline" size={20} color={colors.primaryText} />
               <AppText variant="title">
                 {userEmail ? 'Verified Account' : 'Guest Session'}
               </AppText>
             </View>
             <View
-              className={`px-2.5 py-0.5 rounded-full ${
-                userEmail ? 'bg-emerald-100' : 'bg-slate-100'
-              }`}
+              style={[
+                styles.syncBadge,
+                {
+                  backgroundColor: userEmail ? colors.successSoft : colors.surfaceSubtle,
+                  borderColor: userEmail ? colors.border : colors.border,
+                },
+              ]}
             >
               <AppText
                 variant="micro"
-                className={`font-bold ${
-                  userEmail ? 'text-emerald-700' : 'text-slate-600'
-                }`}
+                style={{
+                  fontWeight: '700',
+                  color: userEmail ? colors.successText : colors.textMuted,
+                }}
               >
                 {userEmail ? '● CLOUD SYNCED' : '● LOCAL ONLY'}
               </AppText>
             </View>
           </View>
 
-          <AppText variant="caption" tone="secondary" className="mb-4">
+          <AppText variant="caption" tone="secondary" style={{ marginBottom: 16 }}>
             {userEmail
               ? `Signed in as ${userEmail}. All progress, quizzes, and bookmarks are backed up to the database.`
               : 'You are currently studying as a Guest. Sign in or register to sync your learning streak and bookmarks across devices.'}
@@ -219,21 +349,23 @@ export default function ProfileScreen() {
       </View>
 
       {/* Study Language Preference */}
-      <View className="mt-6 mb-6">
+      <View style={{ marginTop: 20, marginBottom: 20 }}>
         <SectionHeader title="Study Language" />
-        <View className="flex-row gap-3 mt-3">
+        <View style={styles.langRow}>
           <Pressable
             onPress={() => setLanguage('en')}
-            className={`flex-1 p-3.5 rounded-2xl border items-center justify-center ${
-              language === 'en'
-                ? 'bg-indigo-600 border-indigo-600'
-                : 'bg-white border-slate-200'
-            }`}
+            style={[
+              styles.langButton,
+              {
+                backgroundColor: language === 'en' ? colors.primary : colors.surface,
+                borderColor: language === 'en' ? colors.primary : colors.border,
+              },
+            ]}
           >
             <AppText
               variant="bodyMedium"
               tone={language === 'en' ? 'inverse' : 'default'}
-              className="font-bold"
+              style={{ fontWeight: '700' }}
             >
               English
             </AppText>
@@ -241,16 +373,18 @@ export default function ProfileScreen() {
 
           <Pressable
             onPress={() => setLanguage('hi')}
-            className={`flex-1 p-3.5 rounded-2xl border items-center justify-center ${
-              language === 'hi'
-                ? 'bg-indigo-600 border-indigo-600'
-                : 'bg-white border-slate-200'
-            }`}
+            style={[
+              styles.langButton,
+              {
+                backgroundColor: language === 'hi' ? colors.primary : colors.surface,
+                borderColor: language === 'hi' ? colors.primary : colors.border,
+              },
+            ]}
           >
             <AppText
               variant="bodyMedium"
               tone={language === 'hi' ? 'inverse' : 'default'}
-              className="font-bold"
+              style={{ fontWeight: '700' }}
             >
               हिन्दी (Hindi)
             </AppText>
@@ -259,49 +393,55 @@ export default function ProfileScreen() {
       </View>
 
       {/* ⚡ API Data Engine Switcher */}
-      <View className="mb-6">
+      <View style={{ marginBottom: 20 }}>
         <SectionHeader title="Backend & Data Engine" />
-        <AppCard tone="default" className="mt-3 border-slate-200">
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center gap-2">
-              <Icon name="server-outline" size={20} color="#6366F1" />
+        <AppCard tone="default" style={{ marginTop: 8 }}>
+          <View style={styles.accountRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icon name="server-outline" size={20} color={colors.primaryText} />
               <AppText variant="title">Active Data Source</AppText>
             </View>
             <View
-              className={`px-2.5 py-0.5 rounded-full ${
-                apiDataSource === 'live' ? 'bg-emerald-100' : 'bg-purple-100'
-              }`}
+              style={[
+                styles.syncBadge,
+                {
+                  backgroundColor: apiDataSource === 'live' ? colors.successSoft : colors.surfaceSubtle,
+                },
+              ]}
             >
               <AppText
                 variant="micro"
-                className={`font-bold ${
-                  apiDataSource === 'live' ? 'text-emerald-700' : 'text-purple-700'
-                }`}
+                style={{
+                  fontWeight: '700',
+                  color: apiDataSource === 'live' ? colors.successText : colors.textMuted,
+                }}
               >
                 {apiDataSource === 'live' ? '● LIVE REST API' : '● MOCK ENGINE'}
               </AppText>
             </View>
           </View>
 
-          <AppText variant="caption" tone="secondary" className="mb-4">
+          <AppText variant="caption" tone="secondary" style={{ marginBottom: 16 }}>
             {apiDataSource === 'live'
-              ? 'Connected to NestJS + SQLite server (http://localhost:3000/v1) with live Prisma persistence & real JWT sessions.'
-              : 'Serving rich in-memory mock datasets. Completely offline-first and instant.'}
+              ? 'Connected to live Render cloud backend (https://conceptly-api.onrender.com/v1) backed by Supabase PostgreSQL.'
+              : 'Serving rich offline mock datasets. Instant and works without internet.'}
           </AppText>
 
-          <View className="flex-row gap-3">
+          <View style={styles.langRow}>
             <Pressable
               onPress={() => handleToggleApiSource('mock')}
-              className={`flex-1 p-3 rounded-2xl border items-center justify-center ${
-                apiDataSource === 'mock'
-                  ? 'bg-purple-600 border-purple-600'
-                  : 'bg-white border-slate-200'
-              }`}
+              style={[
+                styles.langButton,
+                {
+                  backgroundColor: apiDataSource === 'mock' ? colors.primary : colors.surface,
+                  borderColor: apiDataSource === 'mock' ? colors.primary : colors.border,
+                },
+              ]}
             >
               <AppText
                 variant="bodyMedium"
                 tone={apiDataSource === 'mock' ? 'inverse' : 'default'}
-                className="font-bold"
+                style={{ fontWeight: '700' }}
               >
                 🧪 Offline Mock
               </AppText>
@@ -309,16 +449,18 @@ export default function ProfileScreen() {
 
             <Pressable
               onPress={() => handleToggleApiSource('live')}
-              className={`flex-1 p-3 rounded-2xl border items-center justify-center ${
-                apiDataSource === 'live'
-                  ? 'bg-indigo-600 border-indigo-600'
-                  : 'bg-white border-slate-200'
-              }`}
+              style={[
+                styles.langButton,
+                {
+                  backgroundColor: apiDataSource === 'live' ? colors.primary : colors.surface,
+                  borderColor: apiDataSource === 'live' ? colors.primary : colors.border,
+                },
+              ]}
             >
               <AppText
                 variant="bodyMedium"
                 tone={apiDataSource === 'live' ? 'inverse' : 'default'}
-                className="font-bold"
+                style={{ fontWeight: '700' }}
               >
                 🌐 Live Backend
               </AppText>
@@ -328,11 +470,11 @@ export default function ProfileScreen() {
       </View>
 
       {/* Target Domain Switcher */}
-      <View className="mb-6">
+      <View style={{ marginBottom: 20 }}>
         <SectionHeader title="Revision Domain Settings" />
-        <View className="gap-3 mt-3">
+        <View style={{ gap: 10, marginTop: 8 }}>
           <AppButton
-            label="Switch Target Domain (Tech / PM / UPSC / School)"
+            label="Switch Target Domain (Tech / PM / Finance / UPSC / School)"
             variant="secondary"
             onPress={() => router.push('/exam-type-select')}
           />
@@ -352,16 +494,16 @@ export default function ProfileScreen() {
       </View>
 
       {/* About Conceptly */}
-      <AppCard tone="default" className="mb-8 border-slate-200">
-        <View className="flex-row items-center gap-2 mb-2">
-          <Icon name="information-circle-outline" size={20} color="#64748B" />
+      <AppCard tone="default" style={{ marginBottom: 32 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <Icon name="information-circle-outline" size={20} color={colors.textSecondary} />
           <AppText variant="title">About Conceptly</AppText>
         </View>
         <AppText variant="caption" tone="secondary">
           First-principles visual micro-reels and interactive flashcard checkpoints designed to build deep conceptual clarity across exams and careers.
         </AppText>
-        <AppText variant="micro" tone="muted" className="mt-3">
-          Conceptly Platform v2.0 (High-Speed Visual Player)
+        <AppText variant="micro" tone="muted" style={{ marginTop: 12 }}>
+          Conceptly Platform v2.0 • Executive Multi-Theme Edition
         </AppText>
       </AppCard>
 
@@ -372,37 +514,51 @@ export default function ProfileScreen() {
         animationType="fade"
         onRequestClose={() => setAuthModalVisible(false)}
       >
-        <View className="flex-1 bg-black/60 items-center justify-center p-4">
-          <View className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200">
+        <View style={styles.modalBackdrop}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             {/* Header */}
-            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderSubtle }]}>
               <AppText variant="h3">
                 {authMode === 'login' ? 'Welcome Back' : 'Create Candidate Account'}
               </AppText>
               <Pressable
                 onPress={() => setAuthModalVisible(false)}
-                className="h-8 w-8 rounded-full bg-slate-100 items-center justify-center"
+                style={[styles.closeButton, { backgroundColor: colors.surfaceSubtle }]}
               >
-                <AppText className="text-slate-500 font-bold">✕</AppText>
+                <AppText style={{ color: colors.textSecondary, fontWeight: '700' }}>✕</AppText>
               </Pressable>
             </View>
 
             {/* Mode Switcher Tabs */}
-            <View className="flex-row bg-slate-100 p-1 rounded-2xl my-4">
+            <View style={[styles.modalTabs, { backgroundColor: colors.surfaceSubtle }]}>
               <Pressable
                 onPress={() => {
                   setAuthMode('login');
                   setAuthError(null);
                 }}
-                className={`flex-1 py-2 rounded-xl items-center ${
-                  authMode === 'login' ? 'bg-white shadow-xs' : ''
-                }`}
+                style={[
+                  styles.modalTab,
+                  authMode === 'login' && {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  },
+                ]}
               >
                 <AppText
                   variant="caption"
-                  className={`font-bold ${
-                    authMode === 'login' ? 'text-indigo-600' : 'text-slate-600'
-                  }`}
+                  style={{
+                    fontWeight: '700',
+                    color: authMode === 'login' ? colors.primaryText : colors.textMuted,
+                  }}
                 >
                   Sign In
                 </AppText>
@@ -412,15 +568,21 @@ export default function ProfileScreen() {
                   setAuthMode('signup');
                   setAuthError(null);
                 }}
-                className={`flex-1 py-2 rounded-xl items-center ${
-                  authMode === 'signup' ? 'bg-white shadow-xs' : ''
-                }`}
+                style={[
+                  styles.modalTab,
+                  authMode === 'signup' && {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  },
+                ]}
               >
                 <AppText
                   variant="caption"
-                  className={`font-bold ${
-                    authMode === 'signup' ? 'text-indigo-600' : 'text-slate-600'
-                  }`}
+                  style={{
+                    fontWeight: '700',
+                    color: authMode === 'signup' ? colors.primaryText : colors.textMuted,
+                  }}
                 >
                   Register
                 </AppText>
@@ -429,8 +591,8 @@ export default function ProfileScreen() {
 
             {/* Error banner */}
             {authError && (
-              <View className="bg-red-50 border border-red-200 p-3 rounded-xl mb-3">
-                <AppText variant="micro" className="text-red-700 font-medium">
+              <View style={[styles.errorBanner, { backgroundColor: colors.dangerSoft }]}>
+                <AppText variant="micro" style={{ color: colors.dangerText, fontWeight: '500' }}>
                   {authError}
                 </AppText>
               </View>
@@ -438,22 +600,29 @@ export default function ProfileScreen() {
 
             {/* Form Fields */}
             {authMode === 'signup' && (
-              <View className="mb-3">
-                <AppText variant="micro" tone="secondary" className="mb-1 font-semibold">
+              <View style={{ marginBottom: 12 }}>
+                <AppText variant="micro" tone="secondary" style={{ marginBottom: 4, fontWeight: '600' }}>
                   Full Name / Alias
                 </AppText>
                 <TextInput
                   value={authName}
                   onChangeText={setAuthName}
                   placeholder="e.g. Alex Chen"
-                  placeholderTextColor="#94A3B8"
-                  className="border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 bg-slate-50"
+                  placeholderTextColor={colors.textMuted}
+                  style={[
+                    styles.textInput,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
                 />
               </View>
             )}
 
-            <View className="mb-3">
-              <AppText variant="micro" tone="secondary" className="mb-1 font-semibold">
+            <View style={{ marginBottom: 12 }}>
+              <AppText variant="micro" tone="secondary" style={{ marginBottom: 4, fontWeight: '600' }}>
                 Email Address
               </AppText>
               <TextInput
@@ -462,13 +631,20 @@ export default function ProfileScreen() {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 placeholder="name@example.com"
-                placeholderTextColor="#94A3B8"
-                className="border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 bg-slate-50"
+                placeholderTextColor={colors.textMuted}
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
               />
             </View>
 
-            <View className="mb-5">
-              <AppText variant="micro" tone="secondary" className="mb-1 font-semibold">
+            <View style={{ marginBottom: 20 }}>
+              <AppText variant="micro" tone="secondary" style={{ marginBottom: 4, fontWeight: '600' }}>
                 Password
               </AppText>
               <TextInput
@@ -476,8 +652,15 @@ export default function ProfileScreen() {
                 onChangeText={setAuthPassword}
                 secureTextEntry
                 placeholder="••••••••"
-                placeholderTextColor="#94A3B8"
-                className="border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 bg-slate-50"
+                placeholderTextColor={colors.textMuted}
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
               />
             </View>
 
@@ -500,3 +683,157 @@ export default function ProfileScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  userCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  avatarBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  themeGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  themeCard: {
+    flex: 1,
+    borderRadius: 14,
+    padding: 10,
+    alignItems: 'center',
+  },
+  swatchPreview: {
+    width: '100%',
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  swatchCard: {
+    width: '75%',
+    height: 26,
+    borderRadius: 6,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  swatchDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  themeDetails: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  themeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  checkBadge: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  syncBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  langRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  langButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  closeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTabs: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 12,
+    marginVertical: 16,
+  },
+  modalTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  errorBanner: {
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+});

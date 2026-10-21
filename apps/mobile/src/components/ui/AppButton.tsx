@@ -1,38 +1,18 @@
 import React from "react";
-import { ActivityIndicator, Pressable, PressableProps, View } from "react-native";
+import { ActivityIndicator, Pressable, PressableProps, View, StyleSheet } from "react-native";
 import { AppText } from "./AppText";
-import { cn } from "../../utils/cn";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
-type Size = "sm" | "md" | "lg";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonSize = "sm" | "md" | "lg";
 
 export type AppButtonProps = PressableProps & {
   label: string;
-  variant?: Variant;
-  size?: Size;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-};
-
-const variantClasses: Record<Variant, string> = {
-  primary: "bg-indigo-600 active:bg-indigo-700",
-  secondary: "bg-indigo-50 border border-indigo-100 active:bg-indigo-100",
-  ghost: "bg-transparent active:bg-slate-100",
-  danger: "bg-red-600 active:bg-red-700",
-};
-
-const labelTone: Record<Variant, "inverse" | "primary" | "default"> = {
-  primary: "inverse",
-  secondary: "primary",
-  ghost: "default",
-  danger: "inverse",
-};
-
-const sizeClasses: Record<Size, string> = {
-  sm: "min-h-10 px-4 rounded-2xl",
-  md: "min-h-12 px-5 rounded-2xl",
-  lg: "min-h-14 px-6 rounded-[24px]",
 };
 
 export function AppButton({
@@ -43,24 +23,76 @@ export function AppButton({
   disabled,
   leftIcon,
   rightIcon,
-  className,
+  style,
   ...props
 }: AppButtonProps) {
+  const { colors, isDark } = useTheme();
+
+  const getVariantStyle = () => {
+    switch (variant) {
+      case "secondary":
+        return {
+          backgroundColor: colors.surfaceSubtle,
+          borderColor: colors.border,
+          borderWidth: 1,
+        };
+      case "ghost":
+        return {
+          backgroundColor: "transparent",
+          borderColor: "transparent",
+          borderWidth: 0,
+        };
+      case "danger":
+        return {
+          backgroundColor: colors.danger,
+          borderColor: colors.danger,
+          borderWidth: 1,
+        };
+      case "primary":
+      default:
+        return {
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
+          borderWidth: 1,
+        };
+    }
+  };
+
+  const getTextTone = () => {
+    switch (variant) {
+      case "primary":
+      case "danger":
+        return "inverse" as const;
+      case "secondary":
+        return "default" as const;
+      case "ghost":
+        return "secondary" as const;
+    }
+  };
+
   return (
     <Pressable
       disabled={disabled || loading}
-      className={cn(
-        "items-center justify-center",
-        variantClasses[variant],
-        sizeClasses[size],
-        disabled || loading ? "opacity-60" : "",
-        className,
-      )}
+      style={(state) => [
+        styles.button,
+        sizeStyles[size],
+        getVariantStyle(),
+        state.pressed && styles.pressed,
+        (disabled || loading) && styles.disabled,
+        typeof style === "function" ? style(state) : style,
+      ]}
       {...props}
     >
-      <View className="flex-row items-center justify-center gap-2">
-        {loading ? <ActivityIndicator color={variant === "secondary" ? "#5B5CF0" : "#FFFFFF"} /> : leftIcon}
-        <AppText variant="bodyMedium" tone={labelTone[variant]}>
+      <View style={styles.contentRow}>
+        {loading ? (
+          <ActivityIndicator
+            size="small"
+            color={variant === "primary" ? colors.textInverse : colors.primary}
+          />
+        ) : (
+          leftIcon
+        )}
+        <AppText variant="bodyMedium" tone={getTextTone()} style={styles.buttonLabel}>
           {label}
         </AppText>
         {!loading ? rightIcon : null}
@@ -68,3 +100,42 @@ export function AppButton({
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+  },
+  contentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  buttonLabel: {
+    fontWeight: "600",
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+});
+
+const sizeStyles = StyleSheet.create({
+  sm: {
+    minHeight: 36,
+    paddingHorizontal: 12,
+  },
+  md: {
+    minHeight: 44,
+    paddingHorizontal: 18,
+  },
+  lg: {
+    minHeight: 52,
+    paddingHorizontal: 24,
+  },
+});

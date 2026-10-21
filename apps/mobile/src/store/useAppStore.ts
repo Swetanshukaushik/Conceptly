@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { BookmarkDto, TopicProgressDto } from '@/services/api/types';
 import { mockBookmarks, mockProgress } from '@/services/api/mockData';
+import type { ThemeMode } from '@/theme/types';
 
 export type DomainCategory =
   | 'TECH_INTERVIEW'
@@ -38,6 +39,7 @@ function loadPersistedState(): Partial<AppState> {
 
 function savePersistedState(state: AppState) {
   const toSave = {
+    theme: state.theme,
     onboardingStep: state.onboardingStep,
     selectedExamType: state.selectedExamType,
     selectedClassId: state.selectedClassId,
@@ -91,6 +93,8 @@ export async function hydrateAppStore() {
 }
 
 export type AppState = {
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
   viewMode: ViewMode;
   onboardingStep: OnboardingStep;
   selectedExamType: DomainCategory | string | null;
@@ -129,6 +133,13 @@ export type AppState = {
 const initialPersisted = loadPersistedState();
 
 export const useAppStore = create<AppState>((set) => ({
+  theme: (initialPersisted.theme as ThemeMode) ?? 'dark',
+  setTheme: (theme: ThemeMode) => {
+    set({ theme });
+    setTimeout(() => {
+      savePersistedState(useAppStore.getState());
+    }, 0);
+  },
   viewMode:
     initialPersisted.viewMode ??
     (Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 768

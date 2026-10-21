@@ -14,3 +14,4 @@ export * from "./ProgressBadge";
 export * from "./StatPill";
 export * from "./MediaFrame";
 export * from "./ReelPlayer";
+export * from "./ThemeToggle";

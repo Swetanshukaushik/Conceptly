@@ -1,0 +1,102 @@
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTheme } from '@/app/providers/ThemeProvider';
+import { ThemeMode } from '@/theme/types';
+
+interface ThemeToggleProps {
+  compact?: boolean;
+}
+
+const THEMES: Array<{ key: ThemeMode; label: string; icon: string }> = [
+  { key: 'light', label: 'Light', icon: '☀️' },
+  { key: 'dark', label: 'Dark', icon: '🌙' },
+  { key: 'grey', label: 'Grey', icon: '🔘' },
+];
+
+export function ThemeToggle({ compact = false }: ThemeToggleProps) {
+  const { theme, setTheme, colors } = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surfaceSubtle,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      {THEMES.map((item) => {
+        const isActive = theme === item.key;
+        return (
+          <Pressable
+            key={item.key}
+            onPress={() => setTheme(item.key)}
+            style={[
+              styles.option,
+              compact && styles.optionCompact,
+              isActive && [
+                styles.optionActive,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderActive,
+                  shadowColor: colors.isDark ? '#000000' : '#0F172A',
+                },
+              ],
+            ]}
+          >
+            <Text style={styles.icon}>{item.icon}</Text>
+            {!compact && (
+              <Text
+                style={[
+                  styles.label,
+                  {
+                    color: isActive ? colors.textPrimary : colors.textMuted,
+                    fontWeight: isActive ? '700' : '500',
+                  },
+                ]}
+              >
+                {item.label}
+              </Text>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 3,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  optionCompact: {
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+  },
+  optionActive: {
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+  },
+  icon: {
+    fontSize: 13,
+  },
+  label: {
+    fontSize: 12,
+  },
+});

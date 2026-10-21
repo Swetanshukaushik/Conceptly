@@ -14,9 +14,11 @@ import { Icon } from '@/components/ui/Icon';
 import { useBookmarksQuery } from '@/services/api/hooks/useBookmarksQuery';
 import { educationApi } from '@/services/api/educationApi';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 export default function BookmarksScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { data: bookmarks, isLoading, refetch } = useBookmarksQuery();
   const viewMode = useAppStore((s) => s.viewMode);
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
@@ -104,10 +106,20 @@ export default function BookmarksScreen() {
                     onPress={() => {
                       router.push(`/reel/${item.reelId}?topicId=${item.topicId}`);
                     }}
-                    className="flex-row items-center gap-1 bg-indigo-50 px-2.5 py-1.5 rounded-full"
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      backgroundColor: colors.primarySoft,
+                      borderColor: colors.primaryBorder,
+                      borderWidth: 1,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 999,
+                    }}
                   >
-                    <Icon name="play" size={12} color="#4F46E5" />
-                    <AppText variant="micro" tone="primary">
+                    <Icon name="play" size={12} color={colors.primaryText} />
+                    <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
                       Watch Reel
                     </AppText>
                   </Pressable>

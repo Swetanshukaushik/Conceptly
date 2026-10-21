@@ -1,42 +1,85 @@
 import React from "react";
-import { Pressable, View, ViewProps } from "react-native";
-import { cn } from "../../utils/cn";
+import { Pressable, View, ViewProps, StyleSheet } from "react-native";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-type Tone = "default" | "muted" | "primarySoft" | "accentSoft" | "successSoft";
-
-const toneClasses: Record<Tone, string> = {
-  default: "bg-white border border-slate-200",
-  muted: "bg-slate-100 border border-slate-200",
-  primarySoft: "bg-indigo-50 border border-indigo-100",
-  accentSoft: "bg-violet-50 border border-violet-100",
-  successSoft: "bg-green-50 border border-green-100",
-};
+export type CardTone = "default" | "muted" | "primarySoft" | "accentSoft" | "successSoft";
 
 export type AppCardProps = ViewProps & {
-  tone?: Tone;
+  tone?: CardTone;
   onPress?: () => void;
 };
 
 export function AppCard({
   tone = "default",
   onPress,
-  className,
+  style,
   children,
   ...props
 }: AppCardProps) {
-  const cardClassName = cn("rounded-[24px] p-4 shadow-sm", toneClasses[tone], className);
+  const { colors, isDark } = useTheme();
+
+  const getToneStyle = () => {
+    switch (tone) {
+      case "muted":
+        return {
+          backgroundColor: colors.surfaceSubtle,
+          borderColor: colors.borderSubtle,
+        };
+      case "primarySoft":
+        return {
+          backgroundColor: colors.primarySoft,
+          borderColor: colors.primaryBorder,
+        };
+      case "accentSoft":
+        return {
+          backgroundColor: colors.accentSoft,
+          borderColor: colors.border,
+        };
+      case "successSoft":
+        return {
+          backgroundColor: colors.successSoft,
+          borderColor: colors.border,
+        };
+      case "default":
+      default:
+        return {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        };
+    }
+  };
+
+  const cardStyle = [
+    styles.card,
+    getToneStyle(),
+    {
+      shadowColor: isDark ? "#000000" : "#0F172A",
+      shadowOpacity: isDark ? 0.25 : 0.04,
+    },
+    style,
+  ];
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} className={cardClassName}>
+      <Pressable onPress={onPress} style={cardStyle}>
         {children}
       </Pressable>
     );
   }
 
   return (
-    <View className={cardClassName} {...props}>
+    <View style={cardStyle} {...props}>
       {children}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+  },
+});

@@ -3,6 +3,8 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { Icon } from './Icon';
 import { ViewportToggle } from './ViewportToggle';
+import { ThemeToggle } from './ThemeToggle';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 const NAV_ITEMS = [
   { label: 'Home', path: '/feed', icon: 'home-outline', activeIcon: 'home' },
@@ -15,18 +17,39 @@ const NAV_ITEMS = [
 export function DesktopNavBar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { colors, isDark } = useTheme();
 
   return (
-    <View style={styles.navBar}>
+    <View
+      style={[
+        styles.navBar,
+        {
+          backgroundColor: colors.navBg,
+          borderBottomColor: colors.navBorder,
+          shadowColor: isDark ? '#000000' : '#0F172A',
+        },
+      ]}
+    >
       <View style={styles.navInner}>
         {/* Brand / Logo */}
         <Pressable onPress={() => router.push('/feed')} style={styles.brandRow}>
-          <View style={styles.logoBadge}>
+          <View
+            style={[
+              styles.logoBadge,
+              {
+                backgroundColor: colors.surfaceSubtle,
+                borderColor: colors.border,
+                shadowColor: colors.primary,
+              },
+            ]}
+          >
             <Text style={styles.logoIcon}>⚡</Text>
           </View>
           <View>
-            <Text style={styles.brandTitle}>Conceptly</Text>
-            <Text style={styles.brandTagline}>Atomic clarity for everything</Text>
+            <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>Conceptly</Text>
+            <Text style={[styles.brandTagline, { color: colors.textMuted }]}>
+              Atomic clarity for everything
+            </Text>
           </View>
         </Pressable>
 
@@ -38,14 +61,29 @@ export function DesktopNavBar() {
               <Pressable
                 key={item.path}
                 onPress={() => router.push(item.path as any)}
-                style={[styles.linkItem, isActive && styles.linkItemActive]}
+                style={[
+                  styles.linkItem,
+                  isActive && {
+                    backgroundColor: colors.primarySoft,
+                    borderWidth: 1,
+                    borderColor: colors.primaryBorder,
+                  },
+                ]}
               >
                 <Icon
                   name={isActive ? item.activeIcon : item.icon}
                   size={16}
-                  color={isActive ? '#4F46E5' : '#64748B'}
+                  color={isActive ? colors.primaryText : colors.textMuted}
                 />
-                <Text style={[styles.linkText, isActive && styles.linkTextActive]}>
+                <Text
+                  style={[
+                    styles.linkText,
+                    {
+                      color: isActive ? colors.primaryText : colors.textSecondary,
+                      fontWeight: isActive ? '700' : '500',
+                    },
+                  ]}
+                >
                   {item.label}
                 </Text>
               </Pressable>
@@ -53,8 +91,9 @@ export function DesktopNavBar() {
           })}
         </View>
 
-        {/* Viewport Switcher */}
+        {/* Action Controls: Theme Switcher + Viewport Switcher */}
         <View style={styles.actionsRow}>
+          <ThemeToggle compact={false} />
           <ViewportToggle inline={true} />
         </View>
       </View>
@@ -65,13 +104,10 @@ export function DesktopNavBar() {
 const styles = StyleSheet.create({
   navBar: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     zIndex: 100,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
   },
   navInner: {
@@ -93,56 +129,47 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#4F46E5',
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   logoIcon: {
-    fontSize: 20,
-    color: '#FFFFFF',
+    fontSize: 18,
   },
   brandTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
   brandTagline: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#6366F1',
+    fontWeight: '500',
+    letterSpacing: -0.1,
   },
   linksRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   linkItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  linkItemActive: {
-    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   linkText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  linkTextActive: {
-    color: '#4F46E5',
-    fontWeight: '700',
+    fontSize: 13,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
 });

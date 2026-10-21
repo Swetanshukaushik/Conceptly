@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 export type ViewportToggleProps = {
   inline?: boolean;
@@ -13,18 +14,42 @@ export function ViewportToggle({ inline = false }: ViewportToggleProps) {
 
   const viewMode = useAppStore((s) => s.viewMode);
   const setViewMode = useAppStore((s) => s.setViewMode);
+  const { colors, isDark } = useTheme();
 
   return (
     <View style={[styles.wrapper, inline ? styles.wrapperInline : styles.wrapperFloating]}>
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.surfaceSubtle,
+            borderColor: colors.border,
+            shadowColor: isDark ? '#000000' : '#0F172A',
+          },
+        ]}
+      >
         <Pressable
           onPress={() => setViewMode('mobile')}
           style={[
             styles.segmentButton,
-            viewMode === 'mobile' && styles.segmentButtonActive,
+            viewMode === 'mobile' && [
+              styles.segmentButtonActive,
+              {
+                backgroundColor: colors.primary,
+                shadowColor: colors.primary,
+              },
+            ],
           ]}
         >
-          <Text style={[styles.segmentText, viewMode === 'mobile' && styles.segmentTextActive]}>
+          <Text
+            style={[
+              styles.segmentText,
+              {
+                color: viewMode === 'mobile' ? colors.textInverse : colors.textMuted,
+                fontWeight: viewMode === 'mobile' ? '700' : '500',
+              },
+            ]}
+          >
             📱 Mobile
           </Text>
         </Pressable>
@@ -33,10 +58,24 @@ export function ViewportToggle({ inline = false }: ViewportToggleProps) {
           onPress={() => setViewMode('desktop')}
           style={[
             styles.segmentButton,
-            viewMode === 'desktop' && styles.segmentButtonActive,
+            viewMode === 'desktop' && [
+              styles.segmentButtonActive,
+              {
+                backgroundColor: colors.primary,
+                shadowColor: colors.primary,
+              },
+            ],
           ]}
         >
-          <Text style={[styles.segmentText, viewMode === 'desktop' && styles.segmentTextActive]}>
+          <Text
+            style={[
+              styles.segmentText,
+              {
+                color: viewMode === 'desktop' ? colors.textInverse : colors.textMuted,
+                fontWeight: viewMode === 'desktop' ? '700' : '500',
+              },
+            ]}
+          >
             💻 Desktop
           </Text>
         </Pressable>
@@ -60,38 +99,27 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F172A', // Slate-900
     borderRadius: 24,
     padding: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   segmentButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentButtonActive: {
-    backgroundColor: '#4F46E5', // Indigo-600
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   segmentText: {
-    color: '#94A3B8',
     fontSize: 12,
-    fontWeight: '600',
-  },
-  segmentTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
   },
 });

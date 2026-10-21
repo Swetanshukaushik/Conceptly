@@ -1,8 +1,8 @@
 import React from "react";
-import { Text, TextProps } from "react-native";
-import { cn } from "../../utils/cn";
+import { Text, TextProps, StyleSheet } from "react-native";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-type Variant =
+export type TextVariant =
   | "hero"
   | "h1"
   | "h2"
@@ -13,45 +13,118 @@ type Variant =
   | "caption"
   | "micro";
 
-type Tone = "default" | "secondary" | "muted" | "inverse" | "primary" | "success" | "danger";
-
-const variantClasses: Record<Variant, string> = {
-  hero: "text-[30px] leading-9 font-extrabold",
-  h1: "text-[26px] leading-8 font-extrabold",
-  h2: "text-[22px] leading-7 font-bold",
-  h3: "text-[18px] leading-6 font-bold",
-  title: "text-base leading-[22px] font-bold",
-  body: "text-[15px] leading-[22px] font-normal",
-  bodyMedium: "text-[15px] leading-[22px] font-medium",
-  caption: "text-[13px] leading-[18px] font-medium",
-  micro: "text-xs leading-4 font-medium",
-};
-
-const toneClasses: Record<Tone, string> = {
-  default: "text-slate-900",
-  secondary: "text-slate-600",
-  muted: "text-slate-500",
-  inverse: "text-white",
-  primary: "text-indigo-600",
-  success: "text-green-600",
-  danger: "text-red-600",
-};
+export type TextTone =
+  | "default"
+  | "secondary"
+  | "muted"
+  | "inverse"
+  | "primary"
+  | "accent"
+  | "success"
+  | "warning"
+  | "danger";
 
 export type AppTextProps = TextProps & {
-  variant?: Variant;
-  tone?: Tone;
+  variant?: TextVariant;
+  tone?: TextTone;
 };
 
 export function AppText({
   variant = "body",
   tone = "default",
-  className,
+  style,
+  children,
   ...props
 }: AppTextProps) {
+  const { colors } = useTheme();
+
+  const getToneColor = (): string => {
+    switch (tone) {
+      case "secondary":
+        return colors.textSecondary;
+      case "muted":
+        return colors.textMuted;
+      case "inverse":
+        return colors.textInverse;
+      case "primary":
+        return colors.primaryText;
+      case "accent":
+        return colors.accentText;
+      case "success":
+        return colors.successText;
+      case "warning":
+        return colors.warningText;
+      case "danger":
+        return colors.dangerText;
+      case "default":
+      default:
+        return colors.textPrimary;
+    }
+  };
+
   return (
     <Text
+      style={[
+        variantStyles[variant],
+        { color: getToneColor() },
+        style,
+      ]}
       {...props}
-      className={cn(variantClasses[variant], toneClasses[tone], className)}
-    />
+    >
+      {children}
+    </Text>
   );
 }
+
+const variantStyles = StyleSheet.create({
+  hero: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  h1: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+  },
+  h2: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  h3: {
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+  title: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: "600",
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "400",
+  },
+  bodyMedium: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "500",
+  },
+  caption: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: "500",
+  },
+  micro: {
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+  },
+});

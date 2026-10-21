@@ -13,11 +13,13 @@ import { useQuizByTopicQuery } from '@/services/api/hooks/useQuizByTopicQuery';
 import { educationApi } from '@/services/api/educationApi';
 import { queryKeys } from '@/services/api/queryKeys';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import type { QuizSubmissionResultDto } from '@/services/api/types';
 
 export default function QuizScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors } = useTheme();
   const { id: topicId } = useLocalSearchParams<{ id: string }>();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -142,9 +144,9 @@ export default function QuizScreen() {
       <ScreenContainer>
         <AppHeader title="Quiz Results" onBack={() => router.back()} />
         <ScrollView className="flex-1 py-2" showsVerticalScrollIndicator={false}>
-          <AppCard className="mb-6 p-6 bg-slate-50 border-slate-200 items-center">
-            <AppText className="text-4xl font-extrabold text-indigo-600">{score}%</AppText>
-            <AppText variant="body" tone="secondary" className="mt-2">
+          <AppCard tone="default" style={{ marginBottom: 20, padding: 24, alignItems: 'center' }}>
+            <AppText variant="hero" tone="primary">{score}%</AppText>
+            <AppText variant="body" tone="secondary" style={{ marginTop: 8 }}>
               {correctCount} of {totalQ} questions correct
             </AppText>
           </AppCard>
@@ -228,11 +230,11 @@ export default function QuizScreen() {
 
                   {/* 💡 Concept Insight / Explanation */}
                   {resultItem?.explanation && (
-                    <View className="mt-3 p-3 bg-indigo-50/70 rounded-xl border border-indigo-100">
-                      <AppText variant="micro" tone="primary" className="font-bold">
+                    <View style={{ marginTop: 12, padding: 12, backgroundColor: colors.primarySoft, borderRadius: 12, borderWidth: 1, borderColor: colors.primaryBorder }}>
+                      <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
                         💡 Conceptual Takeaway:
                       </AppText>
-                      <AppText variant="caption" tone="secondary" className="mt-0.5 text-slate-700 leading-relaxed">
+                      <AppText variant="caption" tone="secondary" style={{ marginTop: 2, lineHeight: 18 }}>
                         {resultItem.explanation}
                       </AppText>
                     </View>
@@ -269,10 +271,12 @@ export default function QuizScreen() {
               {answeredQuestions} of {totalQuestions} answered
             </AppText>
           </View>
-          <View className="mt-2 w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+          <View style={{ marginTop: 8, width: '100%', backgroundColor: colors.surfaceSubtle, borderRadius: 999, height: 6, overflow: 'hidden' }}>
             <View
-              className="h-full bg-indigo-600 rounded-full"
               style={{
+                height: '100%',
+                backgroundColor: colors.primary,
+                borderRadius: 999,
                 width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`
               }}
             />

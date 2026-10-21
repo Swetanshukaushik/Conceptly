@@ -17,6 +17,7 @@ import { useBookmarksQuery } from '@/services/api/hooks/useBookmarksQuery';
 import { useFlashcardsByTopicQuery } from '@/services/api/hooks/useFlashcardsByTopicQuery';
 import { educationApi } from '@/services/api/educationApi';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '1 min';
@@ -36,6 +37,7 @@ export default function TopicDetailScreen() {
 
   const watchedReels = useAppStore((s) => s.watchedReels);
   const viewMode = useAppStore((s) => s.viewMode);
+  const { colors } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
   const { data: topic, isLoading: topicLoading, isError: topicError, refetch: refetchTopic } = useTopicByIdQuery(id || '');
@@ -121,13 +123,13 @@ export default function TopicDetailScreen() {
 
           <View className="mt-4 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <View className="px-3 py-1 bg-indigo-600 rounded-full">
-                <AppText variant="micro" tone="inverse" className="capitalize font-bold">
+              <View style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 }}>
+                <AppText variant="micro" tone="inverse" style={{ textTransform: 'capitalize', fontWeight: '700' }}>
                   {topic.difficulty}
                 </AppText>
               </View>
-              <View className="px-3 py-1 bg-white border border-indigo-200 rounded-full">
-                <AppText variant="micro" tone="primary">
+              <View style={{ backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 }}>
+                <AppText variant="micro" tone="secondary">
                   {topic.reelCount} Visual Reels
                 </AppText>
               </View>
@@ -149,12 +151,18 @@ export default function TopicDetailScreen() {
                   console.error('Bookmark error:', err);
                 }
               }}
-              className="p-2 rounded-full bg-white border border-indigo-200"
+              style={{
+                padding: 8,
+                borderRadius: 999,
+                backgroundColor: colors.surfaceSubtle,
+                borderColor: colors.border,
+                borderWidth: 1,
+              }}
             >
               <Icon
                 name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
                 size={18}
-                color={isBookmarked ? '#4F46E5' : '#64748B'}
+                color={isBookmarked ? colors.primaryText : colors.textMuted}
               />
             </Pressable>
           </View>
@@ -262,14 +270,21 @@ export default function TopicDetailScreen() {
                         <View className="flex-row items-center justify-between">
                           <View className="flex-row items-center gap-3 flex-1 mr-3">
                             <View
-                              className={`h-11 w-11 rounded-full items-center justify-center ${
-                                isWatched ? 'bg-emerald-100' : 'bg-indigo-50'
-                              }`}
+                              style={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 21,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: isWatched ? colors.successSoft : colors.primarySoft,
+                                borderColor: isWatched ? colors.success : colors.primaryBorder,
+                                borderWidth: 1,
+                              }}
                             >
                               <Icon
                                 name={isWatched ? 'checkmark-circle' : 'play'}
-                                size={20}
-                                color={isWatched ? '#10B981' : '#4F46E5'}
+                                size={18}
+                                color={isWatched ? colors.success : colors.primaryText}
                               />
                             </View>
                             <View className="flex-1">
@@ -332,25 +347,29 @@ export default function TopicDetailScreen() {
                   <Pressable onPress={() => setIsCardFlipped((prev) => !prev)}>
                     <AppCard
                       tone="default"
-                      className={`min-h-[220px] justify-between p-6 rounded-3xl border-2 ${
-                        isCardFlipped
-                          ? 'border-indigo-500 bg-indigo-50/40'
-                          : 'border-slate-300 bg-white'
-                      }`}
+                      style={{
+                        minHeight: 220,
+                        justifyContent: 'space-between',
+                        padding: 20,
+                        borderRadius: 20,
+                        borderWidth: 2,
+                        borderColor: isCardFlipped ? colors.primary : colors.border,
+                        backgroundColor: isCardFlipped ? colors.primarySoft : colors.surface,
+                      }}
                     >
                       <View className="flex-row items-center justify-between mb-3">
-                        <View className="px-2.5 py-1 bg-slate-100 rounded-full">
-                          <AppText variant="micro" tone="secondary" className="font-bold">
+                        <View style={{ backgroundColor: colors.surfaceSubtle, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
+                          <AppText variant="micro" tone="secondary" style={{ fontWeight: '700' }}>
                             {isCardFlipped ? '💡 ANSWER & ARCHITECTURE' : '❓ ACTIVE RECALL PROMPT'}
                           </AppText>
                         </View>
-                        <AppText variant="micro" tone="primary" className="font-bold">
+                        <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
                           Tap to Flip ↻
                         </AppText>
                       </View>
 
                       <View className="my-auto py-2">
-                        <AppText variant="h3" className="text-slate-900 leading-snug">
+                        <AppText variant="h3" style={{ lineHeight: 24 }}>
                           {isCardFlipped ? fc.backAnswer : fc.frontQuestion}
                         </AppText>
 
@@ -365,11 +384,11 @@ export default function TopicDetailScreen() {
                         )}
                       </View>
 
-                      <View className="flex-row items-center justify-between pt-4 border-t border-slate-100">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
                         <AppText variant="micro" tone="muted">
                           Self-test your memory before the reel
                         </AppText>
-                        <Icon name="swap-horizontal" size={18} color="#4F46E5" />
+                        <Icon name="swap-horizontal" size={18} color={colors.primaryText} />
                       </View>
                     </AppCard>
                   </Pressable>
@@ -383,18 +402,22 @@ export default function TopicDetailScreen() {
                           setIsCardFlipped(false);
                           setCardIndex((prev) => Math.max(0, prev - 1));
                         }}
-                        className={`px-3 py-1.5 rounded-xl border ${
-                          safeIndex === 0
-                            ? 'border-slate-200 bg-slate-100 opacity-40'
-                            : 'border-indigo-200 bg-indigo-50'
-                        }`}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: safeIndex === 0 ? colors.borderSubtle : colors.primaryBorder,
+                          backgroundColor: safeIndex === 0 ? colors.surfaceSubtle : colors.primarySoft,
+                          opacity: safeIndex === 0 ? 0.4 : 1,
+                        }}
                       >
-                        <AppText variant="caption" tone="primary" className="font-bold">
+                        <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
                           ← Previous
                         </AppText>
                       </Pressable>
 
-                      <AppText variant="micro" tone="secondary" className="font-semibold">
+                      <AppText variant="micro" tone="secondary" style={{ fontWeight: '600' }}>
                         Card {safeIndex + 1} of {cards.length}
                       </AppText>
 
@@ -404,13 +427,17 @@ export default function TopicDetailScreen() {
                           setIsCardFlipped(false);
                           setCardIndex((prev) => Math.min(cards.length - 1, prev + 1));
                         }}
-                        className={`px-3 py-1.5 rounded-xl border ${
-                          safeIndex === cards.length - 1
-                            ? 'border-slate-200 bg-slate-100 opacity-40'
-                            : 'border-indigo-200 bg-indigo-50'
-                        }`}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: safeIndex === cards.length - 1 ? colors.borderSubtle : colors.primaryBorder,
+                          backgroundColor: safeIndex === cards.length - 1 ? colors.surfaceSubtle : colors.primarySoft,
+                          opacity: safeIndex === cards.length - 1 ? 0.4 : 1,
+                        }}
                       >
-                        <AppText variant="caption" tone="primary" className="font-bold">
+                        <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
                           Next Card →
                         </AppText>
                       </Pressable>

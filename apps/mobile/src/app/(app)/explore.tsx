@@ -14,6 +14,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Icon } from '@/components/ui/Icon';
 
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import { useChaptersBySubjectQuery } from '@/services/api/hooks/useChaptersBySubjectQuery';
 import { useTopicsByChapterQuery } from '@/services/api/hooks/useTopicsByChapterQuery';
 import { educationApi } from '@/services/api/educationApi';
@@ -26,6 +27,7 @@ export default function ExploreScreen() {
   const setExamType = useAppStore((s) => s.setExamType);
   const setSubjectId = useAppStore((s) => s.setSubjectId);
   const viewMode = useAppStore((s) => s.viewMode);
+  const { colors } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
   const language = useAppStore((s) => s.language) ?? 'en';
 
@@ -117,20 +119,37 @@ export default function ExploreScreen() {
       <AppHeader title="Conceptly Explorer" subtitle="Instant search & curriculum index" />
 
       {/* 🔍 Search Input Bar */}
-      <View className="mt-3 mb-3">
-        <View className="flex-row items-center bg-slate-100 rounded-2xl px-3.5 py-2.5 border border-slate-200">
-          <Icon name="search" size={20} color="#64748B" />
+      <View style={{ marginTop: 12, marginBottom: 12 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surfaceSubtle,
+            borderRadius: 14,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <Icon name="search" size={18} color={colors.textMuted} />
           <TextInput
-            placeholder="Search concepts (e.g. CAP Theorem, Sliding Window...)"
-            placeholderTextColor="#94A3B8"
+            placeholder="Search concepts (e.g. CAP Theorem, Cache Invalidation...)"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            className="flex-1 ml-2.5 text-slate-900 text-sm font-medium"
+            style={{
+              flex: 1,
+              marginLeft: 10,
+              color: colors.textPrimary,
+              fontSize: 14,
+              fontWeight: '500',
+            }}
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')} className="p-1">
-              <Icon name="close-circle" size={18} color="#94A3B8" />
+            <Pressable onPress={() => setSearchQuery('')} style={{ padding: 4 }}>
+              <Icon name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           )}
         </View>
@@ -167,8 +186,8 @@ export default function ExploreScreen() {
                           {item.title}
                         </AppText>
                         <View className="flex-row items-center gap-2 mt-2">
-                          <View className="bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
-                            <AppText variant="micro" tone="primary" className="capitalize font-semibold">
+                          <View style={{ backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                            <AppText variant="micro" tone="secondary" style={{ textTransform: 'capitalize', fontWeight: '600' }}>
                               {item.difficulty}
                             </AppText>
                           </View>
@@ -177,8 +196,8 @@ export default function ExploreScreen() {
                           </AppText>
                         </View>
                       </View>
-                      <View className="bg-indigo-600 p-2.5 rounded-full items-center justify-center">
-                        <Icon name="play" size={16} color="#FFFFFF" />
+                      <View style={{ backgroundColor: colors.primary, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="play" size={16} color={colors.textInverse} />
                       </View>
                     </View>
                   </AppCard>
@@ -273,16 +292,19 @@ export default function ExploreScreen() {
                     <Pressable
                       key={chap.id}
                       onPress={() => setActiveChapterId(chap.id)}
-                      className={`px-4 py-2.5 rounded-2xl border ${
-                        isSelected
-                          ? 'bg-indigo-600 border-indigo-600'
-                          : 'bg-white border-slate-200'
-                      }`}
+                      style={{
+                        paddingHorizontal: 14,
+                        paddingVertical: 9,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        backgroundColor: isSelected ? colors.primary : colors.surfaceSubtle,
+                        borderColor: isSelected ? colors.primary : colors.border,
+                      }}
                     >
                       <AppText
                         variant="caption"
                         tone={isSelected ? 'inverse' : 'default'}
-                        className="font-semibold"
+                        style={{ fontWeight: '600' }}
                       >
                         {title}
                       </AppText>
@@ -351,8 +373,8 @@ export default function ExploreScreen() {
                             </AppText>
                           </View>
                         </View>
-                        <View className="bg-indigo-50 p-2.5 rounded-full items-center justify-center">
-                          <Icon name="play" size={18} color="#4F46E5" />
+                        <View style={{ backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder, borderWidth: 1, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="play" size={16} color={colors.primaryText} />
                         </View>
                       </View>
                     </AppCard>

@@ -8,7 +8,9 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { Icon } from '@/components/ui/Icon';
 import { ViewportToggle } from '@/components/ui/ViewportToggle';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAppStore, DomainCategory } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 // Domain categories data for quick jump
 const TARGET_TRACKS: Array<{
@@ -147,6 +149,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const viewMode = useAppStore((s) => s.viewMode);
   const setExamType = useAppStore((s) => s.setExamType);
+  const { colors, isDark } = useTheme();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && viewMode === 'desktop';
 
@@ -162,37 +165,45 @@ export default function WelcomeScreen() {
   return (
     <ScreenContainer scroll hideToggle={true}>
       {/* ⚡ Top Landing Bar */}
-      <View className="flex-row items-center justify-between pb-3 border-b border-slate-200/80 mb-4">
-        <View className="flex-row items-center gap-2">
-          <View className="h-8 w-8 rounded-xl bg-indigo-600 items-center justify-center shadow-sm">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
             <AppText variant="body" tone="inverse">
               ⚡
             </AppText>
           </View>
           <View>
-            <View className="flex-row items-center gap-1.5">
-              <AppText variant="bodyMedium" className="font-extrabold text-slate-900 tracking-tight">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <AppText variant="bodyMedium" style={{ fontWeight: '800', letterSpacing: -0.3 }}>
                 Conceptly
               </AppText>
-              <View className="bg-indigo-100 px-1.5 py-0.2 rounded">
-                <AppText variant="micro" tone="primary" className="font-bold text-[9px]">
+              <View style={{ backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                <AppText variant="micro" tone="primary" style={{ fontWeight: '700', fontSize: 9 }}>
                   PRO
                 </AppText>
               </View>
             </View>
-            <AppText variant="micro" tone="muted" className="text-[10px]">
+            <AppText variant="micro" tone="muted" style={{ fontSize: 10 }}>
               Atomic clarity for everything
             </AppText>
           </View>
         </View>
 
-        <View className="flex-row items-center gap-2">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <ThemeToggle compact={true} />
           {isWeb && <ViewportToggle inline={true} />}
           <Pressable
             onPress={() => router.push('/feed')}
-            className="px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200"
+            style={{
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+              borderRadius: 10,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
           >
-            <AppText variant="micro" tone="secondary" className="font-bold">
+            <AppText variant="micro" tone="secondary" style={{ fontWeight: '700' }}>
               Enter App →
             </AppText>
           </Pressable>
@@ -204,9 +215,9 @@ export default function WelcomeScreen() {
         {/* Left Column: Hero Copy & CTA */}
         <View className={isDesktop ? 'flex-1 pr-4' : ''}>
           {/* Tag Pill */}
-          <View className="self-start px-3 py-1 bg-indigo-50 border border-indigo-200/80 rounded-full mb-3 flex-row items-center gap-1.5">
-            <Icon name="flash" size={14} color="#4F46E5" />
-            <AppText variant="caption" tone="primary" className="font-bold uppercase tracking-wider text-[11px]">
+          <View style={{ alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.primaryBorder, borderRadius: 999, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="flash" size={14} color={colors.primaryText} />
+            <AppText variant="caption" tone="primary" style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 11 }}>
               Active Visual Recall Before Interviews
             </AppText>
           </View>
@@ -214,11 +225,10 @@ export default function WelcomeScreen() {
           {/* Hero Title */}
           <AppText
             variant="hero"
-            className="text-slate-900 font-extrabold leading-[1.15] tracking-tight"
-            style={{ fontSize: isDesktop ? 40 : 28 }}
+            style={{ fontSize: isDesktop ? 40 : 28, lineHeight: isDesktop ? 46 : 34, fontWeight: '800' }}
           >
             Revise Anything Visually in{' '}
-            <AppText variant="hero" className="text-indigo-600 font-extrabold" style={{ fontSize: isDesktop ? 40 : 28 }}>
+            <AppText variant="hero" tone="primary" style={{ fontSize: isDesktop ? 40 : 28, lineHeight: isDesktop ? 46 : 34, fontWeight: '800' }}>
               45 Seconds.
             </AppText>
           </AppText>
@@ -355,45 +365,45 @@ export default function WelcomeScreen() {
       </View>
 
       {/* 📊 Trust Stats & Quantitative Bar */}
-      <View className="my-6 py-4 px-5 bg-white border border-slate-200 rounded-3xl shadow-sm">
-        <View className="flex-row flex-wrap items-center justify-around gap-4">
-          <View className="items-center">
-            <AppText variant="h2" tone="primary" className="font-extrabold text-indigo-600">
+      <AppCard tone="default" style={{ marginVertical: 20, paddingVertical: 16, paddingHorizontal: 20 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around', gap: 16 }}>
+          <View style={{ alignItems: 'center' }}>
+            <AppText variant="h2" tone="primary" style={{ fontWeight: '800' }}>
               45s
             </AppText>
-            <AppText variant="caption" tone="muted" className="font-medium">
+            <AppText variant="caption" tone="muted" style={{ fontWeight: '500' }}>
               Average Reel Length
             </AppText>
           </View>
-          <View className="w-px h-8 bg-slate-200 hidden sm:flex" />
-          <View className="items-center">
-            <AppText variant="h2" tone="primary" className="font-extrabold text-indigo-600">
+          <View style={{ width: 1, height: 32, backgroundColor: colors.borderSubtle }} />
+          <View style={{ alignItems: 'center' }}>
+            <AppText variant="h2" tone="primary" style={{ fontWeight: '800' }}>
               37+
             </AppText>
-            <AppText variant="caption" tone="muted" className="font-medium">
+            <AppText variant="caption" tone="muted" style={{ fontWeight: '500' }}>
               High-Yield Topics
             </AppText>
           </View>
-          <View className="w-px h-8 bg-slate-200 hidden sm:flex" />
-          <View className="items-center">
-            <AppText variant="h2" tone="primary" className="font-extrabold text-indigo-600">
+          <View style={{ width: 1, height: 32, backgroundColor: colors.borderSubtle }} />
+          <View style={{ alignItems: 'center' }}>
+            <AppText variant="h2" tone="primary" style={{ fontWeight: '800' }}>
               7
             </AppText>
-            <AppText variant="caption" tone="muted" className="font-medium">
+            <AppText variant="caption" tone="muted" style={{ fontWeight: '500' }}>
               Specialized Tracks
             </AppText>
           </View>
-          <View className="w-px h-8 bg-slate-200 hidden sm:flex" />
-          <View className="items-center">
-            <AppText variant="h2" tone="primary" className="font-extrabold text-indigo-600">
+          <View style={{ width: 1, height: 32, backgroundColor: colors.borderSubtle }} />
+          <View style={{ alignItems: 'center' }}>
+            <AppText variant="h2" tone="primary" style={{ fontWeight: '800' }}>
               100%
             </AppText>
-            <AppText variant="caption" tone="muted" className="font-medium">
+            <AppText variant="caption" tone="muted" style={{ fontWeight: '500' }}>
               Active Recall Focus
             </AppText>
           </View>
         </View>
-      </View>
+      </AppCard>
 
       {/* ⚙️ How Conceptly Works (The 4-Step Engine) */}
       <View className="my-6">
@@ -572,18 +582,18 @@ export default function WelcomeScreen() {
       </View>
 
       {/* 🏁 Bottom Call to Action Banner */}
-      <View className="my-6 p-6 rounded-3xl bg-indigo-50 border border-indigo-200/80 items-center text-center shadow-sm">
-        <View className="h-12 w-12 rounded-2xl bg-indigo-600 items-center justify-center mb-3 shadow-md">
-          <Icon name="flash" size={24} color="#FFFFFF" />
+      <AppCard tone="primarySoft" style={{ marginVertical: 24, padding: 24, alignItems: 'center' }}>
+        <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+          <Icon name="flash" size={24} color={colors.textInverse} />
         </View>
-        <AppText variant="h2" className="text-slate-900 font-extrabold text-center">
+        <AppText variant="h2" style={{ textAlign: 'center', fontWeight: '800' }}>
           Ready to Ace Your Next Round?
         </AppText>
-        <AppText variant="body" tone="secondary" className="text-center max-w-md mt-1 mb-5">
+        <AppText variant="body" tone="secondary" style={{ textAlign: 'center', maxWidth: 440, marginTop: 6, marginBottom: 20 }}>
           Select your track now and start rapid visual revision with 45-second reels, architecture schematics, and practice checkpoints.
         </AppText>
 
-        <View className="w-full max-w-md gap-3">
+        <View style={{ width: '100%', maxWidth: 400, gap: 12 }}>
           <AppButton
             label="Start Rapid Revision →"
             variant="primary"
@@ -591,21 +601,29 @@ export default function WelcomeScreen() {
           />
           <Pressable
             onPress={() => router.push('/explore')}
-            className="py-3 items-center justify-center rounded-2xl bg-white border border-slate-300 shadow-sm"
+            style={{
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+            }}
           >
-            <AppText variant="bodyMedium" tone="secondary" className="font-bold">
+            <AppText variant="bodyMedium" tone="secondary" style={{ fontWeight: '700' }}>
               Browse All 37+ Topics in Explorer
             </AppText>
           </Pressable>
         </View>
-      </View>
+      </AppCard>
 
       {/* Footer Info */}
-      <View className="items-center pb-6 border-t border-slate-200 pt-6">
+      <View style={{ alignItems: 'center', paddingBottom: 24, borderTopWidth: 1, borderTopColor: colors.borderSubtle, paddingTop: 24 }}>
         <AppText variant="caption" tone="muted">
           ⚡ Conceptly • Atomic clarity for everything
         </AppText>
-        <AppText variant="micro" tone="muted" className="mt-1">
+        <AppText variant="micro" tone="muted" style={{ marginTop: 4 }}>
           Bespoke micro-reels for Tech, Product, Finance, UPSC, JEE, NEET & CBSE.
         </AppText>
       </View>

@@ -7,8 +7,8 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
-import { cn } from '../../utils/cn';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import { ViewportToggle } from './ViewportToggle';
 
 export type ScreenContainerProps = ViewProps & {
@@ -27,14 +27,18 @@ export function ScreenContainer({
   ...props
 }: ScreenContainerProps) {
   const viewMode = useAppStore((s) => s.viewMode);
+  const { colors, isDark } = useTheme();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && viewMode === 'desktop';
+
+  const containerBg = isDesktop ? colors.screenBg : colors.screenBg;
+  const outerBg = colors.canvasBg;
 
   return (
     <View
       style={[
         styles.outerRoot,
-        { backgroundColor: isDesktop ? '#F8FAFC' : '#F1F5F9' },
+        { backgroundColor: outerBg },
       ]}
     >
       {/* Floating Viewport Toggle on Web when in mobile view */}
@@ -52,20 +56,24 @@ export function ScreenContainer({
               style={[
                 styles.innerContent,
                 isDesktop ? styles.desktopWidth : styles.mobileWidth,
+                {
+                  backgroundColor: containerBg,
+                  borderColor: isDesktop ? 'transparent' : colors.border,
+                  borderLeftWidth: isDesktop ? 0 : 1,
+                  borderRightWidth: isDesktop ? 0 : 1,
+                  shadowColor: isDark ? '#000000' : '#0F172A',
+                },
                 style,
               ]}
-              className={cn(
-                "w-full transition-all duration-300 min-h-full",
-                isDesktop
-                  ? "bg-slate-50 shadow-none px-4"
-                  : "bg-slate-50 shadow-sm border-x border-slate-200/50",
-                className
-              )}
               {...props}
             >
               <View
-                className={cn("px-4 pt-3 flex-1", contentClassName)}
-                style={{ paddingBottom: isDesktop ? 60 : 100 }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingTop: 12,
+                  flex: 1,
+                  paddingBottom: isDesktop ? 60 : 100,
+                }}
               >
                 {children}
               </View>
@@ -78,18 +86,24 @@ export function ScreenContainer({
                 styles.innerContent,
                 styles.flex1,
                 isDesktop ? styles.desktopWidth : styles.mobileWidth,
+                {
+                  backgroundColor: containerBg,
+                  borderColor: isDesktop ? 'transparent' : colors.border,
+                  borderLeftWidth: isDesktop ? 0 : 1,
+                  borderRightWidth: isDesktop ? 0 : 1,
+                },
                 style,
               ]}
-              className={cn(
-                "w-full transition-all duration-300",
-                isDesktop
-                  ? "bg-slate-50 shadow-none px-4"
-                  : "bg-slate-50 shadow-sm border-x border-slate-200/50",
-                className
-              )}
               {...props}
             >
-              <View className={cn("flex-1 px-4 pt-3 pb-6", contentClassName)}>
+              <View
+                style={{
+                  flex: 1,
+                  paddingHorizontal: 16,
+                  paddingTop: 12,
+                  paddingBottom: 24,
+                }}
+              >
                 {children}
               </View>
             </View>
@@ -131,6 +145,7 @@ const styles = StyleSheet.create({
   },
   innerContent: {
     width: '100%',
+    minHeight: '100%',
   },
   mobileWidth: {
     maxWidth: 500,

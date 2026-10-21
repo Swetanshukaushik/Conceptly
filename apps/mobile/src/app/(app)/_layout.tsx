@@ -4,27 +4,30 @@ import { Tabs } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { DesktopNavBar } from '@/components/ui/DesktopNavBar';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 export default function AppLayout() {
   const viewMode = useAppStore((s) => s.viewMode);
+  const { colors } = useTheme();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && viewMode === 'desktop';
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDesktop ? '#F8FAFC' : '#F1F5F9' }}>
+    <View style={{ flex: 1, backgroundColor: colors.canvasBg }}>
       {/* On desktop view, render top navigation bar */}
       {isDesktop && <DesktopNavBar />}
 
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#4F46E5', // Indigo-600
-          tabBarInactiveTintColor: '#64748B', // Slate-500
+          tabBarActiveTintColor: colors.navActive,
+          tabBarInactiveTintColor: colors.navInactive,
           tabBarStyle: isDesktop
             ? { display: 'none' }
             : {
-                backgroundColor: '#FFFFFF',
-                borderTopColor: '#E2E8F0',
+                backgroundColor: colors.navBg,
+                borderTopColor: colors.navBorder,
+                borderTopWidth: 1,
                 height: 64,
                 paddingBottom: 8,
                 paddingTop: 6,

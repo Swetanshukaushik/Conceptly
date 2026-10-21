@@ -1,47 +1,102 @@
 import React from "react";
-import { Pressable, PressableProps } from "react-native";
-import { cn } from "../../utils/cn";
+import { Pressable, PressableProps, StyleSheet } from "react-native";
 import { Icon } from "./Icon";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-type Tone = "default" | "primary" | "inverse" | "ghost";
-
-const toneClasses: Record<Tone, string> = {
-  default: "bg-white border border-slate-200",
-  primary: "bg-indigo-600 border border-indigo-600",
-  inverse: "bg-black/20 border border-white/20",
-  ghost: "bg-transparent border-0",
-};
+export type IconTone = "default" | "primary" | "inverse" | "ghost";
+export type IconSize = "sm" | "md" | "lg";
 
 export type IconButtonProps = PressableProps & {
   icon: React.ReactNode | string;
-  size?: "sm" | "md" | "lg";
-  variant?: Tone;
+  size?: IconSize;
+  variant?: IconTone;
 };
 
-const sizeClasses = {
-  sm: "h-8 w-8",
-  md: "h-11 w-11",
-  lg: "h-14 w-14",
-};
+const sizeStyles = StyleSheet.create({
+  sm: { width: 32, height: 32, borderRadius: 16 },
+  md: { width: 40, height: 40, borderRadius: 20 },
+  lg: { width: 48, height: 48, borderRadius: 24 },
+});
 
-export function IconButton({ icon, size = "md", variant = "default", className, ...props }: IconButtonProps) {
-  const iconElement = typeof icon === "string" ? (
-    <Icon name={icon} size={size === "sm" ? 16 : size === "lg" ? 32 : 24} />
-  ) : (
-    icon
-  );
+export function IconButton({
+  icon,
+  size = "md",
+  variant = "default",
+  style,
+  ...props
+}: IconButtonProps) {
+  const { colors } = useTheme();
+
+  const getVariantStyle = () => {
+    switch (variant) {
+      case "primary":
+        return {
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
+          borderWidth: 1,
+        };
+      case "inverse":
+        return {
+          backgroundColor: colors.surfaceSubtle,
+          borderColor: colors.border,
+          borderWidth: 1,
+        };
+      case "ghost":
+        return {
+          backgroundColor: "transparent",
+          borderColor: "transparent",
+          borderWidth: 0,
+        };
+      case "default":
+      default:
+        return {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderWidth: 1,
+        };
+    }
+  };
+
+  const iconColor =
+    variant === "primary"
+      ? colors.textInverse
+      : variant === "ghost"
+      ? colors.textSecondary
+      : colors.textPrimary;
+
+  const iconElement =
+    typeof icon === "string" ? (
+      <Icon
+        name={icon}
+        size={size === "sm" ? 16 : size === "lg" ? 24 : 18}
+        color={iconColor}
+      />
+    ) : (
+      icon
+    );
 
   return (
     <Pressable
-      className={cn(
-        "items-center justify-center rounded-full",
-        toneClasses[variant],
-        sizeClasses[size],
-        className
-      )}
+      style={(state) => [
+        styles.button,
+        sizeStyles[size],
+        getVariantStyle(),
+        state.pressed && styles.pressed,
+        typeof style === "function" ? style(state) : style,
+      ]}
       {...props}
     >
       {iconElement}
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pressed: {
+    opacity: 0.75,
+  },
+});

@@ -1,19 +1,13 @@
 import React from "react";
-import { Pressable, PressableProps, View } from "react-native";
+import { Pressable, PressableProps, View, StyleSheet } from "react-native";
 import { AppText } from "./AppText";
-import { cn } from "../../utils/cn";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-type Variant = "default" | "selected" | "soft";
-
-const variantClasses: Record<Variant, string> = {
-  default: "bg-white border border-slate-200",
-  selected: "bg-indigo-600 border border-indigo-600",
-  soft: "bg-indigo-50 border border-indigo-100",
-};
+export type ChipVariant = "default" | "selected" | "soft";
 
 export type ChipProps = PressableProps & {
   label: string;
-  variant?: Variant;
+  variant?: ChipVariant;
   leftIcon?: React.ReactNode;
 };
 
@@ -21,24 +15,77 @@ export function Chip({
   label,
   variant = "default",
   leftIcon,
-  className,
+  style,
   ...props
 }: ChipProps) {
-  const tone = variant === "selected" ? "inverse" : variant === "soft" ? "primary" : "default";
+  const { colors } = useTheme();
+
+  const getVariantStyle = () => {
+    switch (variant) {
+      case "selected":
+        return {
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
+        };
+      case "soft":
+        return {
+          backgroundColor: colors.primarySoft,
+          borderColor: colors.primaryBorder,
+        };
+      case "default":
+      default:
+        return {
+          backgroundColor: colors.surfaceSubtle,
+          borderColor: colors.border,
+        };
+    }
+  };
+
+  const getTone = () => {
+    switch (variant) {
+      case "selected":
+        return "inverse" as const;
+      case "soft":
+        return "primary" as const;
+      case "default":
+      default:
+        return "default" as const;
+    }
+  };
 
   return (
     <Pressable
-      className={cn(
-        "min-h-10 flex-row items-center gap-2 rounded-full px-4 py-2",
-        variantClasses[variant],
-        className,
-      )}
+      style={(state) => [
+        styles.chip,
+        getVariantStyle(),
+        state.pressed && styles.pressed,
+        typeof style === "function" ? style(state) : style,
+      ]}
       {...props}
     >
       {leftIcon ? <View>{leftIcon}</View> : null}
-      <AppText variant="caption" tone={tone}>
+      <AppText variant="caption" tone={getTone()} style={styles.chipText}>
         {label}
       </AppText>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  chip: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  chipText: {
+    fontWeight: "600",
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+});

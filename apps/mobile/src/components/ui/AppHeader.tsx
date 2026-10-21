@@ -1,18 +1,36 @@
 import React from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { AppText } from "./AppText";
 import { IconButton } from "./IconButton";
+import { ThemeToggle } from "./ThemeToggle";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
 export type AppHeaderProps = {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  showThemeToggle?: boolean;
 };
 
-export function AppHeader({ title, subtitle, onBack }: AppHeaderProps) {
+export function AppHeader({
+  title,
+  subtitle,
+  onBack,
+  showThemeToggle = true,
+}: AppHeaderProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-      <View className="flex-row items-center gap-3 flex-1">
+    <View
+      style={[
+        styles.header,
+        {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        },
+      ]}
+    >
+      <View style={styles.leftGroup}>
         {onBack && (
           <IconButton
             icon="arrow-back"
@@ -23,12 +41,8 @@ export function AppHeader({ title, subtitle, onBack }: AppHeaderProps) {
             accessibilityRole="button"
           />
         )}
-        <View className="flex-1">
-          <AppText
-            variant="h2"
-            numberOfLines={1}
-            accessibilityRole="header"
-          >
+        <View style={styles.titleColumn}>
+          <AppText variant="h3" numberOfLines={1} accessibilityRole="header">
             {title}
           </AppText>
           {subtitle ? (
@@ -38,6 +52,37 @@ export function AppHeader({ title, subtitle, onBack }: AppHeaderProps) {
           ) : null}
         </View>
       </View>
+
+      {showThemeToggle && (
+        <View style={styles.rightGroup}>
+          <ThemeToggle compact={true} />
+        </View>
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginBottom: 8,
+  },
+  leftGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  titleColumn: {
+    flex: 1,
+  },
+  rightGroup: {
+    marginLeft: 8,
+  },
+});

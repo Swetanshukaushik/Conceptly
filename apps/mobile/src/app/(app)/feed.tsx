@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, ScrollView, Pressable, Platform } from 'react-native';
+import { View, ScrollView, Pressable, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -14,6 +14,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import { useHomeFeedQuery } from '@/services/api/hooks/useHomeFeedQuery';
 import { educationApi } from '@/services/api/educationApi';
 
@@ -23,6 +24,7 @@ export default function FeedScreen() {
   const classId = useAppStore((s) => s.selectedClassId);
   const setSubjectId = useAppStore((s) => s.setSubjectId);
   const viewMode = useAppStore((s) => s.viewMode);
+  const { colors, isDark } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
   const { data, isLoading, isError, refetch } = useHomeFeedQuery(
@@ -42,37 +44,49 @@ export default function FeedScreen() {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <AppHeader title="Conceptly" subtitle="Atomic clarity for everything" />
-        <View className="py-20">
-          <Loader />
-        </View>
+        <AppHeader
+          title="Conceptly Focus"
+          subtitle="Atomic clarity for everything"
+        />
+        <Loader />
       </ScreenContainer>
     );
   }
 
-  if (isError) {
+  if (isError || !data) {
     return (
       <ScreenContainer>
-        <AppHeader title="Conceptly" subtitle="Atomic clarity for everything" />
-        <View className="mt-6">
-          <ErrorState
-            title="Failed to load concept feed"
-            description="Could not load your topics. Tap retry."
-            actionLabel="Retry"
-            onPressAction={() => refetch()}
-          />
-        </View>
+        <AppHeader
+          title="Conceptly Focus"
+          subtitle="Atomic clarity for everything"
+        />
+        <ErrorState
+          title="Failed to load study feed"
+          description="Could not reach the Conceptly engine. Please verify your connection."
+          actionLabel="Retry Connection"
+          onPressAction={() => refetch()}
+        />
       </ScreenContainer>
     );
   }
 
-  if (!data) {
+  const hasContent =
+    data.continueLearning.length > 0 ||
+    data.recommended.length > 0 ||
+    data.quickRevision.length > 0;
+
+  if (!hasContent) {
     return (
       <ScreenContainer>
-        <AppHeader title="Conceptly" subtitle="Atomic clarity for everything" />
+        <AppHeader
+          title="Conceptly Focus"
+          subtitle="Atomic clarity for everything"
+        />
         <EmptyState
-          title="No content available"
-          description="Check back later for personalized concepts."
+          title="No lessons assigned yet"
+          description="Head over to Explore to browse chapters and start your visual revision."
+          actionLabel="Explore Curriculum"
+          onPressAction={() => router.push('/explore')}
         />
       </ScreenContainer>
     );
@@ -80,9 +94,12 @@ export default function FeedScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader title="Conceptly" subtitle="Atomic clarity for everything" />
+      <AppHeader
+        title="Conceptly Focus"
+        subtitle="Atomic clarity for everything"
+      />
 
-      {/* 🚀 Interview Speed-Run Banner */}
+      {/* Pre-Interview Speed Run Banner */}
       <Pressable
         onPress={() => {
           const firstTopic =
@@ -95,26 +112,38 @@ export default function FeedScreen() {
             router.push('/explore');
           }
         }}
-        className="mt-4 mb-2"
+        style={{ marginTop: 12, marginBottom: 8 }}
       >
-        <AppCard tone="primarySoft" className="border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1 mr-3">
-              <View className="flex-row items-center gap-1.5 mb-1">
-                <Icon name="flash" size={16} color="#4F46E5" />
-                <AppText variant="caption" tone="primary" className="font-extrabold uppercase tracking-wide">
-                  Pre-Interview Speed Run
+        <AppCard tone="primarySoft">
+          <View style={styles.bannerRow}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <View style={styles.badgeRow}>
+                <Icon name="flash" size={14} color={colors.primaryText} />
+                <AppText
+                  variant="micro"
+                  tone="primary"
+                  style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '700' }}
+                >
+                  Pre-Session Speed Run
                 </AppText>
               </View>
-              <AppText variant="h3" className="text-slate-900 leading-snug">
+              <AppText variant="h3" style={{ lineHeight: 24, marginTop: 4 }}>
                 5-Min High-Yield Visual Revision
               </AppText>
-              <AppText variant="caption" tone="secondary" className="mt-1">
-                Swipe through top interview questions with visual mental models.
+              <AppText variant="caption" tone="secondary" style={{ marginTop: 4 }}>
+                Swipe through high-frequency interview topics with visual mental models.
               </AppText>
             </View>
-            <View className="h-12 w-12 rounded-full bg-indigo-600 items-center justify-center shadow-md">
-              <Icon name="play" size={20} color="#FFFFFF" />
+            <View
+              style={[
+                styles.playButton,
+                {
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.primary,
+                },
+              ]}
+            >
+              <Icon name="play" size={18} color={colors.textInverse} />
             </View>
           </View>
         </AppCard>
@@ -122,11 +151,11 @@ export default function FeedScreen() {
 
       {/* Subject shortcuts chips */}
       {data.subjectShortcuts && data.subjectShortcuts.length > 0 && (
-        <View className="mt-3 mb-2">
+        <View style={{ marginTop: 8, marginBottom: 12 }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, paddingHorizontal: 4 }}
+            contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }}
           >
             {data.subjectShortcuts.map((subject) => (
               <Chip
@@ -143,15 +172,15 @@ export default function FeedScreen() {
         </View>
       )}
 
-      {/* Continue Learning */}
+      {/* Continue Revising */}
       {data.continueLearning.length > 0 && (
-        <View className="mt-4 mb-6">
+        <View style={{ marginTop: 12, marginBottom: 20 }}>
           <SectionHeader
             title="Continue Revising"
             actionLabel="View all"
             onPressAction={() => router.push('/explore')}
           />
-          <View className={isDesktop ? "flex-row flex-wrap gap-4 mt-2" : "gap-3 mt-2"}>
+          <View style={isDesktop ? styles.desktopGrid : styles.mobileList}>
             {data.continueLearning.map((item) => (
               <Pressable
                 key={item.id}
@@ -160,25 +189,38 @@ export default function FeedScreen() {
                   router.push(`/topic/${item.id}`);
                 }}
               >
-                <AppCard tone="default" className="border-slate-200">
-                  <View className="flex-row justify-between items-start">
-                    <View className="flex-1 mr-2">
+                <AppCard tone="default">
+                  <View style={styles.cardHeader}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
                       <AppText variant="caption" tone="primary" numberOfLines={1}>
                         {item.subject?.name ?? 'Topic'} • {item.chapter?.title ?? 'Module'}
                       </AppText>
-                      <AppText variant="title" className="mt-1 text-slate-900">
+                      <AppText variant="title" style={{ marginTop: 4 }}>
                         {item.title}
                       </AppText>
                     </View>
-                    <View className="bg-indigo-600 px-2.5 py-1 rounded-full">
-                      <AppText variant="micro" tone="inverse">
-                        {item.reelCount} visual reels
+                    <View
+                      style={[
+                        styles.reelPill,
+                        {
+                          backgroundColor: colors.primarySoft,
+                          borderColor: colors.primaryBorder,
+                        },
+                      ]}
+                    >
+                      <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
+                        {item.reelCount} reels
                       </AppText>
                     </View>
                   </View>
-                  <View className="flex-row items-center gap-2 mt-3">
-                    <View className="bg-slate-100 px-2 py-0.5 rounded-md">
-                      <AppText variant="micro" tone="secondary" className="capitalize">
+                  <View style={styles.cardFooter}>
+                    <View
+                      style={[
+                        styles.diffBadge,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                      ]}
+                    >
+                      <AppText variant="micro" tone="secondary" style={{ textTransform: 'capitalize' }}>
                         {item.difficulty}
                       </AppText>
                     </View>
@@ -195,9 +237,9 @@ export default function FeedScreen() {
 
       {/* Recommended for you */}
       {data.recommended.length > 0 && (
-        <View className="mb-6">
+        <View style={{ marginBottom: 20 }}>
           <SectionHeader title="High-Frequency Topics" />
-          <View className={isDesktop ? "flex-row flex-wrap gap-4 mt-2" : "gap-3 mt-2"}>
+          <View style={isDesktop ? styles.desktopGrid : styles.mobileList}>
             {data.recommended.map((item) => (
               <Pressable
                 key={item.id}
@@ -206,25 +248,38 @@ export default function FeedScreen() {
                   router.push(`/topic/${item.id}`);
                 }}
               >
-                <AppCard tone="default" className="border-slate-200">
-                  <View className="flex-row justify-between items-start">
-                    <View className="flex-1 mr-2">
+                <AppCard tone="default">
+                  <View style={styles.cardHeader}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
                       <AppText variant="caption" tone="secondary" numberOfLines={1}>
                         {item.chapter?.title ?? 'Module'}
                       </AppText>
-                      <AppText variant="title" className="mt-1">
+                      <AppText variant="title" style={{ marginTop: 4 }}>
                         {item.title}
                       </AppText>
                     </View>
-                    <View className="bg-slate-100 px-2 py-0.5 rounded-full">
+                    <View
+                      style={[
+                        styles.reelPill,
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
                       <AppText variant="micro" tone="secondary">
                         {item.reelCount} reels
                       </AppText>
                     </View>
                   </View>
-                  <View className="flex-row items-center gap-2 mt-2">
-                    <View className="bg-slate-100 px-2 py-0.5 rounded-md">
-                      <AppText variant="micro" tone="secondary" className="capitalize">
+                  <View style={styles.cardFooter}>
+                    <View
+                      style={[
+                        styles.diffBadge,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                      ]}
+                    >
+                      <AppText variant="micro" tone="secondary" style={{ textTransform: 'capitalize' }}>
                         {item.difficulty}
                       </AppText>
                     </View>
@@ -238,9 +293,9 @@ export default function FeedScreen() {
 
       {/* Quick Revision */}
       {data.quickRevision.length > 0 && (
-        <View className="mb-8">
+        <View style={{ marginBottom: 28 }}>
           <SectionHeader title="Last-Minute Cheat Sheets" />
-          <View className={isDesktop ? "flex-row flex-wrap gap-4 mt-2" : "gap-3 mt-2"}>
+          <View style={isDesktop ? styles.desktopGrid : styles.mobileList}>
             {data.quickRevision.map((item) => (
               <Pressable
                 key={item.id}
@@ -249,19 +304,27 @@ export default function FeedScreen() {
                   router.push(`/topic/${item.id}`);
                 }}
               >
-                <AppCard tone="accentSoft" className="border-violet-200">
-                  <View className="flex-row justify-between items-start">
-                    <View className="flex-1 mr-2">
+                <AppCard tone="accentSoft">
+                  <View style={styles.cardHeader}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
                       <AppText variant="caption" tone="primary" numberOfLines={1}>
                         {item.chapter?.title}
                       </AppText>
-                      <AppText variant="title" className="mt-1">
+                      <AppText variant="title" style={{ marginTop: 4 }}>
                         {item.title}
                       </AppText>
                     </View>
-                    <View className="bg-violet-600 px-2.5 py-1 rounded-full">
-                      <AppText variant="micro" tone="inverse">
-                        Cram Mode
+                    <View
+                      style={[
+                        styles.reelPill,
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <AppText variant="micro" tone="secondary">
+                        Summary
                       </AppText>
                     </View>
                   </View>
@@ -274,3 +337,59 @@ export default function FeedScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  bannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  playButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginTop: 8,
+  },
+  mobileList: {
+    gap: 12,
+    marginTop: 8,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  reelPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+  },
+  diffBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+});
