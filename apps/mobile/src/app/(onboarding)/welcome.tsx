@@ -27,7 +27,7 @@ const TARGET_TRACKS: Array<{
     title: 'Software & System Design',
     badge: 'High Demand',
     iconName: 'code-slash',
-    accentColor: '#4F46E5',
+    accentColor: '#2563EB',
     sampleTopics: ['CAP Theorem', 'Consistent Hashing', 'Rate Limiting', 'React Fiber', 'B+ Trees'],
     description: 'Whiteboard-ready distributed architectures, caching invariants, and DSA patterns.',
   },

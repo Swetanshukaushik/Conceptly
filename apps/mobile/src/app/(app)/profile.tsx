@@ -35,7 +35,7 @@ const THEME_OPTIONS: Array<{
     icon: '☀️',
     bgPreview: '#F8FAFC',
     cardPreview: '#FFFFFF',
-    accentPreview: '#0F172A',
+    accentPreview: '#1D4ED8',
   },
   {
     id: 'dark',

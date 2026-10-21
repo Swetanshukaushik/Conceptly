@@ -1,25 +1,13 @@
 import React from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { AppText } from "./AppText";
-import { cn } from "../../utils/cn";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-type Tone = "primary" | "success" | "warning";
-
-const toneClasses: Record<Tone, string> = {
-  primary: "bg-indigo-50",
-  success: "bg-green-50",
-  warning: "bg-amber-50",
-};
-
-const textTones: Record<Tone, "primary" | "success" | "default"> = {
-  primary: "primary",
-  success: "success",
-  warning: "default",
-};
+export type ProgressTone = "primary" | "success" | "warning";
 
 export type ProgressBadgeProps = {
   value: number;
-  tone?: Tone;
+  tone?: ProgressTone;
   label?: string;
 };
 
@@ -28,11 +16,56 @@ export function ProgressBadge({
   tone = "primary",
   label = "Complete",
 }: ProgressBadgeProps) {
+  const { colors } = useTheme();
+
+  const getStyle = () => {
+    switch (tone) {
+      case "success":
+        return {
+          backgroundColor: colors.successSoft,
+          borderColor: colors.successText,
+        };
+      case "warning":
+        return {
+          backgroundColor: colors.warningSoft,
+          borderColor: colors.warningText,
+        };
+      case "primary":
+      default:
+        return {
+          backgroundColor: colors.primarySoft,
+          borderColor: colors.primaryBorder,
+        };
+    }
+  };
+
+  const getTextTone = () => {
+    switch (tone) {
+      case "success":
+        return "success" as const;
+      case "warning":
+        return "warning" as const;
+      case "primary":
+      default:
+        return "primary" as const;
+    }
+  };
+
   return (
-    <View className={cn("self-start rounded-full px-3 py-2", toneClasses[tone])}>
-      <AppText variant="micro" tone={textTones[tone]}>
+    <View style={[styles.badge, getStyle()]}>
+      <AppText variant="micro" tone={getTextTone()} style={{ fontWeight: "700" }}>
         {value}% {label}
       </AppText>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+});

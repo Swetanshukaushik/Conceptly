@@ -1,5 +1,13 @@
 export type ThemeMode = 'light' | 'dark' | 'grey';
 
+export interface TrackPalette {
+  badgeBg: string;
+  badgeBorder: string;
+  badgeText: string;
+  iconBg: string;
+  iconColor: string;
+}
+
 export interface ThemeColors {
   name: ThemeMode;
   isDark: boolean;
@@ -29,10 +37,17 @@ export interface ThemeColors {
   primaryBorder: string;   // Subtle border around primary soft cards
   primaryText: string;     // Contrast text on primarySoft
 
-  // Secondary Accents
-  accent: string;          // Secondary highlight
+  // Secondary Accents (Adds subtle, elegant life to the UI)
+  accent: string;          // Secondary highlight (Cyan / Sapphire / Amber)
   accentSoft: string;
   accentText: string;
+
+  accentTeal: string;      // Fresh mint / teal highlight
+  accentTealSoft: string;
+  accentTealText: string;
+
+  streak: string;          // Fire flame orange for streaks
+  streakSoft: string;
 
   // Semantic Status
   success: string;         // Completed / mastery / correct
@@ -52,4 +67,15 @@ export interface ThemeColors {
   navBorder: string;
   navActive: string;
   navInactive: string;
+
+  // Track Specific Accent Maps
+  tracks: {
+    tech: TrackPalette;
+    pm: TrackPalette;
+    finance: TrackPalette;
+    upsc: TrackPalette;
+    jee: TrackPalette;
+    neet: TrackPalette;
+    school: TrackPalette;
+  };
 }

@@ -41,6 +41,17 @@ export default function FeedScreen() {
     }
   }, [classId, examType, data]);
 
+  const getDifficultyColor = (diff: string) => {
+    const d = (diff || '').toLowerCase();
+    if (d === 'easy' || d === 'foundational') {
+      return { bg: colors.successSoft, border: colors.success, text: colors.successText };
+    }
+    if (d === 'hard' || d === 'advanced') {
+      return { bg: colors.dangerSoft, border: colors.danger, text: colors.dangerText };
+    }
+    return { bg: colors.warningSoft, border: colors.warning, text: colors.warningText };
+  };
+
   if (isLoading) {
     return (
       <ScreenContainer>
@@ -214,16 +225,21 @@ export default function FeedScreen() {
                     </View>
                   </View>
                   <View style={styles.cardFooter}>
-                    <View
-                      style={[
-                        styles.diffBadge,
-                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                      ]}
-                    >
-                      <AppText variant="micro" tone="secondary" style={{ textTransform: 'capitalize' }}>
-                        {item.difficulty}
-                      </AppText>
-                    </View>
+                    {(() => {
+                      const diffCol = getDifficultyColor(item.difficulty);
+                      return (
+                        <View
+                          style={[
+                            styles.diffBadge,
+                            { backgroundColor: diffCol.bg, borderColor: diffCol.border },
+                          ]}
+                        >
+                          <AppText variant="micro" style={{ textTransform: 'capitalize', color: diffCol.text, fontWeight: '700' }}>
+                            {item.difficulty}
+                          </AppText>
+                        </View>
+                      );
+                    })()}
                     <AppText variant="micro" tone="muted">
                       Tap to resume reels & quiz
                     </AppText>
@@ -273,16 +289,21 @@ export default function FeedScreen() {
                     </View>
                   </View>
                   <View style={styles.cardFooter}>
-                    <View
-                      style={[
-                        styles.diffBadge,
-                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                      ]}
-                    >
-                      <AppText variant="micro" tone="secondary" style={{ textTransform: 'capitalize' }}>
-                        {item.difficulty}
-                      </AppText>
-                    </View>
+                    {(() => {
+                      const diffCol = getDifficultyColor(item.difficulty);
+                      return (
+                        <View
+                          style={[
+                            styles.diffBadge,
+                            { backgroundColor: diffCol.bg, borderColor: diffCol.border },
+                          ]}
+                        >
+                          <AppText variant="micro" style={{ textTransform: 'capitalize', color: diffCol.text, fontWeight: '700' }}>
+                            {item.difficulty}
+                          </AppText>
+                        </View>
+                      );
+                    })()}
                   </View>
                 </AppCard>
               </Pressable>

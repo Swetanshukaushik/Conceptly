@@ -7,14 +7,19 @@ interface ThemeToggleProps {
   compact?: boolean;
 }
 
-const THEMES: Array<{ key: ThemeMode; label: string; icon: string }> = [
-  { key: 'light', label: 'Light', icon: '☀️' },
-  { key: 'dark', label: 'Dark', icon: '🌙' },
-  { key: 'grey', label: 'Grey', icon: '🔘' },
+const THEMES: Array<{
+  key: ThemeMode;
+  label: string;
+  icon: string;
+  accent: string;
+}> = [
+  { key: 'light', label: 'Light', icon: '☀️', accent: '#D97706' },
+  { key: 'dark', label: 'Dark', icon: '🌙', accent: '#38BDF8' },
+  { key: 'grey', label: 'Grey', icon: '🔘', accent: '#F59E0B' },
 ];
 
 export function ThemeToggle({ compact = false }: ThemeToggleProps) {
-  const { theme, setTheme, colors } = useTheme();
+  const { theme, setTheme, colors, isDark } = useTheme();
 
   return (
     <View
@@ -40,12 +45,14 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.borderActive,
-                  shadowColor: colors.isDark ? '#000000' : '#0F172A',
+                  shadowColor: isDark ? '#000000' : '#0F172A',
                 },
               ],
             ]}
           >
-            <Text style={styles.icon}>{item.icon}</Text>
+            <Text style={[styles.icon, isActive && { transform: [{ scale: 1.1 }] }]}>
+              {item.icon}
+            </Text>
             {!compact && (
               <Text
                 style={[
@@ -58,6 +65,14 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
               >
                 {item.label}
               </Text>
+            )}
+            {isActive && (
+              <View
+                style={[
+                  styles.activeDot,
+                  { backgroundColor: item.accent },
+                ]}
+              />
             )}
           </Pressable>
         );
@@ -83,14 +98,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'transparent',
+    position: 'relative',
   },
   optionCompact: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 5,
+    gap: 3,
   },
   optionActive: {
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.16,
     shadowRadius: 3,
   },
   icon: {
@@ -98,5 +115,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginLeft: 2,
   },
 });

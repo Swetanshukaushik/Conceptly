@@ -1,6 +1,7 @@
 import React from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, View, StyleSheet } from "react-native";
 import { AppText } from "./AppText";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
 export type SectionHeaderProps = {
   title: string;
@@ -15,20 +16,31 @@ export function SectionHeader({
   actionLabel,
   onPressAction,
 }: SectionHeaderProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className="mb-3 flex-row items-end justify-between gap-3">
-      <View className="flex-1">
+    <View style={styles.container}>
+      <View style={{ flex: 1 }}>
         <AppText variant="h3">{title}</AppText>
         {subtitle ? (
-          <AppText variant="caption" tone="secondary" className="mt-1">
+          <AppText variant="caption" tone="secondary" style={{ marginTop: 2 }}>
             {subtitle}
           </AppText>
         ) : null}
       </View>
 
       {actionLabel ? (
-        <Pressable onPress={onPressAction} className="rounded-full bg-slate-100 px-3 py-2">
-          <AppText variant="caption" tone="primary">
+        <Pressable
+          onPress={onPressAction}
+          style={[
+            styles.actionButton,
+            {
+              backgroundColor: colors.primarySoft,
+              borderColor: colors.primaryBorder,
+            },
+          ]}
+        >
+          <AppText variant="caption" tone="primary" style={{ fontWeight: "600" }}>
             {actionLabel}
           </AppText>
         </Pressable>
@@ -36,3 +48,19 @@ export function SectionHeader({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  actionButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+});

@@ -40,6 +40,17 @@ export default function TopicDetailScreen() {
   const { colors } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
+  const getDifficultyColor = (diff?: string) => {
+    const d = (diff || '').toLowerCase();
+    if (d === 'easy' || d === 'foundational') {
+      return { bg: colors.successSoft, border: colors.success, text: colors.successText };
+    }
+    if (d === 'hard' || d === 'advanced') {
+      return { bg: colors.dangerSoft, border: colors.danger, text: colors.dangerText };
+    }
+    return { bg: colors.warningSoft, border: colors.warning, text: colors.warningText };
+  };
+
   const { data: topic, isLoading: topicLoading, isError: topicError, refetch: refetchTopic } = useTopicByIdQuery(id || '');
   const { data: reels, isLoading: reelsLoading, refetch: refetchReels } = useReelsByTopicQuery(id || '');
   const { data: flashcards } = useFlashcardsByTopicQuery(id || '');
@@ -123,11 +134,16 @@ export default function TopicDetailScreen() {
 
           <View className="mt-4 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <View style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 }}>
-                <AppText variant="micro" tone="inverse" style={{ textTransform: 'capitalize', fontWeight: '700' }}>
-                  {topic.difficulty}
-                </AppText>
-              </View>
+              {(() => {
+                const diffCol = getDifficultyColor(topic.difficulty);
+                return (
+                  <View style={{ backgroundColor: diffCol.bg, borderColor: diffCol.border, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 }}>
+                    <AppText variant="micro" style={{ textTransform: 'capitalize', color: diffCol.text, fontWeight: '700' }}>
+                      {topic.difficulty}
+                    </AppText>
+                  </View>
+                );
+              })()}
               <View style={{ backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999 }}>
                 <AppText variant="micro" tone="secondary">
                   {topic.reelCount} Visual Reels

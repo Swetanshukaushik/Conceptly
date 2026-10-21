@@ -31,6 +31,17 @@ export default function ExploreScreen() {
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
   const language = useAppStore((s) => s.language) ?? 'en';
 
+  const getDifficultyColor = (diff: string) => {
+    const d = (diff || '').toLowerCase();
+    if (d === 'easy' || d === 'foundational') {
+      return { bg: colors.successSoft, border: colors.success, text: colors.successText };
+    }
+    if (d === 'hard' || d === 'advanced') {
+      return { bg: colors.dangerSoft, border: colors.danger, text: colors.dangerText };
+    }
+    return { bg: colors.warningSoft, border: colors.warning, text: colors.warningText };
+  };
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeSubjectId, setActiveSubjectId] = useState<string>(selectedSubjectId);
   const [activeChapterId, setActiveChapterId] = useState<string>('');
@@ -186,11 +197,16 @@ export default function ExploreScreen() {
                           {item.title}
                         </AppText>
                         <View className="flex-row items-center gap-2 mt-2">
-                          <View style={{ backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                            <AppText variant="micro" tone="secondary" style={{ textTransform: 'capitalize', fontWeight: '600' }}>
-                              {item.difficulty}
-                            </AppText>
-                          </View>
+                          {(() => {
+                            const diffCol = getDifficultyColor(item.difficulty);
+                            return (
+                              <View style={{ backgroundColor: diffCol.bg, borderColor: diffCol.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                <AppText variant="micro" style={{ textTransform: 'capitalize', color: diffCol.text, fontWeight: '700' }}>
+                                  {item.difficulty}
+                                </AppText>
+                              </View>
+                            );
+                          })()}
                           <AppText variant="micro" tone="muted">
                             {item.reelCount} visual reels
                           </AppText>
@@ -363,11 +379,16 @@ export default function ExploreScreen() {
                             {item.title}
                           </AppText>
                           <View className="flex-row items-center gap-2 mt-2">
-                            <View className="bg-slate-100 px-2.5 py-0.5 rounded-md">
-                              <AppText variant="micro" tone="secondary" className="capitalize">
-                                {item.difficulty}
-                              </AppText>
-                            </View>
+                            {(() => {
+                              const diffCol = getDifficultyColor(item.difficulty);
+                              return (
+                                <View style={{ backgroundColor: diffCol.bg, borderColor: diffCol.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                  <AppText variant="micro" style={{ textTransform: 'capitalize', color: diffCol.text, fontWeight: '700' }}>
+                                    {item.difficulty}
+                                  </AppText>
+                                </View>
+                              );
+                            })()}
                             <AppText variant="micro" tone="muted">
                               {item.reelCount} visual lessons
                             </AppText>
