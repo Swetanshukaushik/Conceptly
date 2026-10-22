@@ -190,10 +190,10 @@ export default function ExploreScreen() {
                     router.push(`/topic/${item.id}`);
                   }}
                 >
-                  <AppCard tone="default" className="border-slate-200">
+                  <AppCard tone="default">
                     <View className="flex-row justify-between items-start">
                       <View className="flex-1 mr-3">
-                        <AppText variant="title" className="text-slate-900 font-bold">
+                        <AppText variant="title" style={{ fontWeight: '700' }}>
                           {item.title}
                         </AppText>
                         <View className="flex-row items-center gap-2 mt-2">
@@ -372,10 +372,10 @@ export default function ExploreScreen() {
                       router.push(`/topic/${item.id}`);
                     }}
                   >
-                    <AppCard tone="default" className="border-slate-200">
+                    <AppCard tone="default">
                       <View className="flex-row justify-between items-start">
                         <View className="flex-1 mr-3">
-                          <AppText variant="title" className="text-slate-900 font-bold">
+                          <AppText variant="title" style={{ fontWeight: '700' }}>
                             {item.title}
                           </AppText>
                           <View className="flex-row items-center gap-2 mt-2">

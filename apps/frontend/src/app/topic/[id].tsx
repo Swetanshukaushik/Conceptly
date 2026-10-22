@@ -124,16 +124,16 @@ export default function TopicDetailScreen() {
 
       <View className="mt-3">
         {/* Main Topic Header Card */}
-        <AppCard tone="primarySoft" className="mb-4 border-indigo-100">
-          <AppText variant="caption" tone="primary" className="font-semibold">
+        <AppCard tone="primarySoft" style={{ marginBottom: 16 }}>
+          <AppText variant="caption" tone="primary" style={{ fontWeight: '600' }}>
             {topic.subject?.name ?? 'Subject'} • {topic.chapter?.title ?? 'Chapter'}
           </AppText>
-          <AppText variant="h2" className="text-slate-900 mt-1">
+          <AppText variant="h2" style={{ marginTop: 4, fontWeight: '800' }}>
             {topic.title}
           </AppText>
 
-          <View className="mt-4 flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
+          <View style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {(() => {
                 const diffCol = getDifficultyColor(topic.difficulty);
                 return (
@@ -185,37 +185,48 @@ export default function TopicDetailScreen() {
         </AppCard>
 
         {/* 📍 Checkpoint Progress Track */}
-        <AppCard tone="default" className="mb-5 border-slate-200 bg-slate-50 p-3.5">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center gap-1.5">
-              <Icon name="stats-chart" size={16} color="#4F46E5" />
-              <AppText variant="caption" className="font-bold text-slate-800">
+        <AppCard tone="muted" style={{ marginBottom: 18, padding: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Icon name="stats-chart" size={16} color={colors.primary} />
+              <AppText variant="caption" style={{ fontWeight: '700' }}>
                 Reels Progress Checkpoints
               </AppText>
             </View>
-            <AppText variant="caption" tone="primary" className="font-bold">
+            <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
               {watchedCount}/{totalReelsCount} watched
             </AppText>
           </View>
 
           {/* Horizontal Track Bar with Dots */}
-          <View className="flex-row items-center justify-between my-2">
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 8 }}>
             {reels?.map((r, i) => {
               const isWatched = watchedReels[r.id];
               return (
                 <React.Fragment key={r.id}>
                   <View
-                    className={`h-4 w-4 rounded-full items-center justify-center ${
-                      isWatched ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
+                    style={{
+                      height: 16,
+                      width: 16,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: isWatched ? colors.success : colors.surfaceSubtle,
+                      borderColor: isWatched ? colors.success : colors.border,
+                      borderWidth: 1,
+                    }}
                   >
-                    {isWatched && <Icon name="checkmark" size={10} color="#FFFFFF" />}
+                    {isWatched && <Icon name="checkmark" size={10} color={colors.textInverse} />}
                   </View>
                   {i < totalReelsCount - 1 && (
                     <View
-                      className={`flex-1 h-1 mx-1 rounded-full ${
-                        isWatched ? 'bg-emerald-500' : 'bg-slate-200'
-                      }`}
+                      style={{
+                        flex: 1,
+                        height: 3,
+                        marginHorizontal: 4,
+                        borderRadius: 2,
+                        backgroundColor: isWatched ? colors.success : colors.borderSubtle,
+                      }}
                     />
                   )}
                 </React.Fragment>
@@ -223,7 +234,7 @@ export default function TopicDetailScreen() {
             })}
           </View>
 
-          <AppText variant="micro" tone="muted" className="mt-1">
+          <AppText variant="micro" tone="muted" style={{ marginTop: 4 }}>
             {progressPercent === 100
               ? '🎉 All reels in this topic completed! Take the quiz below.'
               : `${totalReelsCount - watchedCount} more reels to finish this topic.`}
@@ -231,17 +242,34 @@ export default function TopicDetailScreen() {
         </AppCard>
 
         {/* Tab Switcher: Reels vs Flashcards */}
-        <View className="flex-row bg-slate-100 p-1 rounded-2xl mb-4 border border-slate-200">
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: colors.surfaceSubtle,
+            padding: 4,
+            borderRadius: 14,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
           <Pressable
             onPress={() => setActiveTab('reels')}
-            className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
-              activeTab === 'reels' ? 'bg-white shadow-sm' : ''
-            }`}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: activeTab === 'reels' ? colors.surface : 'transparent',
+              borderWidth: 1,
+              borderColor: activeTab === 'reels' ? colors.borderActive : 'transparent',
+            }}
           >
             <AppText
               variant="caption"
               tone={activeTab === 'reels' ? 'primary' : 'muted'}
-              className="font-bold"
+              style={{ fontWeight: '700' }}
             >
               🎬 Visual Reels ({reels?.length ?? 0})
             </AppText>
@@ -249,14 +277,21 @@ export default function TopicDetailScreen() {
 
           <Pressable
             onPress={() => setActiveTab('flashcards')}
-            className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
-              activeTab === 'flashcards' ? 'bg-white shadow-sm' : ''
-            }`}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: activeTab === 'flashcards' ? colors.surface : 'transparent',
+              borderWidth: 1,
+              borderColor: activeTab === 'flashcards' ? colors.borderActive : 'transparent',
+            }}
           >
             <AppText
               variant="caption"
               tone={activeTab === 'flashcards' ? 'primary' : 'muted'}
-              className="font-bold"
+              style={{ fontWeight: '700' }}
             >
               ⚡ Flashcard Flip
             </AppText>
@@ -282,9 +317,9 @@ export default function TopicDetailScreen() {
                         router.push(`/reel/${item.id}?topicId=${id}`);
                       }}
                     >
-                      <AppCard tone="default" className="border-slate-200">
-                        <View className="flex-row items-center justify-between">
-                          <View className="flex-row items-center gap-3 flex-1 mr-3">
+                      <AppCard tone="default">
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 12 }}>
                             <View
                               style={{
                                 width: 42,
@@ -303,17 +338,17 @@ export default function TopicDetailScreen() {
                                 color={isWatched ? colors.success : colors.primaryText}
                               />
                             </View>
-                            <View className="flex-1">
-                              <AppText variant="bodyMedium" className="font-semibold text-slate-900">
+                            <View style={{ flex: 1 }}>
+                              <AppText variant="bodyMedium" style={{ fontWeight: '700' }}>
                                 {item.title}
                               </AppText>
-                              <View className="flex-row items-center gap-2 mt-1">
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
                                 <AppText variant="micro" tone="muted">
                                   Reel {index + 1} • {formatDuration(item.durationSec)}
                                 </AppText>
                                 {isWatched && (
-                                  <View className="bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
-                                    <AppText variant="micro" className="text-emerald-700 font-bold">
+                                  <View style={{ backgroundColor: colors.successSoft, borderColor: colors.success, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                                    <AppText variant="micro" style={{ color: colors.successText, fontWeight: '700' }}>
                                       Watched
                                     </AppText>
                                   </View>
@@ -321,7 +356,7 @@ export default function TopicDetailScreen() {
                               </View>
                             </View>
                           </View>
-                          <Icon name="chevron-forward" size={18} color="#94A3B8" />
+                          <Icon name="chevron-forward" size={18} color={colors.textMuted} />
                         </View>
                       </AppCard>
                     </Pressable>
@@ -466,11 +501,11 @@ export default function TopicDetailScreen() {
         )}
 
         {/* Action Buttons: Quiz Checkpoint */}
-        <View className="mb-10 gap-3">
+        <View style={{ marginBottom: 40 }}>
           <AppButton
             label="Take Practice Quiz Checkpoint"
             variant="primary"
-            leftIcon={<Icon name="help-circle-outline" size={20} color="#FFFFFF" />}
+            leftIcon={<Icon name="help-circle-outline" size={20} color={colors.textInverse} />}
             onPress={() => {
               educationApi.trackAnalyticsEvent('quiz_started', { topicId: id });
               router.push(`/quiz/${id}`);

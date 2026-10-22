@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable, View, ViewProps, StyleSheet } from "react-native";
 import { useTheme } from "@/app/providers/ThemeProvider";
 
-export type CardTone = "default" | "muted" | "primarySoft" | "accentSoft" | "successSoft";
+export type CardTone = "default" | "muted" | "primarySoft" | "accentSoft" | "successSoft" | "warningSoft";
 
 export type AppCardProps = ViewProps & {
   tone?: CardTone;
@@ -38,6 +38,11 @@ export function AppCard({
       case "successSoft":
         return {
           backgroundColor: colors.successSoft,
+          borderColor: colors.border,
+        };
+      case "warningSoft":
+        return {
+          backgroundColor: colors.warningSoft,
           borderColor: colors.border,
         };
       case "default":

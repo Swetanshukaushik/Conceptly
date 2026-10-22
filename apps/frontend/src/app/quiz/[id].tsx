@@ -152,20 +152,20 @@ export default function QuizScreen() {
           </AppCard>
 
           {score >= 70 ? (
-            <AppCard tone="successSoft" className="mb-6 p-4 border-green-200">
-              <AppText variant="bodyMedium" tone="success" className="font-bold text-center">
+            <AppCard tone="successSoft" style={{ marginBottom: 24, padding: 16 }}>
+              <AppText variant="bodyMedium" tone="success" style={{ fontWeight: '700', textAlign: 'center' }}>
                 Outstanding work! You have passed this topic! 🎉
               </AppText>
             </AppCard>
           ) : (
-            <AppCard className="mb-6 p-4 bg-amber-50 border border-amber-200">
-              <AppText variant="bodyMedium" className="text-amber-800 font-semibold text-center">
+            <AppCard tone="warningSoft" style={{ marginBottom: 24, padding: 16 }}>
+              <AppText variant="bodyMedium" tone="warning" style={{ fontWeight: '700', textAlign: 'center' }}>
                 Good effort! Watch the video reels again and retry to improve.
               </AppText>
             </AppCard>
           )}
 
-          <AppText variant="h3" className="mb-3">
+          <AppText variant="h3" style={{ marginBottom: 12, fontWeight: '700' }}>
             Review Answers
           </AppText>
 
@@ -184,11 +184,11 @@ export default function QuizScreen() {
                 : question.correctOptionId;
 
               return (
-                <AppCard className="mb-3 p-4 border-slate-200" tone="default">
-                  <AppText variant="caption" tone="primary" className="font-bold">
+                <AppCard tone="default" style={{ marginBottom: 14, padding: 16 }}>
+                  <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
                     Question {index + 1}
                   </AppText>
-                  <AppText variant="bodyMedium" className="font-semibold text-slate-900 mt-1">
+                  <AppText variant="bodyMedium" style={{ marginTop: 4, fontWeight: '700' }}>
                     {question.text}
                   </AppText>
                   <FlatList
@@ -201,25 +201,37 @@ export default function QuizScreen() {
                       const showAsCorrect = isCorrectAnswer;
                       const showAsIncorrect = isSelected && !isCorrect;
 
+                      let optBg = colors.surfaceSubtle;
+                      let optBorder = colors.border;
+                      let optText = colors.textPrimary;
+
+                      if (showAsCorrect) {
+                        optBg = colors.successSoft;
+                        optBorder = colors.success;
+                        optText = colors.successText;
+                      } else if (showAsIncorrect) {
+                        optBg = colors.dangerSoft;
+                        optBorder = colors.danger;
+                        optText = colors.dangerText;
+                      }
+
                       return (
                         <View
-                          className={`mt-2 p-3 rounded-xl border ${
-                            showAsCorrect
-                              ? 'border-green-500 bg-green-50'
-                              : showAsIncorrect
-                              ? 'border-red-400 bg-red-50'
-                              : 'border-slate-200 bg-white'
-                          }`}
+                          style={{
+                            marginTop: 8,
+                            padding: 12,
+                            borderRadius: 12,
+                            borderWidth: 1,
+                            backgroundColor: optBg,
+                            borderColor: optBorder,
+                          }}
                         >
                           <AppText
                             variant="caption"
-                            className={`font-medium ${
-                              showAsCorrect
-                                ? 'text-green-700 font-bold'
-                                : showAsIncorrect
-                                ? 'text-red-600'
-                                : 'text-slate-700'
-                            }`}
+                            style={{
+                              color: optText,
+                              fontWeight: showAsCorrect ? '700' : '500',
+                            }}
                           >
                             {option.text} {showAsCorrect && '✓ (Correct)'} {showAsIncorrect && '✗ (Your answer)'}
                           </AppText>
@@ -264,7 +276,7 @@ export default function QuizScreen() {
       />
       <ScrollView className="flex-1 py-2" showsVerticalScrollIndicator={false}>
         {/* Progress indicator */}
-        <AppCard className="mb-4 p-3 bg-slate-50 border-slate-200">
+        <AppCard tone="muted" style={{ marginBottom: 16, padding: 12 }}>
           <View className="flex-row items-center justify-between">
             <AppText variant="micro" tone="muted">Progress</AppText>
             <AppText variant="micro" tone="muted">
@@ -284,8 +296,8 @@ export default function QuizScreen() {
         </AppCard>
 
         {/* Current Question */}
-        <AppCard className="mb-6 p-5 border-slate-200">
-          <AppText variant="h3" className="text-slate-900 leading-snug">
+        <AppCard tone="default" style={{ marginBottom: 24, padding: 20 }}>
+          <AppText variant="h3" style={{ fontWeight: '700', lineHeight: 26 }}>
             {currentQuestion.text}
           </AppText>
 

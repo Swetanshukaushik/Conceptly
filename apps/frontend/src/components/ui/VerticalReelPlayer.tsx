@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   Dimensions,
+  PanResponder,
 } from 'react-native';
 import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
 import { Icon } from './Icon';
@@ -270,42 +271,86 @@ function MobileVerticalReelPlayer({
 
   const remainingCount = Math.max(0, totalCount - (activeIndex + 1));
 
-  // Touch Swipe Gesture handler (Swipe Up -> Next, Swipe Down -> Prev)
-  const touchStartY = useRef<number>(0);
-  const onTouchStart = (e: any) => {
-    touchStartY.current = e.nativeEvent?.pageY || e.nativeEvent?.clientY || 0;
-  };
-  const onTouchEnd = (e: any) => {
-    const currentY = e.nativeEvent?.pageY || e.nativeEvent?.clientY || 0;
-    const diff = touchStartY.current - currentY;
-    if (diff > 45 && activeIndex < totalCount - 1) {
-      setActiveIndex(activeIndex + 1);
-    } else if (diff < -45 && activeIndex > 0) {
-      setActiveIndex(activeIndex - 1);
+  // Seamless Next / Prev Navigation
+  const goToNext = useCallback(() => {
+    if (activeIndex < totalCount - 1) {
+      setActiveIndex((prev) => prev + 1);
+    } else if (onQuizPress) {
+      onQuizPress(reel.topicId);
     }
-  };
+  }, [activeIndex, totalCount, onQuizPress, reel.topicId]);
 
-  // Keyboard navigation on Web (ArrowDown / ArrowUp)
+  const goToPrev = useCallback(() => {
+    if (activeIndex > 0) {
+      setActiveIndex((prev) => prev - 1);
+    }
+  }, [activeIndex]);
+
+  // Instagram-style Vertical Pan Responder (Touch swipe UP -> Next, swipe DOWN -> Prev)
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          const isVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.2;
+          return isVertical && Math.abs(gestureState.dy) > 10;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy < -28) {
+            // Swiped UP -> Next reel
+            goToNext();
+          } else if (gestureState.dy > 28) {
+            // Swiped DOWN -> Previous reel
+            goToPrev();
+          }
+        },
+      }),
+    [goToNext, goToPrev]
+  );
+
+  // Mouse Wheel / Trackpad Scroll on Web (TikTok / Instagram web experience)
+  useEffect(() => {
+    if (isWeb && typeof window !== 'undefined') {
+      let isThrottled = false;
+      const handleWheel = (e: WheelEvent) => {
+        if (isThrottled) return;
+        if (e.deltaY > 20) {
+          isThrottled = true;
+          goToNext();
+          setTimeout(() => { isThrottled = false; }, 400);
+        } else if (e.deltaY < -20) {
+          isThrottled = true;
+          goToPrev();
+          setTimeout(() => { isThrottled = false; }, 400);
+        }
+      };
+      window.addEventListener('wheel', handleWheel, { passive: true });
+      return () => window.removeEventListener('wheel', handleWheel);
+    }
+  }, [goToNext, goToPrev, isWeb]);
+
+  // Keyboard Navigation on Web (ArrowDown / ArrowUp / Space)
   useEffect(() => {
     if (isWeb && typeof window !== 'undefined') {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-          setActiveIndex((prev) => Math.min(totalCount - 1, prev + 1));
-        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-          setActiveIndex((prev) => Math.max(0, prev - 1));
+        if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+          e.preventDefault();
+          goToNext();
+        } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+          e.preventDefault();
+          goToPrev();
         }
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [totalCount, isWeb]);
+  }, [goToNext, goToPrev, isWeb]);
 
   return (
     <View style={styles.mobileOuterContainer}>
       <View
         style={styles.mobilePlayerFrame}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
+        {...panResponder.panHandlers}
       >
         {/* Full Video Area (Tap to play/pause) */}
         <Pressable onPress={togglePlayPause} style={styles.mobileVideoPressable}>
@@ -356,6 +401,14 @@ function MobileVerticalReelPlayer({
           {isWeb && <ViewportToggle inline />}
         </View>
 
+        {/* ↕ Swipe Hint Pill on first reel */}
+        {activeIndex === 0 && totalCount > 1 && (
+          <View style={styles.swipeHintPill}>
+            <Icon name="swap-vertical" size={13} color="#FFFFFF" />
+            <Text style={styles.swipeHintText}>Swipe up for next reel</Text>
+          </View>
+        )}
+
         {/* 📍 Checkpoint Track Layer */}
         <View style={styles.mobileTrackContainer}>
           <View style={styles.checkpointTrackRow}>
@@ -405,6 +458,19 @@ function MobileVerticalReelPlayer({
 
         {/* 👉 Right Side Action Controls */}
         <View style={styles.mobileRightActions}>
+          {/* Instagram-style Step Arrows */}
+          {activeIndex > 0 && (
+            <Pressable onPress={goToPrev} style={styles.floatingArrowBtn}>
+              <Icon name="chevron-up" size={20} color="#FFFFFF" />
+            </Pressable>
+          )}
+
+          {activeIndex < totalCount - 1 && (
+            <Pressable onPress={goToNext} style={styles.floatingArrowBtn}>
+              <Icon name="chevron-down" size={20} color="#FFFFFF" />
+            </Pressable>
+          )}
+
           {/* Speed switcher (1x, 1.25x, 1.5x, 2x) */}
           <Pressable onPress={cycleSpeed} style={styles.actionCircleButton}>
             <Text style={styles.speedText}>{playbackSpeed}x</Text>
@@ -658,6 +724,73 @@ function DesktopStudioPlayer({
     }
   };
 
+  const goToNext = useCallback(() => {
+    if (activeIndex < totalCount - 1) {
+      setActiveIndex((prev) => prev + 1);
+    } else if (onQuizPress) {
+      onQuizPress(reel.topicId);
+    }
+  }, [activeIndex, totalCount, onQuizPress, reel.topicId]);
+
+  const goToPrev = useCallback(() => {
+    if (activeIndex > 0) {
+      setActiveIndex((prev) => prev - 1);
+    }
+  }, [activeIndex]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          const isVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.2;
+          return isVertical && Math.abs(gestureState.dy) > 10;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy < -28) {
+            goToNext();
+          } else if (gestureState.dy > 28) {
+            goToPrev();
+          }
+        },
+      }),
+    [goToNext, goToPrev]
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let isThrottled = false;
+    const handleWheel = (e: WheelEvent) => {
+      if (isThrottled) return;
+      if (e.deltaY > 20) {
+        isThrottled = true;
+        goToNext();
+        setTimeout(() => { isThrottled = false; }, 400);
+      } else if (e.deltaY < -20) {
+        isThrottled = true;
+        goToPrev();
+        setTimeout(() => { isThrottled = false; }, 400);
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [goToNext, goToPrev]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        goToNext();
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        goToPrev();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNext, goToPrev]);
+
   const remainingCount = Math.max(0, totalCount - (activeIndex + 1));
 
   return (
@@ -685,7 +818,7 @@ function DesktopStudioPlayer({
       <View style={styles.desktopStudioBody}>
         {/* Left Column: Vertical Reel Player Card */}
         <View style={styles.desktopVideoCol}>
-          <View style={styles.desktopPlayerCard}>
+          <View style={styles.desktopPlayerCard} {...panResponder.panHandlers}>
             <Pressable
               onPress={togglePlayPause}
               style={styles.desktopVideoPressable}
@@ -1129,6 +1262,41 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 11,
     fontWeight: '700',
+  },
+  swipeHintPill: {
+    position: 'absolute',
+    top: 72,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    zIndex: 22,
+  },
+  swipeHintText: {
+    color: '#F8FAFC',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  floatingArrowBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
   },
 
   // Desktop Player Styles

@@ -1,7 +1,8 @@
 import React from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { AppText } from "./AppText";
 import { AppButton } from "./AppButton";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
 export type EmptyStateProps = {
   title: string;
@@ -18,20 +19,56 @@ export function EmptyState({
   onPressAction,
   icon,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className="items-center rounded-[28px] bg-white px-6 py-10">
-      {icon ? <View className="mb-4">{icon}</View> : null}
-      <AppText variant="h3" className="text-center">
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      {icon ? <View style={styles.iconContainer}>{icon}</View> : null}
+      <AppText variant="h3" style={styles.title}>
         {title}
       </AppText>
       {description ? (
-        <AppText variant="body" tone="secondary" className="mt-2 text-center">
+        <AppText variant="body" tone="secondary" style={styles.description}>
           {description}
         </AppText>
       ) : null}
       {actionLabel ? (
-        <AppButton label={actionLabel} onPress={onPressAction} className="mt-5 self-stretch" />
+        <AppButton label={actionLabel} onPress={onPressAction} style={styles.actionButton} />
       ) : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 36,
+  },
+  iconContainer: {
+    marginBottom: 16,
+  },
+  title: {
+    textAlign: "center",
+    fontWeight: "700",
+  },
+  description: {
+    marginTop: 8,
+    textAlign: "center",
+    maxWidth: 360,
+  },
+  actionButton: {
+    marginTop: 20,
+    alignSelf: "stretch",
+  },
+});

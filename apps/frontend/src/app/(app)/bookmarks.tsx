@@ -65,22 +65,22 @@ export default function BookmarksScreen() {
               router.push(`/topic/${item.topicId}`);
             }}
           >
-            <AppCard tone="default" className="border-slate-200">
+            <AppCard tone="default">
               <View className="flex-row items-start justify-between">
                 <View className="flex-1 mr-2">
                   <AppText variant="caption" tone="primary" numberOfLines={1}>
                     {item.subject?.name ?? 'Subject'} • {item.chapter?.title ?? 'Chapter'}
                   </AppText>
-                  <AppText variant="title" className="mt-1">
+                  <AppText variant="title" style={{ marginTop: 4, fontWeight: '700' }}>
                     {item.topic?.title ?? 'Topic'}
                   </AppText>
                 </View>
-                <View className="bg-amber-100 p-2 rounded-full">
-                  <Icon name="bookmark" size={16} color="#D97706" />
+                <View style={{ backgroundColor: colors.warningSoft, borderColor: colors.warning, borderWidth: 1, padding: 8, borderRadius: 999 }}>
+                  <Icon name="bookmark" size={16} color={colors.warningText} />
                 </View>
               </View>
 
-              <View className="mt-4 flex-row items-center justify-between border-t border-slate-100 pt-3">
+              <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: colors.borderSubtle, paddingTop: 12 }}>
                 <View className="flex-row gap-2">
                   <AppButton
                     label="Resume Lesson"
