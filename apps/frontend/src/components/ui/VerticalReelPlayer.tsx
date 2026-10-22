@@ -14,6 +14,7 @@ import {
 import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
 import { Icon } from './Icon';
 import { ViewportToggle } from './ViewportToggle';
+import { ThemeToggle } from './ThemeToggle';
 import { educationApi } from '@/services/api/educationApi';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -67,15 +68,18 @@ function ReelCheatSheetModal({
           <View style={styles.modalHeader}>
             <View style={styles.modalDragHandle} />
             <View style={styles.modalTitleRow}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
                 <Text style={styles.modalTitle}>⚡ Rapid Revision Cheat-Sheet</Text>
                 <Text style={styles.modalSubtitle} numberOfLines={1}>
                   {reel.title}
                 </Text>
               </View>
-              <Pressable onPress={onClose} style={styles.modalCloseButton}>
-                <Icon name="close" size={18} color={colors.textSecondary} />
-              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ThemeToggle compact={true} />
+                <Pressable onPress={onClose} style={styles.modalCloseButton}>
+                  <Icon name="close" size={18} color={colors.textSecondary} />
+                </Pressable>
+              </View>
             </View>
           </View>
 
@@ -401,6 +405,8 @@ function MobileVerticalReelPlayer({
               {reel.topic?.title ?? 'Revision Reel'}
             </Text>
           </View>
+
+          <ThemeToggle compact={true} overlay={true} />
 
           {isWeb && <ViewportToggle inline />}
         </View>
@@ -824,7 +830,10 @@ function DesktopStudioPlayer({
           </View>
         </View>
 
-        <ViewportToggle inline={true} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <ThemeToggle />
+          <ViewportToggle inline={true} />
+        </View>
       </View>
 
       {/* Main Studio Body: 2 Columns */}
