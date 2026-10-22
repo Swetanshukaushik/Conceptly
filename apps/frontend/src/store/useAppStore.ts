@@ -22,19 +22,31 @@ const STORAGE_KEY = 'conceptly-app-storage';
 const LEGACY_STORAGE_KEY = 'revisex-app-storage';
 
 function loadPersistedState(): Partial<AppState> {
+  let state: Partial<AppState> = {};
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw =
         window.localStorage.getItem(STORAGE_KEY) ||
         window.localStorage.getItem(LEGACY_STORAGE_KEY);
       if (raw) {
-        return JSON.parse(raw);
+        state = JSON.parse(raw);
       }
     } catch (e) {
       console.warn('Failed to load persisted state from localStorage:', e);
     }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlTheme = params.get('theme');
+      if (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'grey') {
+        state.theme = urlTheme;
+      }
+      const urlViewMode = params.get('viewMode');
+      if (urlViewMode === 'desktop' || urlViewMode === 'mobile') {
+        state.viewMode = urlViewMode;
+      }
+    } catch (e) {}
   }
-  return {};
+  return state;
 }
 
 function savePersistedState(state: AppState) {

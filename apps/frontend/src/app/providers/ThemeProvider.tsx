@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import { View } from 'react-native';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeColors, ThemeMode } from '@/theme/types';
@@ -30,6 +30,20 @@ export function useThemeMode(): 'light' | 'dark' {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const storeTheme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlTheme = params.get('theme') as ThemeMode;
+        if (urlTheme && (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'grey')) {
+          if (urlTheme !== storeTheme) {
+            setTheme(urlTheme);
+          }
+        }
+      } catch (e) {}
+    }
+  }, [storeTheme, setTheme]);
 
   const activeMode: ThemeMode = storeTheme || 'dark';
 
