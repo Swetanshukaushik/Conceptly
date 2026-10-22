@@ -16,11 +16,11 @@ import { Icon } from './Icon';
 import { ViewportToggle } from './ViewportToggle';
 import { educationApi } from '@/services/api/educationApi';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/services/api/queryKeys';
 import type { ReelDto } from '@/services/api/types';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import type { ThemeColors } from '@/theme/types';
 
 const SPEED_OPTIONS = [1.0, 1.25, 1.5, 2.0];
 
@@ -51,6 +51,9 @@ function ReelCheatSheetModal({
   reel: ReelDto;
   onQuizPress?: (topicId: string) => void;
 }) {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getReelStyles(colors, isDark), [colors, isDark]);
+
   return (
     <Modal
       visible={visible}
@@ -71,7 +74,7 @@ function ReelCheatSheetModal({
                 </Text>
               </View>
               <Pressable onPress={onClose} style={styles.modalCloseButton}>
-                <Icon name="close" size={20} color="#94A3B8" />
+                <Icon name="close" size={18} color={colors.textSecondary} />
               </Pressable>
             </View>
           </View>
@@ -89,7 +92,7 @@ function ReelCheatSheetModal({
             {reel.interviewPitch && (
               <View style={styles.modalPitchBanner}>
                 <View style={styles.pitchHeaderRow}>
-                  <Icon name="mic" size={15} color="#38BDF8" />
+                  <Icon name="mic" size={15} color={colors.accentText} />
                   <Text style={styles.pitchHeaderText}>30-SECOND INTERVIEW PITCH</Text>
                 </View>
                 <Text style={styles.pitchSubheader}>Say this directly when asked by the interviewer:</Text>
@@ -101,7 +104,7 @@ function ReelCheatSheetModal({
             {reel.architectureDiagram && (
               <View style={styles.modalDiagramContainer}>
                 <View style={styles.diagramHeaderRow}>
-                  <Icon name="git-network" size={15} color="#A78BFA" />
+                  <Icon name="git-network" size={15} color={colors.primary} />
                   <Text style={styles.diagramHeaderText}>VISUAL ARCHITECTURE FLOW</Text>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.diagramScroll}>
@@ -116,7 +119,7 @@ function ReelCheatSheetModal({
             {reel.pitfalls && reel.pitfalls.length > 0 && (
               <View style={styles.modalPitfallsContainer}>
                 <View style={styles.pitfallsHeaderRow}>
-                  <Icon name="alert-circle" size={15} color="#F87171" />
+                  <Icon name="alert-circle" size={15} color={colors.danger} />
                   <Text style={styles.pitfallsHeaderText}>INTERVIEW RED FLAGS (AVOID SAYING)</Text>
                 </View>
                 <View style={styles.pitfallsList}>
@@ -187,6 +190,9 @@ function MobileVerticalReelPlayer({
   onBack?: () => void;
 }) {
   const isWeb = Platform.OS === 'web';
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getReelStyles(colors, isDark), [colors, isDark]);
+
   const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
 
   useEffect(() => {
@@ -297,10 +303,8 @@ function MobileVerticalReelPlayer({
         },
         onPanResponderRelease: (_, gestureState) => {
           if (gestureState.dy < -28) {
-            // Swiped UP -> Next reel
             goToNext();
           } else if (gestureState.dy > 28) {
-            // Swiped DOWN -> Previous reel
             goToPrev();
           }
         },
@@ -369,7 +373,7 @@ function MobileVerticalReelPlayer({
           {/* Buffering Indicator */}
           {isBuffering && (
             <View style={styles.bufferingContainer}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           )}
 
@@ -377,7 +381,7 @@ function MobileVerticalReelPlayer({
           {!isPlaying && !isBuffering && (
             <View style={styles.pauseOverlay}>
               <View style={styles.pauseIconBadge}>
-                <Icon name="play" size={36} color="#FFFFFF" />
+                <Icon name="play" size={36} color={colors.textPrimary} />
               </View>
             </View>
           )}
@@ -387,7 +391,7 @@ function MobileVerticalReelPlayer({
         <View style={styles.mobileTopHeader} pointerEvents="box-none">
           {onBack && (
             <Pressable onPress={onBack} style={styles.mobileBackButton}>
-              <Icon name="arrow-back" size={16} color="#FFFFFF" />
+              <Icon name="arrow-back" size={16} color={colors.textPrimary} />
               <Text style={styles.mobileBackText}>Back</Text>
             </Pressable>
           )}
@@ -404,7 +408,7 @@ function MobileVerticalReelPlayer({
         {/* ↕ Swipe Hint Pill on first reel */}
         {activeIndex === 0 && totalCount > 1 && (
           <View style={styles.swipeHintPill}>
-            <Icon name="swap-vertical" size={13} color="#FFFFFF" />
+            <Icon name="swap-vertical" size={13} color={colors.textPrimary} />
             <Text style={styles.swipeHintText}>Swipe up for next reel</Text>
           </View>
         )}
@@ -428,7 +432,7 @@ function MobileVerticalReelPlayer({
                     ]}
                   >
                     {isPastOrWatched && !isCurrent && (
-                      <Icon name="checkmark" size={10} color="#FFFFFF" />
+                      <Icon name="checkmark" size={10} color={colors.textInverse} />
                     )}
                     {isCurrent && <View style={styles.currentDotPulse} />}
                   </Pressable>
@@ -461,13 +465,13 @@ function MobileVerticalReelPlayer({
           {/* Instagram-style Step Arrows */}
           {activeIndex > 0 && (
             <Pressable onPress={goToPrev} style={styles.floatingArrowBtn}>
-              <Icon name="chevron-up" size={20} color="#FFFFFF" />
+              <Icon name="chevron-up" size={20} color={colors.textPrimary} />
             </Pressable>
           )}
 
           {activeIndex < totalCount - 1 && (
             <Pressable onPress={goToNext} style={styles.floatingArrowBtn}>
-              <Icon name="chevron-down" size={20} color="#FFFFFF" />
+              <Icon name="chevron-down" size={20} color={colors.textPrimary} />
             </Pressable>
           )}
 
@@ -479,7 +483,7 @@ function MobileVerticalReelPlayer({
 
           {/* Cheat-Sheet / Notes Drawer Button */}
           <Pressable onPress={() => setShowNotesDrawer(true)} style={styles.actionCircleButton}>
-            <Icon name="document-text" size={20} color="#FFFFFF" />
+            <Icon name="document-text" size={20} color={colors.textPrimary} />
             <Text style={styles.actionLabel}>Notes</Text>
           </Pressable>
 
@@ -488,7 +492,7 @@ function MobileVerticalReelPlayer({
             <Icon
               name={isMuted ? 'volume-mute' : 'volume-high'}
               size={20}
-              color="#FFFFFF"
+              color={colors.textPrimary}
             />
             <Text style={styles.actionLabel}>{isMuted ? 'Muted' : 'Audio'}</Text>
           </Pressable>
@@ -498,7 +502,7 @@ function MobileVerticalReelPlayer({
             <Icon
               name={isSaved ? 'bookmark' : 'bookmark-outline'}
               size={20}
-              color={isSaved ? '#FBBF24' : '#FFFFFF'}
+              color={isSaved ? colors.warning : colors.textPrimary}
             />
             <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
           </Pressable>
@@ -509,8 +513,8 @@ function MobileVerticalReelPlayer({
               onPress={() => onQuizPress(reel.topicId)}
               style={[styles.actionCircleButton, styles.quizCircleButton]}
             >
-              <Icon name="help-circle" size={22} color="#FFFFFF" />
-              <Text style={styles.actionLabel}>Quiz</Text>
+              <Icon name="help-circle" size={22} color={colors.textInverse} />
+              <Text style={[styles.actionLabel, { color: colors.textInverse }]}>Quiz</Text>
             </Pressable>
           )}
         </View>
@@ -533,7 +537,7 @@ function MobileVerticalReelPlayer({
           {/* Key takeaway quick pill */}
           {reel.keyTakeaway && (
             <View style={styles.takeawayPill}>
-              <Icon name="bulb" size={14} color="#FBBF24" />
+              <Icon name="bulb" size={14} color={colors.warning} />
               <Text style={styles.takeawayText} numberOfLines={2}>
                 {reel.keyTakeaway}
               </Text>
@@ -542,7 +546,7 @@ function MobileVerticalReelPlayer({
 
           <View style={styles.bottomMetaRow}>
             <View style={styles.durationPill}>
-              <Icon name="time-outline" size={13} color="#CBD5E1" />
+              <Icon name="time-outline" size={13} color={colors.textSecondary} />
               <Text style={styles.durationText}>{formatSeconds(reel.durationSec)}</Text>
             </View>
 
@@ -552,7 +556,7 @@ function MobileVerticalReelPlayer({
                 onPress={() => setShowNotesDrawer(true)}
                 style={styles.sheetTriggerButton}
               >
-                <Icon name="reader-outline" size={14} color="#FFFFFF" />
+                <Icon name="reader-outline" size={14} color={colors.textPrimary} />
                 <Text style={styles.sheetTriggerText}>Cheat Sheet</Text>
               </Pressable>
 
@@ -562,7 +566,7 @@ function MobileVerticalReelPlayer({
                   onPress={() => onQuizPress(reel.topicId)}
                   style={styles.quizBannerButton}
                 >
-                  <Icon name="school-outline" size={14} color="#FFFFFF" />
+                  <Icon name="school-outline" size={14} color={colors.textInverse} />
                   <Text style={styles.quizBannerText}>Take Quiz</Text>
                 </Pressable>
               )}
@@ -583,7 +587,7 @@ function MobileVerticalReelPlayer({
             <Icon
               name="chevron-back"
               size={15}
-              color={activeIndex === 0 ? '#475569' : '#FFFFFF'}
+              color={activeIndex === 0 ? colors.textMuted : colors.textPrimary}
             />
             <Text
               style={[
@@ -618,7 +622,7 @@ function MobileVerticalReelPlayer({
             <Icon
               name="chevron-forward"
               size={15}
-              color={activeIndex === totalCount - 1 ? '#475569' : '#FFFFFF'}
+              color={activeIndex === totalCount - 1 ? colors.textMuted : colors.textPrimary}
             />
           </Pressable>
         </View>
@@ -649,6 +653,9 @@ function DesktopStudioPlayer({
   onFlashcardPress?: (topicId: string) => void;
   onBack?: () => void;
 }) {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getReelStyles(colors, isDark), [colors, isDark]);
+
   const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
 
   useEffect(() => {
@@ -714,7 +721,13 @@ function DesktopStudioPlayer({
   };
 
   const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded && status.didJustFinish) {
+    if (!status.isLoaded) {
+      setIsBuffering(true);
+      return;
+    }
+    setIsBuffering(status.isBuffering);
+
+    if (status.didJustFinish) {
       educationApi.recordReelView(reel.id, {
         reelId: reel.id,
         watchDurationSec: Math.round(((status as any).durationMillis ?? 45000) / 1000),
@@ -800,7 +813,7 @@ function DesktopStudioPlayer({
         <View style={styles.desktopHeaderLeft}>
           {onBack && (
             <Pressable onPress={onBack} style={styles.desktopBackButton}>
-              <Icon name="arrow-back" size={16} color="#FFFFFF" />
+              <Icon name="arrow-back" size={16} color={colors.textPrimary} />
               <Text style={styles.desktopBackText}>Back to Topic</Text>
             </Pressable>
           )}
@@ -835,11 +848,18 @@ function DesktopStudioPlayer({
                 useNativeControls={false}
               />
 
+              {/* Buffering Indicator */}
+              {isBuffering && (
+                <View style={styles.bufferingContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              )}
+
               {/* Pause Overlay Icon */}
-              {!isPlaying && (
+              {!isPlaying && !isBuffering && (
                 <View style={styles.pauseOverlay}>
                   <View style={styles.pauseIconBadge}>
-                    <Icon name="play" size={36} color="#FFFFFF" />
+                    <Icon name="play" size={36} color={colors.textPrimary} />
                   </View>
                 </View>
               )}
@@ -862,7 +882,7 @@ function DesktopStudioPlayer({
                           ]}
                         >
                           {isPastOrWatched && !isCurrent && (
-                            <Icon name="checkmark" size={10} color="#FFFFFF" />
+                            <Icon name="checkmark" size={10} color={colors.textInverse} />
                           )}
                           {isCurrent && <View style={styles.currentDotPulse} />}
                         </Pressable>
@@ -900,7 +920,7 @@ function DesktopStudioPlayer({
                   <Icon
                     name={isMuted ? 'volume-mute' : 'volume-high'}
                     size={20}
-                    color="#FFFFFF"
+                    color={colors.textPrimary}
                   />
                   <Text style={styles.actionLabel}>{isMuted ? 'Muted' : 'Audio'}</Text>
                 </Pressable>
@@ -909,7 +929,7 @@ function DesktopStudioPlayer({
                   <Icon
                     name={isSaved ? 'bookmark' : 'bookmark-outline'}
                     size={20}
-                    color={isSaved ? '#FBBF24' : '#FFFFFF'}
+                    color={isSaved ? colors.warning : colors.textPrimary}
                   />
                   <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
                 </Pressable>
@@ -931,7 +951,7 @@ function DesktopStudioPlayer({
                   {reel.title}
                 </Text>
                 <View style={styles.durationPill}>
-                  <Icon name="time-outline" size={13} color="#CBD5E1" />
+                  <Icon name="time-outline" size={13} color={colors.textSecondary} />
                   <Text style={styles.durationText}>{formatSeconds(reel.durationSec)}</Text>
                 </View>
               </View>
@@ -951,7 +971,7 @@ function DesktopStudioPlayer({
               <Icon
                 name="chevron-back"
                 size={16}
-                color={activeIndex === 0 ? '#475569' : '#FFFFFF'}
+                color={activeIndex === 0 ? colors.textMuted : colors.textPrimary}
               />
               <Text
                 style={[
@@ -986,7 +1006,7 @@ function DesktopStudioPlayer({
               <Icon
                 name="chevron-forward"
                 size={16}
-                color={activeIndex === totalCount - 1 ? '#475569' : '#FFFFFF'}
+                color={activeIndex === totalCount - 1 ? colors.textMuted : colors.textPrimary}
               />
             </Pressable>
           </View>
@@ -1012,7 +1032,7 @@ function DesktopStudioPlayer({
             {reel.interviewPitch && (
               <View style={styles.modalPitchBanner}>
                 <View style={styles.pitchHeaderRow}>
-                  <Icon name="mic" size={15} color="#38BDF8" />
+                  <Icon name="mic" size={15} color={colors.accentText} />
                   <Text style={styles.pitchHeaderText}>30-SECOND INTERVIEW PITCH</Text>
                 </View>
                 <Text style={styles.pitchSubheader}>Say this directly when asked by the interviewer:</Text>
@@ -1024,7 +1044,7 @@ function DesktopStudioPlayer({
             {reel.architectureDiagram && (
               <View style={styles.modalDiagramContainer}>
                 <View style={styles.diagramHeaderRow}>
-                  <Icon name="git-network" size={15} color="#A78BFA" />
+                  <Icon name="git-network" size={15} color={colors.primary} />
                   <Text style={styles.diagramHeaderText}>VISUAL ARCHITECTURE FLOW</Text>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.diagramScroll}>
@@ -1039,7 +1059,7 @@ function DesktopStudioPlayer({
             {reel.pitfalls && reel.pitfalls.length > 0 && (
               <View style={styles.modalPitfallsContainer}>
                 <View style={styles.pitfallsHeaderRow}>
-                  <Icon name="alert-circle" size={15} color="#F87171" />
+                  <Icon name="alert-circle" size={15} color={colors.danger} />
                   <Text style={styles.pitfallsHeaderText}>INTERVIEW RED FLAGS (AVOID SAYING)</Text>
                 </View>
                 <View style={styles.pitfallsList}>
@@ -1119,826 +1139,857 @@ export function VerticalReelPlayer({
   );
 }
 
-const styles = StyleSheet.create({
-  // Mobile Player Styles
-  mobileOuterContainer: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mobilePlayerFrame: {
-    width: '100%',
-    maxWidth: 500,
-    height: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#0B0F19',
-  },
-  mobileVideoPressable: {
-    width: '100%',
-    height: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mobileVideo: {
-    width: '100%',
-    height: '100%',
-  },
-  mobileTopHeader: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    right: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 30,
-    gap: 8,
-  },
-  mobileBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-  },
-  mobileBackText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  mobileTopicBadge: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  mobileTopicBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  mobileTrackContainer: {
-    position: 'absolute',
-    top: 58,
-    left: 14,
-    right: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    zIndex: 25,
-  },
-  mobileRightActions: {
-    position: 'absolute',
-    right: 12,
-    bottom: 128,
-    alignItems: 'center',
-    gap: 12,
-    zIndex: 25,
-  },
-  mobileBottomOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 46,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    paddingTop: 24,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 20,
-  },
-  mobilePagerBar: {
-    position: 'absolute',
-    bottom: 6,
-    left: 14,
-    right: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    zIndex: 30,
-  },
-  mobilePagerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  mobilePagerBtnDisabled: {
-    opacity: 0.35,
-  },
-  mobilePagerBtnText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  mobilePagerBtnTextDisabled: {
-    color: '#64748B',
-  },
-  mobilePagerCountText: {
-    color: '#E2E8F0',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  swipeHintPill: {
-    position: 'absolute',
-    top: 72,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    zIndex: 22,
-  },
-  swipeHintText: {
-    color: '#F8FAFC',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  floatingArrowBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-  },
+// 🎨 Theme-Aware Stylesheet Generator (Light, Dark, and Grey modes)
+function getReelStyles(colors: ThemeColors, isDark: boolean) {
+  return StyleSheet.create({
+    // Mobile Player Styles
+    mobileOuterContainer: {
+      flex: 1,
+      width: '100%',
+      height: '100%',
+      backgroundColor: colors.canvasBg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    mobilePlayerFrame: {
+      width: '100%',
+      maxWidth: 500,
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+      backgroundColor: '#000000',
+      borderLeftWidth: Platform.OS === 'web' ? 1 : 0,
+      borderRightWidth: Platform.OS === 'web' ? 1 : 0,
+      borderColor: colors.border,
+    },
+    mobileVideoPressable: {
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mobileVideo: {
+      width: '100%',
+      height: '100%',
+    },
+    mobileTopHeader: {
+      position: 'absolute',
+      top: 14,
+      left: 14,
+      right: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      zIndex: 30,
+      gap: 8,
+    },
+    mobileBackButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.78)' : 'rgba(255, 255, 255, 0.88)',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    mobileBackText: {
+      color: colors.textPrimary,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    mobileTopicBadge: {
+      flex: 1,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.78)' : 'rgba(255, 255, 255, 0.88)',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 16,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    mobileTopicBadgeText: {
+      color: colors.textPrimary,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    mobileTrackContainer: {
+      position: 'absolute',
+      top: 58,
+      left: 14,
+      right: 14,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.88)' : 'rgba(255, 255, 255, 0.94)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      zIndex: 25,
+    },
+    mobileRightActions: {
+      position: 'absolute',
+      right: 12,
+      bottom: 128,
+      alignItems: 'center',
+      gap: 12,
+      zIndex: 25,
+    },
+    mobileBottomOverlay: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 46,
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      paddingTop: 24,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      zIndex: 20,
+    },
+    mobilePagerBar: {
+      position: 'absolute',
+      bottom: 6,
+      left: 14,
+      right: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      zIndex: 30,
+    },
+    mobilePagerBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceSubtle,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    mobilePagerBtnDisabled: {
+      opacity: 0.35,
+    },
+    mobilePagerBtnText: {
+      color: colors.textPrimary,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    mobilePagerBtnTextDisabled: {
+      color: colors.textMuted,
+    },
+    mobilePagerCountText: {
+      color: colors.textPrimary,
+      fontSize: 11,
+      fontWeight: '700',
+    },
+    swipeHintPill: {
+      position: 'absolute',
+      top: 72,
+      alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.88)' : 'rgba(255, 255, 255, 0.94)',
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      zIndex: 22,
+    },
+    swipeHintText: {
+      color: colors.textPrimary,
+      fontSize: 11,
+      fontWeight: '600',
+      letterSpacing: -0.2,
+    },
+    floatingArrowBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.82)' : 'rgba(255, 255, 255, 0.9)',
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: isDark ? '#000000' : '#0F172A',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.35 : 0.12,
+      shadowRadius: 4,
+    },
 
-  // Desktop Player Styles
-  desktopContainer: {
-    flex: 1,
-    backgroundColor: '#0B0F19',
-    alignItems: 'center',
-    width: '100%',
-    minHeight: '100%',
-  },
-  desktopHeader: {
-    width: '100%',
-    maxWidth: 1200,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  desktopHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  desktopBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 14,
-  },
-  desktopBackText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  desktopTopicPill: {
-    backgroundColor: 'rgba(79, 70, 229, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(79, 70, 229, 0.4)',
-  },
-  desktopTopicText: {
-    color: '#A5B4FC',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  desktopStudioBody: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    gap: 28,
-    maxWidth: 1200,
-    width: '100%',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    flex: 1,
-  },
-  desktopVideoCol: {
-    alignItems: 'center',
-  },
-  desktopPlayerCard: {
-    width: 400,
-    height: 640,
-    borderRadius: 24,
-    overflow: 'hidden',
-    backgroundColor: '#000000',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  desktopVideoPressable: {
-    width: 400,
-    height: 640,
-    position: 'relative',
-  },
-  desktopVideoElement: {
-    width: 400,
-    height: 640,
-  },
-  desktopPagerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 400,
-    marginTop: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  desktopPagerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  desktopPagerButtonDisabled: {
-    backgroundColor: 'transparent',
-    opacity: 0.4,
-  },
-  desktopPagerText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  desktopPagerTextDisabled: {
-    color: '#64748B',
-  },
-  desktopPagerCount: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  desktopStudioPanel: {
-    flex: 1,
-    maxWidth: 680,
-    height: 692,
-    backgroundColor: '#0F172A',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-  },
-  studioPanelHeader: {
-    marginBottom: 16,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  studioPanelTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  studioPanelSubtitle: {
-    color: '#94A3B8',
-    fontSize: 13,
-    marginTop: 3,
-  },
-  studioScroll: {
-    flex: 1,
-  },
+    // Desktop Player Styles
+    desktopContainer: {
+      flex: 1,
+      backgroundColor: colors.screenBg,
+      alignItems: 'center',
+      width: '100%',
+      minHeight: '100%',
+    },
+    desktopHeader: {
+      width: '100%',
+      maxWidth: 1200,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingTop: 16,
+      paddingBottom: 12,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    desktopHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    desktopBackButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.surfaceSubtle,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 14,
+    },
+    desktopBackText: {
+      color: colors.textPrimary,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    desktopTopicPill: {
+      backgroundColor: colors.primarySoft,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.primaryBorder,
+    },
+    desktopTopicText: {
+      color: colors.primaryText,
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    desktopStudioBody: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      gap: 28,
+      maxWidth: 1200,
+      width: '100%',
+      paddingHorizontal: 24,
+      paddingVertical: 20,
+      flex: 1,
+    },
+    desktopVideoCol: {
+      alignItems: 'center',
+    },
+    desktopPlayerCard: {
+      width: 400,
+      height: 640,
+      borderRadius: 24,
+      overflow: 'hidden',
+      backgroundColor: '#000000',
+      position: 'relative',
+      shadowColor: isDark ? '#000000' : '#0F172A',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: isDark ? 0.45 : 0.1,
+      shadowRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    desktopVideoPressable: {
+      width: 400,
+      height: 640,
+      position: 'relative',
+    },
+    desktopVideoElement: {
+      width: 400,
+      height: 640,
+    },
+    desktopPagerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: 400,
+      marginTop: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    desktopPagerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 10,
+      backgroundColor: colors.surfaceSubtle,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    desktopPagerButtonDisabled: {
+      backgroundColor: 'transparent',
+      opacity: 0.35,
+    },
+    desktopPagerText: {
+      color: colors.textPrimary,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    desktopPagerTextDisabled: {
+      color: colors.textMuted,
+    },
+    desktopPagerCount: {
+      color: colors.textPrimary,
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    desktopStudioPanel: {
+      flex: 1,
+      maxWidth: 680,
+      height: 692,
+      backgroundColor: colors.surface,
+      borderRadius: 24,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: isDark ? '#000000' : '#0F172A',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: isDark ? 0.35 : 0.08,
+      shadowRadius: 16,
+    },
+    studioPanelHeader: {
+      marginBottom: 16,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    studioPanelTitle: {
+      color: colors.textPrimary,
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    studioPanelSubtitle: {
+      color: colors.textMuted,
+      fontSize: 13,
+      marginTop: 3,
+    },
+    studioScroll: {
+      flex: 1,
+    },
 
-  // Video State Overlays
-  bufferingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    zIndex: 10,
-  },
-  pauseOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    zIndex: 10,
-  },
-  pauseIconBadge: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+    // Video State Overlays
+    bufferingContainer: {
+      ...StyleSheet.absoluteFillObject,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)',
+      zIndex: 10,
+    },
+    pauseOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(15,23,42,0.25)',
+      zIndex: 10,
+    },
+    pauseIconBadge: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
 
-  // Shared Track & Checkpoints
-  trackContainer: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    right: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    zIndex: 20,
-  },
-  checkpointTrackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkpointDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkpointDotCompleted: {
-    backgroundColor: '#10B981', // Emerald green
-  },
-  checkpointDotCurrent: {
-    backgroundColor: '#6366F1', // Indigo glow
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.2 }],
-  },
-  currentDotPulse: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
-  },
-  trackSegment: {
-    flex: 1,
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginHorizontal: 4,
-    borderRadius: 2,
-  },
-  trackSegmentActive: {
-    backgroundColor: '#10B981',
-  },
-  trackSummaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  trackSummaryText: {
-    color: '#E2E8F0',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  trackRemainingText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '500',
-  },
+    // Shared Track & Checkpoints
+    trackContainer: {
+      position: 'absolute',
+      top: 16,
+      left: 16,
+      right: 16,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.88)' : 'rgba(255, 255, 255, 0.94)',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      zIndex: 20,
+    },
+    checkpointTrackRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkpointDot: {
+      width: 14,
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkpointDotCompleted: {
+      backgroundColor: colors.success,
+    },
+    checkpointDotCurrent: {
+      backgroundColor: colors.primary,
+      borderWidth: 2,
+      borderColor: colors.textInverse,
+      transform: [{ scale: 1.2 }],
+    },
+    currentDotPulse: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.textInverse,
+    },
+    trackSegment: {
+      flex: 1,
+      height: 3,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.1)',
+      marginHorizontal: 4,
+      borderRadius: 2,
+    },
+    trackSegmentActive: {
+      backgroundColor: colors.success,
+    },
+    trackSummaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 6,
+    },
+    trackSummaryText: {
+      color: colors.textPrimary,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    trackRemainingText: {
+      color: colors.textMuted,
+      fontSize: 11,
+      fontWeight: '500',
+    },
 
-  // Shared Action Buttons
-  rightActionsContainer: {
-    position: 'absolute',
-    right: 14,
-    bottom: 90,
-    alignItems: 'center',
-    gap: 14,
-    zIndex: 20,
-  },
-  actionCircleButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-  },
-  speedText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  quizCircleButton: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#6366F1',
-  },
-  actionLabel: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '600',
-    marginTop: 2,
-  },
+    // Shared Action Buttons
+    rightActionsContainer: {
+      position: 'absolute',
+      right: 14,
+      bottom: 90,
+      alignItems: 'center',
+      gap: 14,
+      zIndex: 20,
+    },
+    actionCircleButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.82)' : 'rgba(255, 255, 255, 0.9)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    speedText: {
+      color: colors.textPrimary,
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
+    quizCircleButton: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primaryBorder,
+    },
+    actionLabel: {
+      color: colors.textPrimary,
+      fontSize: 9,
+      fontWeight: '600',
+      marginTop: 2,
+    },
 
-  // Shared Bottom Overlay
-  bottomOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 18,
-    paddingBottom: 16,
-    paddingTop: 36,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    zIndex: 10,
-  },
-  chapterBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  subjectTag: {
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  subjectTagText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  chapterSubtitleText: {
-    color: '#E2E8F0',
-    fontSize: 12,
-    fontWeight: '500',
-    flex: 1,
-  },
-  reelTitleText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
-    lineHeight: 20,
-    marginBottom: 4,
-  },
-  takeawayPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(251, 191, 36, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.3)',
-    marginBottom: 8,
-  },
-  takeawayText: {
-    color: '#FDE68A',
-    fontSize: 11,
-    fontWeight: '500',
-    flex: 1,
-  },
-  bottomMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  durationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  durationText: {
-    color: '#CBD5E1',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  sheetTriggerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  sheetTriggerText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  quizBannerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#6366F1',
-  },
-  quizBannerText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
+    // Shared Bottom Overlay
+    bottomOverlay: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 18,
+      paddingBottom: 16,
+      paddingTop: 36,
+      backgroundColor: isDark ? 'rgba(11, 15, 25, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      zIndex: 10,
+    },
+    chapterBadgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4,
+    },
+    subjectTag: {
+      backgroundColor: colors.primarySoft,
+      borderWidth: 1,
+      borderColor: colors.primaryBorder,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 8,
+    },
+    subjectTagText: {
+      color: colors.primaryText,
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
+    chapterSubtitleText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '500',
+      flex: 1,
+    },
+    reelTitleText: {
+      color: colors.textPrimary,
+      fontSize: 15,
+      fontWeight: 'bold',
+      lineHeight: 20,
+      marginBottom: 4,
+    },
+    takeawayPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.warningSoft,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(217, 119, 6, 0.3)',
+      marginBottom: 8,
+    },
+    takeawayText: {
+      color: colors.warningText,
+      fontSize: 11,
+      fontWeight: '500',
+      flex: 1,
+    },
+    bottomMetaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    durationPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.surfaceSubtle,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
+    },
+    durationText: {
+      color: colors.textSecondary,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    actionButtonsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    sheetTriggerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.surfaceSubtle,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    sheetTriggerText: {
+      color: colors.textPrimary,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    quizBannerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.primary,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.primaryBorder,
+    },
+    quizBannerText: {
+      color: colors.textInverse,
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
 
-  // Modal / Drawer Styles
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#0F172A',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '85%',
-    paddingBottom: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  modalHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  modalDragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#475569',
-    alignSelf: 'center',
-    marginBottom: 10,
-  },
-  modalTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: 'bold',
-  },
-  modalSubtitle: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  modalCloseButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalScroll: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  modalTakeawayBanner: {
-    backgroundColor: 'rgba(79, 70, 229, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.35)',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-  },
-  modalTakeawayHeader: {
-    color: '#818CF8',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  modalTakeawayBody: {
-    color: '#E0E7FF',
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  modalPitchBanner: {
-    backgroundColor: 'rgba(14, 165, 233, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-  },
-  pitchHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  pitchHeaderText: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  pitchSubheader: {
-    color: '#94A3B8',
-    fontSize: 11,
-    marginBottom: 6,
-  },
-  pitchBody: {
-    color: '#F0F9FF',
-    fontSize: 13,
-    lineHeight: 19,
-    fontStyle: 'italic',
-    fontWeight: '500',
-  },
-  modalDiagramContainer: {
-    backgroundColor: '#020617',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.3)',
-    padding: 14,
-    marginBottom: 16,
-  },
-  diagramHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  diagramHeaderText: {
-    color: '#A78BFA',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  diagramScroll: {
-    marginTop: 4,
-  },
-  diagramMonospace: {
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    color: '#34D399',
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  modalPitfallsContainer: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.3)',
-    padding: 14,
-    marginBottom: 16,
-  },
-  pitfallsHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  pitfallsHeaderText: {
-    color: '#F87171',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  pitfallsList: {
-    gap: 8,
-  },
-  pitfallRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  pitfallCross: {
-    color: '#EF4444',
-    fontSize: 13,
-    fontWeight: 'bold',
-    lineHeight: 18,
-  },
-  pitfallText: {
-    color: '#FCA5A5',
-    fontSize: 12,
-    lineHeight: 17,
-    flex: 1,
-  },
-  bulletSectionTitle: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  bulletsContainer: {
-    gap: 8,
-    marginBottom: 20,
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  bulletDot: {
-    color: '#6366F1',
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  bulletText: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    lineHeight: 18,
-    flex: 1,
-  },
-  modalActions: {
-    gap: 10,
-    marginTop: 8,
-    marginBottom: 30,
-  },
-  modalQuizButton: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 13,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalQuizButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  modalDismissButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalDismissText: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-});
+    // Modal / Drawer Styles
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: isDark ? 'rgba(0,0,0,0.72)' : 'rgba(15, 23, 42, 0.45)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      maxHeight: '85%',
+      paddingBottom: 28,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: isDark ? '#000000' : '#0F172A',
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: isDark ? 0.4 : 0.1,
+      shadowRadius: 12,
+    },
+    modalHeader: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalDragHandle: {
+      width: 36,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      alignSelf: 'center',
+      marginBottom: 10,
+    },
+    modalTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    modalTitle: {
+      color: colors.textPrimary,
+      fontSize: 17,
+      fontWeight: 'bold',
+    },
+    modalSubtitle: {
+      color: colors.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    modalCloseButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.surfaceSubtle,
+      borderWidth: 1,
+      borderColor: colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalScroll: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+    },
+    modalTakeawayBanner: {
+      backgroundColor: colors.primarySoft,
+      borderWidth: 1,
+      borderColor: colors.primaryBorder,
+      borderRadius: 16,
+      padding: 14,
+      marginBottom: 16,
+    },
+    modalTakeawayHeader: {
+      color: colors.primaryText,
+      fontSize: 11,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+      marginBottom: 4,
+    },
+    modalTakeawayBody: {
+      color: colors.textPrimary,
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '500',
+    },
+    modalPitchBanner: {
+      backgroundColor: colors.accentSoft,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(13, 148, 136, 0.3)',
+      borderRadius: 16,
+      padding: 14,
+      marginBottom: 16,
+    },
+    pitchHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 4,
+    },
+    pitchHeaderText: {
+      color: colors.accentText,
+      fontSize: 11,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    pitchSubheader: {
+      color: colors.textMuted,
+      fontSize: 11,
+      marginBottom: 6,
+    },
+    pitchBody: {
+      color: colors.textPrimary,
+      fontSize: 13,
+      lineHeight: 19,
+      fontStyle: 'italic',
+      fontWeight: '500',
+    },
+    modalDiagramContainer: {
+      backgroundColor: colors.surfaceSubtle,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: 16,
+    },
+    diagramHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 8,
+    },
+    diagramHeaderText: {
+      color: colors.primaryText,
+      fontSize: 11,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    diagramScroll: {
+      marginTop: 4,
+    },
+    diagramMonospace: {
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      color: colors.accentTealText,
+      fontSize: 11,
+      lineHeight: 16,
+    },
+    modalPitfallsContainer: {
+      backgroundColor: colors.dangerSoft,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(248, 113, 113, 0.3)' : 'rgba(220, 38, 38, 0.25)',
+      padding: 14,
+      marginBottom: 16,
+    },
+    pitfallsHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 8,
+    },
+    pitfallsHeaderText: {
+      color: colors.dangerText,
+      fontSize: 11,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    pitfallsList: {
+      gap: 8,
+    },
+    pitfallRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+    },
+    pitfallCross: {
+      color: colors.danger,
+      fontSize: 13,
+      fontWeight: 'bold',
+      lineHeight: 18,
+    },
+    pitfallText: {
+      color: colors.dangerText,
+      fontSize: 12,
+      lineHeight: 17,
+      flex: 1,
+    },
+    bulletSectionTitle: {
+      color: colors.textPrimary,
+      fontSize: 13,
+      fontWeight: '700',
+      marginBottom: 8,
+    },
+    bulletsContainer: {
+      gap: 8,
+      marginBottom: 20,
+    },
+    bulletRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+    },
+    bulletDot: {
+      color: colors.primary,
+      fontSize: 14,
+      lineHeight: 18,
+    },
+    bulletText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 18,
+      flex: 1,
+    },
+    modalActions: {
+      gap: 10,
+      marginTop: 8,
+      marginBottom: 30,
+    },
+    modalQuizButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: 13,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalQuizButtonText: {
+      color: colors.textInverse,
+      fontSize: 13,
+      fontWeight: 'bold',
+    },
+    modalDismissButton: {
+      backgroundColor: colors.surfaceSubtle,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 12,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalDismissText: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+  });
+}

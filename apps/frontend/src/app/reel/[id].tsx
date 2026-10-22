@@ -42,7 +42,7 @@ export default function ReelPlayerScreen() {
 
   if (isLoading) {
     return (
-      <ScreenContainer className="bg-black">
+      <ScreenContainer>
         <View className="flex-1 justify-center items-center">
           <Loader />
         </View>
