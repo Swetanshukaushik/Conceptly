@@ -234,37 +234,37 @@ export default function WelcomeScreen() {
           </AppText>
 
           {/* Hero Subtitle */}
-          <AppText variant="body" tone="secondary" className="mt-3 leading-relaxed text-slate-600">
+          <AppText variant="body" tone="secondary" style={{ marginTop: 12, lineHeight: 22, maxWidth: 540 }}>
             Cut through 50-page textbooks and hours of lecture videos. Master system design, coding patterns,
             case frameworks, and competitive exams through ultra-dense visual reels, whiteboard ASCII flows,
             and verbatim interview pitches.
           </AppText>
 
           {/* Proof Badges Row */}
-          <View className="flex-row flex-wrap items-center gap-3 mt-4">
-            <View className="flex-row items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg">
-              <Icon name="time-outline" size={14} color="#475569" />
-              <AppText variant="micro" className="font-bold text-slate-700">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+              <Icon name="time-outline" size={14} color={colors.primaryText} />
+              <AppText variant="micro" style={{ fontWeight: '700' }}>
                 45s Micro-Reels
               </AppText>
             </View>
-            <View className="flex-row items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg">
-              <Icon name="git-network-outline" size={14} color="#475569" />
-              <AppText variant="micro" className="font-bold text-slate-700">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+              <Icon name="git-network-outline" size={14} color={colors.primaryText} />
+              <AppText variant="micro" style={{ fontWeight: '700' }}>
                 ASCII Architecture Flows
               </AppText>
             </View>
-            <View className="flex-row items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg">
-              <Icon name="mic-outline" size={14} color="#475569" />
-              <AppText variant="micro" className="font-bold text-slate-700">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+              <Icon name="mic-outline" size={14} color={colors.primaryText} />
+              <AppText variant="micro" style={{ fontWeight: '700' }}>
                 30-Sec Pitch Scripts
               </AppText>
             </View>
           </View>
 
           {/* Primary Call to Actions */}
-          <View className="flex-row flex-wrap items-center gap-3.5 mt-6">
-            <View className="flex-1 min-w-[200px]">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 14, marginTop: 24 }}>
+            <View style={{ flex: 1, minWidth: 200 }}>
               <AppButton
                 label="Start Rapid Revision →"
                 variant="primary"
@@ -273,10 +273,21 @@ export default function WelcomeScreen() {
             </View>
             <Pressable
               onPress={() => router.push('/reel/reel-cap-1?topicId=topic-cap-theorem')}
-              className="px-5 py-3.5 rounded-2xl bg-white border border-slate-300 items-center justify-center flex-row gap-2 shadow-sm"
+              style={{
+                paddingHorizontal: 20,
+                paddingVertical: 14,
+                borderRadius: 14,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderWidth: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 8,
+              }}
             >
-              <Icon name="play" size={16} color="#4F46E5" />
-              <AppText variant="bodyMedium" tone="primary" className="font-bold">
+              <Icon name="play" size={16} color={colors.primary} />
+              <AppText variant="bodyMedium" tone="primary" style={{ fontWeight: '700' }}>
                 Watch Demo Reel
               </AppText>
             </Pressable>
@@ -407,43 +418,56 @@ export default function WelcomeScreen() {
 
       {/* ⚙️ How Conceptly Works (The 4-Step Engine) */}
       <View className="my-6">
-        <View className="items-center text-center mb-6">
-          <View className="px-3 py-0.5 bg-slate-100 rounded-full mb-1">
-            <AppText variant="micro" tone="secondary" className="font-bold tracking-wider uppercase">
+        <View style={{ alignItems: 'center', marginBottom: 24 }}>
+          <View style={{ paddingHorizontal: 12, paddingVertical: 2, backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, borderRadius: 999, marginBottom: 6 }}>
+            <AppText variant="micro" tone="secondary" style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
               The Learning Loop
             </AppText>
           </View>
-          <AppText variant="h2" className="text-slate-900 font-extrabold text-center">
+          <AppText variant="h2" style={{ fontWeight: '800', textAlign: 'center' }}>
             How Conceptly Accelerates Your Understanding
           </AppText>
-          <AppText variant="body" tone="muted" className="text-center max-w-xl mt-1">
+          <AppText variant="body" tone="muted" style={{ textAlign: 'center', maxWidth: 560, marginTop: 4 }}>
             Built specifically for candidates who need maximum retention and mental model clarity in minimum time.
           </AppText>
         </View>
 
-        <View className={isDesktop ? 'flex-row gap-4' : 'gap-3'}>
-          {WORKFLOW_STEPS.map((s, idx) => (
+        <View style={isDesktop ? { flexDirection: 'row', gap: 16 } : { gap: 12 }}>
+          {WORKFLOW_STEPS.map((s) => (
             <View
               key={s.step}
-              className={`p-4 rounded-2xl bg-white border border-slate-200 shadow-sm ${
-                isDesktop ? 'flex-1' : ''
-              }`}
+              style={[
+                {
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                },
+                isDesktop ? { flex: 1 } : undefined,
+              ]}
             >
-              <View className="flex-row items-center justify-between mb-3">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <View
-                  style={{ backgroundColor: `${s.color}15` }}
-                  className="h-10 w-10 rounded-xl items-center justify-center"
+                  style={{
+                    backgroundColor: `${s.color}15`,
+                    height: 40,
+                    width: 40,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
                   <Icon name={s.icon} size={20} color={s.color} />
                 </View>
-                <AppText variant="caption" className="font-mono font-extrabold text-slate-300">
+                <AppText variant="caption" tone="muted" style={{ fontFamily: 'monospace', fontWeight: '800' }}>
                   {s.step}
                 </AppText>
               </View>
-              <AppText variant="title" className="text-slate-900 font-bold mb-1">
+              <AppText variant="title" style={{ fontWeight: '700', marginBottom: 4 }}>
                 {s.title}
               </AppText>
-              <AppText variant="caption" tone="secondary" className="leading-relaxed">
+              <AppText variant="caption" tone="secondary" style={{ lineHeight: 18 }}>
                 {s.desc}
               </AppText>
             </View>
@@ -478,7 +502,7 @@ export default function WelcomeScreen() {
             >
               <AppCard
                 tone="default"
-                className="border-slate-200 hover:border-indigo-400 transition-colors p-4 justify-between h-full"
+                style={{ padding: 16, justifyContent: 'space-between', height: '100%' }}
               >
                 <View>
                   {/* Track Top Row */}
@@ -491,7 +515,7 @@ export default function WelcomeScreen() {
                         <Icon name={track.iconName} size={20} color={track.accentColor} />
                       </View>
                       <View>
-                        <AppText variant="title" className="text-slate-900 font-bold">
+                        <AppText variant="title" style={{ fontWeight: '700' }}>
                           {track.title}
                         </AppText>
                         <View className="flex-row items-center gap-1.5 mt-0.5">
@@ -505,18 +529,18 @@ export default function WelcomeScreen() {
                         </View>
                       </View>
                     </View>
-                    <Icon name="chevron-forward" size={18} color="#94A3B8" />
+                    <Icon name="chevron-forward" size={18} color={colors.textMuted} />
                   </View>
 
-                  <AppText variant="caption" tone="secondary" className="my-2 leading-relaxed">
+                  <AppText variant="caption" tone="secondary" style={{ marginVertical: 8, lineHeight: 18 }}>
                     {track.description}
                   </AppText>
 
                   {/* Sample Topic Chips */}
-                  <View className="flex-row flex-wrap gap-1.5 mt-2">
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                     {track.sampleTopics.map((topic, tIdx) => (
-                      <View key={tIdx} className="bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60">
-                        <AppText variant="micro" className="text-slate-700 font-medium">
+                      <View key={tIdx} style={{ backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                        <AppText variant="micro" tone="secondary" style={{ fontWeight: '600' }}>
                           {topic}
                         </AppText>
                       </View>
@@ -525,8 +549,8 @@ export default function WelcomeScreen() {
                 </View>
 
                 {/* Bottom CTA on Card */}
-                <View className="flex-row items-center justify-between pt-3 mt-3 border-t border-slate-100">
-                  <AppText variant="micro" tone="primary" className="font-bold">
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, marginTop: 12, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
+                  <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
                     Start Revision Track →
                   </AppText>
                   <AppText variant="micro" tone="muted">

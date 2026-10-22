@@ -132,6 +132,21 @@ export default function TopicDetailScreen() {
             {topic.title}
           </AppText>
 
+          {/* ⚡ The 1-Sentence Core Mental Model */}
+          {topic.cheatSheetSummary && topic.cheatSheetSummary.length > 0 && (
+            <View style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Icon name="flash" size={13} color={colors.primaryText} />
+                <AppText variant="micro" tone="primary" style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Core Mental Model
+                </AppText>
+              </View>
+              <AppText variant="caption" tone="secondary" style={{ lineHeight: 18 }}>
+                {topic.cheatSheetSummary[0]}
+              </AppText>
+            </View>
+          )}
+
           <View style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {(() => {
@@ -182,6 +197,35 @@ export default function TopicDetailScreen() {
               />
             </Pressable>
           </View>
+
+          {/* Quick Launch Reel Button */}
+          {reels && reels.length > 0 && (
+            <Pressable
+              onPress={() => {
+                educationApi.trackAnalyticsEvent('reel_started', {
+                  reelId: reels[0].id,
+                  reelNumber: 1,
+                });
+                router.push(`/reel/${reels[0].id}?topicId=${id}`);
+              }}
+              style={{
+                marginTop: 14,
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                borderRadius: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              <Icon name="play" size={16} color={colors.textInverse} />
+              <AppText variant="bodyMedium" tone="inverse" style={{ fontWeight: '700' }}>
+                Start 45s Visual Breakdown ({formatDuration(reels[0]?.durationSec)})
+              </AppText>
+            </Pressable>
+          )}
         </AppCard>
 
         {/* 📍 Checkpoint Progress Track */}
