@@ -1,6 +1,7 @@
 import { runtimeConfig } from '@/constants/runtimeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { apiGet, apiPost, apiDelete } from './client';
+import { offlineCache } from './offlineCache';
 import {
   mockChaptersBySubject,
   mockClasses,
@@ -287,10 +288,13 @@ export const educationApi = {
     if (isMockMode()) {
       await sleep(150);
       const cards = mockFlashcards[topicId];
-      if (cards && cards.length > 0) return cards;
+      if (cards && cards.length > 0) {
+        offlineCache.set(`flashcards:${topicId}`, cards);
+        return cards;
+      }
 
       const topic = mockTopicDetails.find((t) => t.id === topicId) ?? mockTopics.find((t) => t.id === topicId);
-      return [
+      const generated = [
         {
           id: `fc-${topicId}-1`,
           topicId,
@@ -302,13 +306,21 @@ export const educationApi = {
           ],
         },
       ];
+      offlineCache.set(`flashcards:${topicId}`, generated);
+      return generated;
     }
 
     try {
-      return await apiGet<FlashcardDto[]>(`/v1/curriculum/topics/${topicId}/flashcards`);
+      const res = await apiGet<FlashcardDto[]>(`/v1/curriculum/topics/${topicId}/flashcards`);
+      if (res && res.length > 0) {
+        offlineCache.set(`flashcards:${topicId}`, res);
+      }
+      return res;
     } catch (e) {
-      console.warn('[educationApi] Live getFlashcardsByTopic failed:', e);
-      return [];
+      console.warn('[educationApi] Live getFlashcardsByTopic failed, checking offline cache:', e);
+      const cached = await offlineCache.get<FlashcardDto[]>(`flashcards:${topicId}`);
+      if (cached && cached.length > 0) return cached;
+      return mockFlashcards[topicId] ?? [];
     }
   },
 
@@ -373,7 +385,39 @@ export const educationApi = {
     if (isMockMode()) {
       await sleep(180);
       const detail = mockTopicDetails.find((t) => t.id === topicId);
-      if (detail) return detail;
+      if (detail) {
+        offlineCache.set(`topic:${topicId}`, detail);
+        return detail;
+      }
+
+      const meta = resolveTopicMetadata(topicId);
+      const fallbackDetail: TopicDetailDto = {
+        id: meta.id,
+        title: meta.title,
+        difficulty: meta.difficulty,
+        chapterId: meta.chapterId,
+        reelCount: 2,
+        chapter: { id: meta.chapterId, title: meta.chapterTitle },
+        subject: { id: meta.subjectId, name: meta.subjectName, classLevel: 0 },
+        cheatSheetSummary: meta.notes,
+      };
+      offlineCache.set(`topic:${topicId}`, fallbackDetail);
+      return fallbackDetail;
+    }
+
+    try {
+      const res = await apiGet<TopicDetailDto>(`/v1/curriculum/topics/${topicId}`);
+      if (res) {
+        offlineCache.set(`topic:${topicId}`, res);
+      }
+      return res;
+    } catch (e) {
+      console.warn('[educationApi] Live getTopicById failed, checking offline cache:', e);
+      const cached = await offlineCache.get<TopicDetailDto>(`topic:${topicId}`);
+      if (cached) return cached;
+
+      const fallback = mockTopicDetails.find((t) => t.id === topicId);
+      if (fallback) return fallback;
 
       const meta = resolveTopicMetadata(topicId);
       return {
@@ -387,18 +431,19 @@ export const educationApi = {
         cheatSheetSummary: meta.notes,
       };
     }
-
-    return apiGet<TopicDetailDto>(`/v1/curriculum/topics/${topicId}`);
   },
 
   async getReelsByTopic(topicId: string): Promise<ReelDto[]> {
     if (isMockMode()) {
       await sleep(200);
       const filtered = mockReels.filter((reel) => reel.topicId === topicId);
-      if (filtered.length > 0) return filtered;
+      if (filtered.length > 0) {
+        offlineCache.set(`reels:${topicId}`, filtered);
+        return filtered;
+      }
 
       const meta = resolveTopicMetadata(topicId);
-      return [
+      const generated = [
         {
           id: `reel-${topicId}-1`,
           title: `${meta.title}: Core Concept & Breakdown`,
@@ -435,9 +480,46 @@ export const educationApi = {
           ],
         },
       ];
+      offlineCache.set(`reels:${topicId}`, generated);
+      return generated;
     }
 
-    return apiGet<ReelDto[]>(`/v1/topics/${topicId}/reels`);
+    try {
+      const res = await apiGet<ReelDto[]>(`/v1/topics/${topicId}/reels`);
+      if (res && res.length > 0) {
+        offlineCache.set(`reels:${topicId}`, res);
+      }
+      return res;
+    } catch (e) {
+      console.warn('[educationApi] Live getReelsByTopic failed, checking offline cache:', e);
+      const cached = await offlineCache.get<ReelDto[]>(`reels:${topicId}`);
+      if (cached && cached.length > 0) return cached;
+
+      const filtered = mockReels.filter((reel) => reel.topicId === topicId);
+      if (filtered.length > 0) return filtered;
+
+      const meta = resolveTopicMetadata(topicId);
+      return [
+        {
+          id: `reel-${topicId}-1`,
+          title: `${meta.title}: Core Concept & Breakdown`,
+          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          durationSec: 52,
+          topicId,
+          topic: { id: topicId, title: meta.title, difficulty: meta.difficulty },
+          chapter: { id: meta.chapterId, title: meta.chapterTitle },
+          subject: { id: meta.subjectId, name: meta.subjectName, classLevel: 0 },
+          keyTakeaway: meta.notes[0],
+          summaryNotes: meta.notes,
+          architectureDiagram: `  [ ${meta.title.toUpperCase().slice(0, 32)} ]\n          │\n          ├──► Input & Context Analysis\n          ├──► Core Transformation & Trade-offs\n          └──► Verified Solution & Optimal Bounds`,
+          interviewPitch: `When discussing ${meta.title}, I evaluate the primary invariants and trade-offs before jumping to conclusions, ensuring a systematic and structured solution.`,
+          pitfalls: [
+            `DON'T overlook boundary conditions or extreme edge cases when analyzing ${meta.title}.`,
+            "DON'T skip verifying assumptions before executing your solution.",
+          ],
+        },
+      ];
+    }
   },
 
   async getReelById(reelId: string): Promise<ReelDto> {
@@ -495,11 +577,14 @@ export const educationApi = {
     if (isMockMode()) {
       await sleep(200);
       const quiz = mockQuizzes[topicId];
-      if (quiz) return quiz;
+      if (quiz) {
+        offlineCache.set(`quiz:${topicId}`, quiz);
+        return quiz;
+      }
 
       // Generate a dynamic 2-question quiz so any topic has a playable quiz
       const topic = mockTopicDetails.find((t) => t.id === topicId) ?? mockTopics.find((t) => t.id === topicId);
-      return {
+      const generated: QuizDto = {
         topicId,
         topicTitle: topic?.title ?? 'Topic Practice Quiz',
         questions: [
@@ -529,12 +614,20 @@ export const educationApi = {
           },
         ],
       };
+      offlineCache.set(`quiz:${topicId}`, generated);
+      return generated;
     }
 
     try {
-      return await apiGet<QuizDto>(`/v1/topics/${topicId}/quiz`);
+      const res = await apiGet<QuizDto>(`/v1/topics/${topicId}/quiz`);
+      if (res) {
+        offlineCache.set(`quiz:${topicId}`, res);
+      }
+      return res;
     } catch (e) {
-      console.warn('[educationApi] Live getQuizByTopic failed, fallback to mock:', e);
+      console.warn('[educationApi] Live getQuizByTopic failed, checking offline cache:', e);
+      const cached = await offlineCache.get<QuizDto>(`quiz:${topicId}`);
+      if (cached) return cached;
       return mockQuizzes[topicId] ?? {
         topicId,
         topicTitle: 'Topic Practice Quiz',
@@ -610,12 +703,14 @@ export const educationApi = {
   },
 
   async getHomeFeed(examType?: string, classLevel?: number): Promise<HomeFeedDto> {
+    const effectiveExamType =
+      examType ?? useAppStore.getState().selectedExamType ?? 'TECH_INTERVIEW';
+    const effectiveClassId =
+      classLevel ?? useAppStore.getState().selectedClassId ?? 10;
+    const cacheKey = `homefeed:${effectiveExamType}:${effectiveClassId}`;
+
     if (isMockMode()) {
       await sleep(200);
-      const effectiveExamType =
-        examType ?? useAppStore.getState().selectedExamType ?? 'TECH_INTERVIEW';
-      const effectiveClassId =
-        classLevel ?? useAppStore.getState().selectedClassId ?? 10;
 
       let subjects: SubjectDto[] = [];
       if (effectiveExamType === 'SCHOOL') {
@@ -651,19 +746,32 @@ export const educationApi = {
           ? activeTopics.slice(1, 4)
           : activeTopics.slice(0, 2);
 
-      return {
+      const feedResult: HomeFeedDto = {
         subjectShortcuts,
         continueLearning,
         recommended,
         quickRevision,
       };
+      offlineCache.set(cacheKey, feedResult);
+      return feedResult;
     }
 
-    const params = new URLSearchParams();
-    if (examType) params.append('examType', examType);
-    if (classLevel) params.append('classLevel', classLevel.toString());
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return apiGet<HomeFeedDto>(`/v1/feed${query}`);
+    try {
+      const params = new URLSearchParams();
+      if (examType) params.append('examType', examType);
+      if (classLevel) params.append('classLevel', classLevel.toString());
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const res = await apiGet<HomeFeedDto>(`/v1/feed${query}`);
+      if (res) {
+        offlineCache.set(cacheKey, res);
+      }
+      return res;
+    } catch (e) {
+      console.warn('[educationApi] Live getHomeFeed failed, checking offline cache:', e);
+      const cached = await offlineCache.get<HomeFeedDto>(cacheKey);
+      if (cached) return cached;
+      return mockHomeFeed;
+    }
   },
 
   async getProgress(): Promise<TopicProgressDto[]> {

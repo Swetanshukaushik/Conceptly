@@ -40,6 +40,94 @@ function formatSeconds(secs?: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+export interface CaptionSegment {
+  startSec: number;
+  endSec: number;
+  text: string;
+}
+
+export function parseVtt(vttString: string): CaptionSegment[] {
+  const lines = vttString.split(/\r?\n/);
+  const segments: CaptionSegment[] = [];
+  let currentStart = -1;
+  let currentEnd = -1;
+  let currentText = '';
+
+  function timeToSec(tStr: string): number {
+    const parts = tStr.split(':');
+    if (parts.length === 3) {
+      const h = parseFloat(parts[0]);
+      const m = parseFloat(parts[1]);
+      const s = parseFloat(parts[2]);
+      return h * 3600 + m * 60 + s;
+    } else if (parts.length === 2) {
+      const m = parseFloat(parts[0]);
+      const s = parseFloat(parts[1]);
+      return m * 60 + s;
+    }
+    return 0;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.includes('-->')) {
+      const [startStr, endStr] = line.split('-->').map((s) => s.trim().split(' ')[0]);
+      currentStart = timeToSec(startStr);
+      currentEnd = timeToSec(endStr);
+      currentText = '';
+    } else if (line && currentStart >= 0) {
+      currentText += (currentText ? ' ' : '') + line;
+    } else if (!line && currentStart >= 0 && currentText) {
+      segments.push({ startSec: currentStart, endSec: currentEnd, text: currentText });
+      currentStart = -1;
+      currentEnd = -1;
+      currentText = '';
+    }
+  }
+
+  if (currentStart >= 0 && currentText) {
+    segments.push({ startSec: currentStart, endSec: currentEnd, text: currentText });
+  }
+
+  return segments;
+}
+
+export function getReelCaptionSegments(reel: ReelDto): CaptionSegment[] {
+  if (reel.captions && reel.captions.length > 0) {
+    return reel.captions;
+  }
+
+  const rawPieces: string[] = [];
+  if (reel.keyTakeaway) {
+    rawPieces.push(`🎯 Mental Model: ${reel.keyTakeaway}`);
+  }
+  if (reel.summaryNotes && reel.summaryNotes.length > 0) {
+    reel.summaryNotes.forEach((n) => rawPieces.push(`⚡ ${n}`));
+  }
+  if (reel.interviewPitch) {
+    rawPieces.push(`🎤 Interview Pitch: "${reel.interviewPitch}"`);
+  }
+  if (reel.pitfalls && reel.pitfalls.length > 0) {
+    rawPieces.push(`⚠️ Red Flag: ${reel.pitfalls[0]}`);
+  }
+
+  if (rawPieces.length === 0) {
+    rawPieces.push(`Master ${reel.title} with atomic clarity.`);
+  }
+
+  const duration = reel.durationSec || 45;
+  const segmentDuration = Math.max(4, Math.floor(duration / rawPieces.length));
+  const segments: CaptionSegment[] = [];
+
+  rawPieces.forEach((text, i) => {
+    const startSec = i * segmentDuration;
+    const endSec = Math.min(duration, (i + 1) * segmentDuration);
+    segments.push({ startSec, endSec, text });
+  });
+
+  return segments;
+}
+
 // 📑 Reusable Rapid Revision Cheat Sheet Modal
 function ReelCheatSheetModal({
   visible,
@@ -217,7 +305,20 @@ function MobileVerticalReelPlayer({
   const setPlaybackSpeed = useAppStore((s) => s.setPlaybackSpeed);
   const watchedReels = useAppStore((s) => s.watchedReels);
   const markReelWatched = useAppStore((s) => s.markReelWatched);
+  const captionsEnabled = useAppStore((s) => s.captionsEnabled);
+  const toggleCaptions = useAppStore((s) => s.toggleCaptions);
   const queryClient = useQueryClient();
+
+  const [currentPlaybackMillis, setCurrentPlaybackMillis] = useState<number>(0);
+
+  const captionSegments = useMemo(() => getReelCaptionSegments(reel), [reel]);
+  const currentSec = Math.floor(currentPlaybackMillis / 1000);
+  const activeCaption = useMemo(() => {
+    return captionSegments.find((c) => currentSec >= c.startSec && currentSec < c.endSec)?.text;
+  }, [captionSegments, currentSec]);
+
+  const nextReel = activeIndex < totalCount - 1 ? reels[activeIndex + 1] : null;
+  const prevReel = activeIndex > 0 ? reels[activeIndex - 1] : null;
 
   useEffect(() => {
     setIsPlaying(true);
@@ -268,6 +369,7 @@ function MobileVerticalReelPlayer({
       return;
     }
     setIsBuffering(status.isBuffering);
+    setCurrentPlaybackMillis((status as any).positionMillis ?? 0);
 
     if (status.didJustFinish) {
       educationApi.recordReelView(reel.id, {
@@ -360,6 +462,28 @@ function MobileVerticalReelPlayer({
         style={styles.mobilePlayerFrame}
         {...panResponder.panHandlers}
       >
+        {/* Background Video Pre-fetch Engine for Zero-Buffering */}
+        <View style={styles.preloaderHidden} pointerEvents="none">
+          {nextReel && (
+            <Video
+              source={{ uri: nextReel.videoUrl }}
+              style={styles.preloaderVideo}
+              shouldPlay={false}
+              isMuted={true}
+              positionMillis={0}
+            />
+          )}
+          {prevReel && (
+            <Video
+              source={{ uri: prevReel.videoUrl }}
+              style={styles.preloaderVideo}
+              shouldPlay={false}
+              isMuted={true}
+              positionMillis={0}
+            />
+          )}
+        </View>
+
         {/* Full Video Area (Tap to play/pause) */}
         <Pressable onPress={togglePlayPause} style={styles.mobileVideoPressable}>
           <Video
@@ -487,6 +611,34 @@ function MobileVerticalReelPlayer({
             <Text style={styles.actionLabel}>Speed</Text>
           </Pressable>
 
+          {/* Closed Captions toggle */}
+          <Pressable
+            onPress={toggleCaptions}
+            style={[
+              styles.actionCircleButton,
+              captionsEnabled && styles.actionCircleButtonActive,
+            ]}
+          >
+            <View style={styles.ccBadgeContainer}>
+              <Text
+                style={[
+                  styles.ccBadgeText,
+                  captionsEnabled && { color: colors.primaryText, fontWeight: '800' },
+                ]}
+              >
+                CC
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.actionLabel,
+                captionsEnabled && { color: colors.primaryText, fontWeight: '700' },
+              ]}
+            >
+              {captionsEnabled ? 'CC On' : 'CC Off'}
+            </Text>
+          </Pressable>
+
           {/* Cheat-Sheet / Notes Drawer Button */}
           <Pressable onPress={() => setShowNotesDrawer(true)} style={styles.actionCircleButton}>
             <Icon name="document-text" size={20} color={colors.textPrimary} />
@@ -524,6 +676,15 @@ function MobileVerticalReelPlayer({
             </Pressable>
           )}
         </View>
+
+        {/* 💬 Synchronized Subtitles / Closed Captions Overlay */}
+        {captionsEnabled && !!activeCaption && (
+          <View style={styles.captionOverlayContainer} pointerEvents="none">
+            <View style={styles.captionPill}>
+              <Text style={styles.captionText}>{activeCaption}</Text>
+            </View>
+          </View>
+        )}
 
         {/* 🔻 Bottom Details & Key Takeaway Overlay */}
         <View style={styles.mobileBottomOverlay} pointerEvents="box-none">
@@ -681,7 +842,20 @@ function DesktopStudioPlayer({
   const setPlaybackSpeed = useAppStore((s) => s.setPlaybackSpeed);
   const watchedReels = useAppStore((s) => s.watchedReels);
   const markReelWatched = useAppStore((s) => s.markReelWatched);
+  const captionsEnabled = useAppStore((s) => s.captionsEnabled);
+  const toggleCaptions = useAppStore((s) => s.toggleCaptions);
   const queryClient = useQueryClient();
+
+  const [currentPlaybackMillis, setCurrentPlaybackMillis] = useState<number>(0);
+
+  const captionSegments = useMemo(() => getReelCaptionSegments(reel), [reel]);
+  const currentSec = Math.floor(currentPlaybackMillis / 1000);
+  const activeCaption = useMemo(() => {
+    return captionSegments.find((c) => currentSec >= c.startSec && currentSec < c.endSec)?.text;
+  }, [captionSegments, currentSec]);
+
+  const nextReel = activeIndex < totalCount - 1 ? reels[activeIndex + 1] : null;
+  const prevReel = activeIndex > 0 ? reels[activeIndex - 1] : null;
 
   useEffect(() => {
     setIsPlaying(true);
@@ -732,6 +906,7 @@ function DesktopStudioPlayer({
       return;
     }
     setIsBuffering(status.isBuffering);
+    setCurrentPlaybackMillis((status as any).positionMillis ?? 0);
 
     if (status.didJustFinish) {
       educationApi.recordReelView(reel.id, {
@@ -841,6 +1016,28 @@ function DesktopStudioPlayer({
         {/* Left Column: Vertical Reel Player Card */}
         <View style={styles.desktopVideoCol}>
           <View style={styles.desktopPlayerCard} {...panResponder.panHandlers}>
+            {/* Background Video Pre-fetch Engine for Zero-Buffering */}
+            <View style={styles.preloaderHidden} pointerEvents="none">
+              {nextReel && (
+                <Video
+                  source={{ uri: nextReel.videoUrl }}
+                  style={styles.preloaderVideo}
+                  shouldPlay={false}
+                  isMuted={true}
+                  positionMillis={0}
+                />
+              )}
+              {prevReel && (
+                <Video
+                  source={{ uri: prevReel.videoUrl }}
+                  style={styles.preloaderVideo}
+                  shouldPlay={false}
+                  isMuted={true}
+                  positionMillis={0}
+                />
+              )}
+            </View>
+
             <Pressable
               onPress={togglePlayPause}
               style={styles.desktopVideoPressable}
@@ -925,6 +1122,34 @@ function DesktopStudioPlayer({
                   <Text style={styles.actionLabel}>Speed</Text>
                 </Pressable>
 
+                {/* Closed Captions toggle */}
+                <Pressable
+                  onPress={toggleCaptions}
+                  style={[
+                    styles.actionCircleButton,
+                    captionsEnabled && styles.actionCircleButtonActive,
+                  ]}
+                >
+                  <View style={styles.ccBadgeContainer}>
+                    <Text
+                      style={[
+                        styles.ccBadgeText,
+                        captionsEnabled && { color: colors.primaryText, fontWeight: '800' },
+                      ]}
+                    >
+                      CC
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.actionLabel,
+                      captionsEnabled && { color: colors.primaryText, fontWeight: '700' },
+                    ]}
+                  >
+                    {captionsEnabled ? 'CC On' : 'CC Off'}
+                  </Text>
+                </Pressable>
+
                 <Pressable onPress={toggleMute} style={styles.actionCircleButton}>
                   <Icon
                     name={isMuted ? 'volume-mute' : 'volume-high'}
@@ -943,6 +1168,15 @@ function DesktopStudioPlayer({
                   <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
                 </Pressable>
               </View>
+
+              {/* 💬 Synchronized Subtitles / Closed Captions Overlay */}
+              {captionsEnabled && !!activeCaption && (
+                <View style={styles.desktopCaptionOverlayContainer} pointerEvents="none">
+                  <View style={styles.captionPill}>
+                    <Text style={styles.captionText}>{activeCaption}</Text>
+                  </View>
+                </View>
+              )}
 
               {/* Bottom Details Overlay */}
               <View style={[styles.bottomOverlay, { bottom: 0, paddingBottom: 16 }]}>
@@ -1618,6 +1852,20 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
       borderWidth: 1,
       borderColor: colors.border,
     },
+    actionCircleButtonActive: {
+      backgroundColor: isDark ? 'rgba(79, 70, 229, 0.28)' : 'rgba(99, 102, 241, 0.18)',
+      borderColor: colors.primary,
+    },
+    ccBadgeContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ccBadgeText: {
+      color: colors.textPrimary,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
     speedText: {
       color: colors.textPrimary,
       fontSize: 11,
@@ -1999,6 +2247,58 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
       color: colors.textSecondary,
       fontSize: 13,
       fontWeight: '600',
+    },
+
+    // Synchronized Captions & Subtitles
+    captionOverlayContainer: {
+      position: 'absolute',
+      bottom: 235,
+      left: 16,
+      right: 64,
+      alignItems: 'center',
+      zIndex: 26,
+    },
+    desktopCaptionOverlayContainer: {
+      position: 'absolute',
+      bottom: 100,
+      left: 14,
+      right: 70,
+      alignItems: 'center',
+      zIndex: 26,
+    },
+    captionPill: {
+      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      maxWidth: '100%',
+      shadowColor: isDark ? '#000000' : '#0F172A',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    captionText: {
+      color: colors.textPrimary,
+      fontSize: 12,
+      fontWeight: '600',
+      textAlign: 'center',
+      lineHeight: 16,
+    },
+
+    // Hidden Stream Preloader for Instant 0ms Swipe
+    preloaderHidden: {
+      position: 'absolute',
+      width: 0,
+      height: 0,
+      opacity: 0,
+      overflow: 'hidden',
+    },
+    preloaderVideo: {
+      width: 1,
+      height: 1,
     },
   });
 }

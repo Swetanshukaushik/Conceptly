@@ -67,6 +67,7 @@ function savePersistedState(state: AppState) {
     authToken: state.authToken,
     userEmail: state.userEmail,
     userName: state.userName,
+    captionsEnabled: state.captionsEnabled,
   };
 
   const jsonStr = JSON.stringify(toSave);
@@ -118,6 +119,9 @@ export type AppState = {
   watchedReels: Record<string, boolean>;
   userBookmarks: BookmarkDto[];
   userProgress: TopicProgressDto[];
+  captionsEnabled: boolean;
+  toggleCaptions: () => void;
+  setCaptionsEnabled: (enabled: boolean) => void;
   apiDataSource: ApiDataSource;
   authToken: string | null;
   userEmail: string | null;
@@ -170,6 +174,22 @@ export const useAppStore = create<AppState>((set) => ({
   },
   userBookmarks: initialPersisted.userBookmarks ?? mockBookmarks,
   userProgress: initialPersisted.userProgress ?? mockProgress,
+  captionsEnabled: (initialPersisted as any).captionsEnabled ?? true,
+  toggleCaptions: () => {
+    set((state) => {
+      const next = !state.captionsEnabled;
+      setTimeout(() => {
+        savePersistedState(useAppStore.getState());
+      }, 0);
+      return { captionsEnabled: next };
+    });
+  },
+  setCaptionsEnabled: (enabled: boolean) => {
+    set({ captionsEnabled: enabled });
+    setTimeout(() => {
+      savePersistedState(useAppStore.getState());
+    }, 0);
+  },
   apiDataSource:
     initialPersisted.apiDataSource ??
     ((process.env.EXPO_PUBLIC_DATA_SOURCE as any) || 'live'),

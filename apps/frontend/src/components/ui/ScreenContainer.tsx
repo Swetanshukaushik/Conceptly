@@ -10,6 +10,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { ViewportToggle } from './ViewportToggle';
+import { AppErrorBoundary } from './AppErrorBoundary';
 
 export type ScreenContainerProps = ViewProps & {
   scroll?: boolean;
@@ -75,7 +76,7 @@ export function ScreenContainer({
                   paddingBottom: isDesktop ? 60 : 100,
                 }}
               >
-                {children}
+                <AppErrorBoundary>{children}</AppErrorBoundary>
               </View>
             </View>
           </ScrollView>
@@ -104,7 +105,7 @@ export function ScreenContainer({
                   paddingBottom: 24,
                 }}
               >
-                {children}
+                <AppErrorBoundary>{children}</AppErrorBoundary>
               </View>
             </View>
           </View>

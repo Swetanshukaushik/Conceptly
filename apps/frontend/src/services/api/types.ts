@@ -49,6 +49,8 @@ export type ReelDto = {
   architectureDiagram?: string;
   interviewPitch?: string;
   pitfalls?: string[];
+  subtitlesUrl?: string;
+  captions?: Array<{ startSec: number; endSec: number; text: string }>;
 };
 
 export type QuizOptionDto = {

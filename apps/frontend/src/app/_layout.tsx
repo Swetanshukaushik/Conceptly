@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
 import { AppProviders } from './providers/AppProviders';
+import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { useAppStore, hydrateAppStore } from '@/store/useAppStore';
 import { educationApi } from '@/services/api/educationApi';
 
@@ -44,7 +45,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AppProviders>
           <StatusBar style="light" />
-          <Stack screenOptions={{ headerShown: false }} />
+          <AppErrorBoundary>
+            <Stack screenOptions={{ headerShown: false }} />
+          </AppErrorBoundary>
         </AppProviders>
       </SafeAreaProvider>
     </GestureHandlerRootView>

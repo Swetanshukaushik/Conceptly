@@ -1,5 +1,6 @@
 import React from "react";
 import { View } from "react-native";
+import { useTheme } from "@/app/providers/ThemeProvider";
 import { AppText } from "./AppText";
 import { AppButton } from "./AppButton";
 
@@ -16,15 +17,33 @@ export function ErrorState({
   actionLabel = "Retry",
   onPressAction,
 }: ErrorStateProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className="rounded-[28px] border border-red-100 bg-red-50 px-6 py-8">
+    <View
+      style={{
+        backgroundColor: colors.dangerSoft,
+        borderColor: colors.border,
+        borderWidth: 1,
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingVertical: 28,
+      }}
+    >
       <AppText variant="h3" tone="danger">
         {title}
       </AppText>
-      <AppText variant="body" tone="secondary" className="mt-2">
+      <AppText variant="body" tone="secondary" style={{ marginTop: 8 }}>
         {description}
       </AppText>
-      <AppButton label={actionLabel} onPress={onPressAction} variant="danger" className="mt-5 self-start" />
+      {onPressAction && (
+        <AppButton
+          label={actionLabel}
+          onPress={onPressAction}
+          variant="danger"
+          style={{ marginTop: 20, alignSelf: 'flex-start' }}
+        />
+      )}
     </View>
   );
 }
