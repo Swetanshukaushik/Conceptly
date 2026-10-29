@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/Icon';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { CognitiveTelemetryBar } from '@/components/ui/CognitiveTelemetryBar';
 import { BionicText } from '@/components/ui/BionicText';
+import { InteractiveSchematic } from '@/components/ui/InteractiveSchematic';
 
 import { useTopicByIdQuery } from '@/services/api/hooks/useTopicByIdQuery';
 import { useReelsByTopicQuery } from '@/services/api/hooks/useReelsByTopicQuery';
@@ -234,6 +235,13 @@ export default function TopicDetailScreen() {
             </Pressable>
           )}
         </AppCard>
+
+        {/* ⚡ 2040 Interactive System / Concept Topology Simulator */}
+        <InteractiveSchematic
+          title={topic.title}
+          topicId={id}
+          asciiDiagram={(topic as any).asciiDiagram}
+        />
 
         {/* 📍 Checkpoint Progress Track */}
         <AppCard tone="muted" style={{ marginBottom: 18, padding: 14 }}>

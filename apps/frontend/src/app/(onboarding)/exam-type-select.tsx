@@ -1,54 +1,119 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { AppHeader } from '@/components/ui/AppHeader';
 import { AppText } from '@/components/ui/AppText';
-import { Chip } from '@/components/ui/Chip';
 import { AppButton } from '@/components/ui/AppButton';
+import { Icon } from '@/components/ui/Icon';
 
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/app/providers/ThemeProvider';
 
 const domainCategories = [
-  { id: 'TECH_INTERVIEW', label: '💻 Software & System Design Interview', description: 'System Design, DSA, Frontend, Backend' },
-  { id: 'PM_INTERVIEW', label: '🚀 Product Management Interview', description: 'CIRCLES framework, metrics, product sense' },
-  { id: 'FINANCE_CONSULTING', label: '📊 Finance & Consulting Cases', description: 'Valuation, profitability, case frameworks' },
-  { id: 'UPSC', label: '🏛️ UPSC Civil Services', description: 'Polity, Governance, Modern History' },
-  { id: 'IIT_JEE', label: '📐 IIT JEE Engineering', description: 'Physics, Chemistry, Advanced Math' },
-  { id: 'NEET', label: '🩺 NEET Medical Entrance', description: 'Biology, Zoology, Physics' },
-  { id: 'SCHOOL', label: '🎒 NCERT School (Classes 6–10)', description: 'Board exam visual concepts' },
+  {
+    id: 'TECH_INTERVIEW',
+    label: '💻 Software & System Design Interview',
+    description: 'System Design, Distributed Architecture, DSA, React & Backend Internals',
+  },
+  {
+    id: 'PM_INTERVIEW',
+    label: '🚀 Product Management Interview',
+    description: 'CIRCLES framework, North Star metrics, A/B experimentation & execution',
+  },
+  {
+    id: 'FINANCE_CONSULTING',
+    label: '📊 Finance & Consulting Cases',
+    description: 'DCF Valuation, M&A, Profitability Trees & MBB Case Frameworks',
+  },
+  {
+    id: 'UPSC',
+    label: '🏛️ UPSC Civil Services',
+    description: 'Indian Polity, Basic Structure, Modern History & Macro Economy',
+  },
+  {
+    id: 'IIT_JEE',
+    label: '📐 IIT JEE Engineering',
+    description: 'Rotational Mechanics, Electrodynamics, Organic Chemistry & Calculus',
+  },
+  {
+    id: 'NEET',
+    label: '🩺 NEET Medical Entrance',
+    description: 'Human Physiology, Cardiac Cycle, Molecular Genetics & Medical Physics',
+  },
+  {
+    id: 'SCHOOL',
+    label: '🎒 NCERT School (Classes 6–10)',
+    description: 'Board exam visual concepts across Mathematics, Science & Social Studies',
+  },
 ] as const;
 
 export default function ExamTypeSelectScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const selectedExamType = useAppStore((s) => s.selectedExamType);
   const setExamType = useAppStore((s) => s.setExamType);
 
   return (
     <ScreenContainer className="justify-between">
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-        <AppText variant="h1">
-          What are you revising for?
-        </AppText>
-        <AppText variant="body" tone="secondary" className="mt-2">
-          Pick your target domain to get rapid visual reels before your big interview or exam.
+      <AppHeader
+        title="Target Learning Track"
+        subtitle="Step 1 of 3 • Cognitive Calibration"
+        onBack={() => router.back()}
+      />
+
+      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 mt-2">
+        <AppText variant="body" tone="secondary">
+          Select your primary target domain to calibrate high-yield 45-second visual reels, interactive schematics, and exam marking schemes.
         </AppText>
 
-        <View className="mt-6 gap-3 mb-6">
-          {domainCategories.map((cat) => (
-            <Chip
-              key={cat.id}
-              label={cat.label}
-              variant={selectedExamType === cat.id ? 'selected' : 'default'}
-              onPress={() => setExamType(cat.id)}
-            />
-          ))}
+        <View className="mt-4 gap-3 mb-6">
+          {domainCategories.map((cat) => {
+            const isSelected = selectedExamType === cat.id;
+            return (
+              <Pressable
+                key={cat.id}
+                onPress={() => setExamType(cat.id)}
+                style={{
+                  padding: 16,
+                  borderRadius: 16,
+                  borderWidth: 1.5,
+                  backgroundColor: isSelected ? colors.primarySoft : colors.surface,
+                  borderColor: isSelected ? colors.primary : colors.border,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <AppText
+                    variant="bodyMedium"
+                    style={{
+                      fontWeight: '700',
+                      color: isSelected ? colors.primaryText : colors.textPrimary,
+                    }}
+                  >
+                    {cat.label}
+                  </AppText>
+                  <AppText variant="caption" tone="secondary" style={{ marginTop: 4 }}>
+                    {cat.description}
+                  </AppText>
+                </View>
+                <Icon
+                  name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={20}
+                  color={isSelected ? colors.primary : colors.textMuted}
+                />
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
 
-      <View className="pt-2">
+      <View className="pt-2 pb-4">
         <AppButton
-          label="Continue"
+          label="Continue to Subjects →"
           disabled={selectedExamType == null}
           onPress={() => {
             if (selectedExamType === 'SCHOOL') {

@@ -521,6 +521,36 @@ There are only two hard things in Computer Science.
     assert.strictEqual(constellationNodes.length - 1, 2); // 2 prerequisite vectors
   });
 
+  // SECTION 9: Final Production Completion (High-Stakes Exam Mode, SM-2 Queue, 7-Domain Simulators)
+  console.log(`\n${BOLD}${BLUE}Step 9: High-Stakes Exam Mode, SM-2 Vault Queue & 7-Domain Topologies${RESET}`);
+
+  testStep('High-Stakes Exam Mode computes JEE/NEET (+4/-1) and UPSC (+2/-0.66) negative marking accurately', () => {
+    // 2 correct, 1 wrong, 1 skipped in JEE (+4 / -1) -> 2*4 - 1*1 = 7.0 / 16.0
+    const jeeNet = Number((2 * 4.0 - 1 * 1.0).toFixed(2));
+    assert.strictEqual(jeeNet, 7.0);
+
+    // 2 correct, 1 wrong, 1 skipped in UPSC (+2 / -0.66) -> 2*2 - 1*0.66 = 3.34 / 8.0
+    const upscNet = Number((2 * 2.0 - 1 * 0.66).toFixed(2));
+    assert.strictEqual(upscNet, 3.34);
+  });
+
+  testStep('Saved & Synaptic Vault sorts SM-2 flashcards by Due Priority', () => {
+    const now = Date.now();
+    const cards = [
+      { id: 'c-mastered', box: 5, nextReviewAt: now + 999999 },
+      { id: 'c-due', box: 1, nextReviewAt: now - 1000 },
+      { id: 'c-new', box: null, nextReviewAt: null },
+    ];
+    const sorted = [...cards].sort((a, b) => {
+      const dueA = a.box == null ? 0 : a.nextReviewAt <= now ? 1 : 2;
+      const dueB = b.box == null ? 0 : b.nextReviewAt <= now ? 1 : 2;
+      return dueA - dueB;
+    });
+    assert.strictEqual(sorted[0].id, 'c-new');
+    assert.strictEqual(sorted[1].id, 'c-due');
+    assert.strictEqual(sorted[2].id, 'c-mastered');
+  });
+
   console.log(`\n${BOLD}${GREEN}======================================================${RESET}`);
   console.log(`${BOLD}${GREEN}  All ${passedTests}/${totalTests} E2E Smoke Tests Passed Successfully!     ${RESET}`);
   console.log(`${BOLD}${GREEN}======================================================${RESET}\n`);

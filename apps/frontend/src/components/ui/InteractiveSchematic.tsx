@@ -24,6 +24,11 @@ export function InteractiveSchematic({
     const lower = `${topicId} ${title}`.toLowerCase();
     const isCap = lower.includes('cap') || lower.includes('pacelc') || lower.includes('consensus');
     const isCache = lower.includes('cache') || lower.includes('stampede') || lower.includes('redis');
+    const isPM = lower.includes('circle') || lower.includes('product') || lower.includes('metric') || lower.includes('pm');
+    const isFin = lower.includes('dcf') || lower.includes('valuation') || lower.includes('wacc') || lower.includes('profit');
+    const isUpsc = lower.includes('basic') || lower.includes('structure') || lower.includes('polity') || lower.includes('article') || lower.includes('constitution');
+    const isJee = lower.includes('inertia') || lower.includes('rotat') || lower.includes('axis') || lower.includes('torque');
+    const isNeet = lower.includes('cardiac') || lower.includes('ecg') || lower.includes('heart') || lower.includes('circulation');
 
     if (isCap) {
       return {
@@ -96,6 +101,191 @@ export function InteractiveSchematic({
             : simMode === 'fault'
             ? 'STAMPEDE ALERT: Simultaneous key expiry caused 10,000 threads to hammer Primary DB concurrently!'
             : 'MITIGATED: Probabilistic early refresh (XFetch) + singleflight mutex recomputes key with 1 thread.',
+      };
+    }
+
+    if (isPM) {
+      return {
+        systemName: 'PRODUCT FUNNEL & CIRCLES SIMULATOR',
+        faultButtonLabel: '⚡ Inject Onboarding Friction',
+        mitigateButtonLabel: '🛡️ Prioritize Core Persona MVP',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'ACQUISITION',
+            name: 'Target Persona',
+            status: simMode === 'nominal' ? 'SEGMENTED' : simMode === 'fault' ? 'UNFOCUSED' : 'ICP LOCKED',
+            latency: simMode === 'nominal' ? 'CTR 4.8%' : simMode === 'fault' ? 'CTR 0.9%' : 'CTR 6.2%',
+          },
+          {
+            id: 'N2',
+            role: 'ACTIVATION',
+            name: 'Aha! Workflow',
+            status: simMode === 'nominal' ? 'TTV 45s' : simMode === 'fault' ? 'DROP-OFF 78%' : '1-CLICK FLOW',
+            latency: simMode === 'nominal' ? 'CVR 64%' : simMode === 'fault' ? 'CVR 14%' : 'CVR 79%',
+          },
+          {
+            id: 'N3',
+            role: 'NORTH STAR',
+            name: 'D30 Retention',
+            status: simMode === 'nominal' ? 'COHORT +42%' : simMode === 'fault' ? 'CHURN SPIKE' : 'COMPOUNDING',
+            latency: simMode === 'nominal' ? 'NDR 118%' : simMode === 'fault' ? 'NDR 74%' : 'NDR 132%',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: CIRCLES framework aligns user pain point directly with measurable North Star retention.'
+            : simMode === 'fault'
+            ? 'FEATURE CREEP FAULT: Building unprioritized edge features before validating user need collapses D30 retention.'
+            : 'MITIGATED: Ruthless RICE prioritization cuts friction and accelerates Time-To-Value (TTV).',
+      };
+    }
+
+    if (isFin) {
+      return {
+        systemName: 'DCF VALUATION & WACC SENSITIVITY',
+        faultButtonLabel: '⚡ Hike WACC (+300 bps)',
+        mitigateButtonLabel: '🛡️ Optimize NWC & FCF Margin',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'OPERATING ENGINE',
+            name: 'Unlevered FCF',
+            status: simMode === 'nominal' ? 'EBIT(1-T)+DA' : simMode === 'fault' ? 'CAPEX DRAG' : 'NWC RELEASE',
+            latency: simMode === 'nominal' ? '$140M/yr' : simMode === 'fault' ? '$92M/yr' : '$168M/yr',
+          },
+          {
+            id: 'N2',
+            role: 'DISCOUNT RATE',
+            name: 'WACC Hurdle',
+            status: simMode === 'nominal' ? 'WACC 8.5%' : simMode === 'fault' ? 'WACC 11.5%' : 'HEDGED 8.2%',
+            latency: simMode === 'nominal' ? 'Ke 10.2%' : simMode === 'fault' ? 'Ke 14.0%' : 'Kd Optimized',
+          },
+          {
+            id: 'N3',
+            role: 'VALUATION OUTPUT',
+            name: 'Enterprise Value',
+            status: simMode === 'nominal' ? 'EV $2.4B' : simMode === 'fault' ? 'EV $1.5B (-37%)' : 'EV $2.8B',
+            latency: simMode === 'nominal' ? 'TV 68% EV' : simMode === 'fault' ? 'COMPRESSED' : 'ACCRETIVE',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: Unlevered Free Cash Flows discounted at 8.5% WACC with 2.5% perpetual terminal growth.'
+            : simMode === 'fault'
+            ? 'RATE SHOCK: A +300 bps jump in WACC disproportionately crushes Terminal Value (PV of TV drops 37%).'
+            : 'MITIGATED: Expanding operating margin and tightening Working Capital offsets discount rate compression.',
+      };
+    }
+
+    if (isUpsc) {
+      return {
+        systemName: 'CONSTITUTIONAL JUDICIAL REVIEW MATRIX',
+        faultButtonLabel: '⚡ Pass Ultra-Vires Amendment',
+        mitigateButtonLabel: '🛡️ Invoke Basic Structure (Art 368)',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'LEGISLATURE',
+            name: 'Parliament Art 368',
+            status: simMode === 'nominal' ? '2/3 MAJORITY' : simMode === 'fault' ? 'CURTAIL ART 32' : 'BOUNDED POWER',
+            latency: simMode === 'nominal' ? 'VALID BILL' : simMode === 'fault' ? 'OVERREACH' : 'CONSTITUTIONAL',
+          },
+          {
+            id: 'N2',
+            role: 'JUDICIARY',
+            name: 'SC Constitution Bench',
+            status: simMode === 'nominal' ? 'ART 13 REVIEW' : simMode === 'fault' ? 'CHALLENGED' : '7:6 DOCTRINE',
+            latency: simMode === 'nominal' ? 'HARMONIOUS' : simMode === 'fault' ? 'WRIT FILED' : 'STRUCK DOWN',
+          },
+          {
+            id: 'N3',
+            role: 'CORE PILLAR',
+            name: 'Basic Structure',
+            status: simMode === 'nominal' ? 'PROTECTED' : simMode === 'fault' ? 'VIOLATED' : 'INVIOLABLE',
+            latency: simMode === 'nominal' ? 'RULE OF LAW' : simMode === 'fault' ? 'NULL & VOID' : 'KESAVANANDA',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: Parliament amends the Constitution within the permissible bounds of Article 368.'
+            : simMode === 'fault'
+            ? 'CONSTITUTIONAL CRISIS: Amendment attempts to abrogate Judicial Review or Secular/Federal character.'
+            : 'MITIGATED: Supreme Court applies Kesavananda Bharati (1973) Basic Structure Doctrine to strike down the ultra-vires clause.',
+      };
+    }
+
+    if (isJee) {
+      return {
+        systemName: 'RIGID BODY ROTATIONAL DYNAMICS LAB',
+        faultButtonLabel: '⚡ Apply 2D Theorem to 3D Sphere',
+        mitigateButtonLabel: '🛡️ Enforce Parallel Axis (Icm + Md²)',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'COM INERTIA',
+            name: 'Center of Mass (I_cm)',
+            status: simMode === 'nominal' ? '2/5 M·R²' : simMode === 'fault' ? '3D GEOMETRY' : '2/5 M·R²',
+            latency: simMode === 'nominal' ? 'AXIS: COM' : simMode === 'fault' ? 'NON-PLANAR' : 'VALID COM',
+          },
+          {
+            id: 'N2',
+            role: 'AXIS SHIFT',
+            name: 'Tangent Offset (d = R)',
+            status: simMode === 'nominal' ? '+ M·d²' : simMode === 'fault' ? 'Iz ≠ Ix + Iy' : '+ M·R² APPLIED',
+            latency: simMode === 'nominal' ? 'PARALLEL OK' : simMode === 'fault' ? 'TRAP ERROR' : 'EXACT SHIFT',
+          },
+          {
+            id: 'N3',
+            role: 'TOTAL INERTIA',
+            name: 'I_tangent Output',
+            status: simMode === 'nominal' ? '7/5 M·R²' : simMode === 'fault' ? 'INVALID' : '7/5 M·R² VERIFIED',
+            latency: simMode === 'nominal' ? '1.40 MR²' : simMode === 'fault' ? 'ERRONEOUS' : '1.40 MR²',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: Parallel Axis Theorem (I = I_cm + Md²) accurately computes inertia about any displaced parallel axis.'
+            : simMode === 'fault'
+            ? 'JEE EXAM TRAP: Perpendicular Axis Theorem (Iz = Ix + Iy) ONLY works for 2D planar laminas, never 3D spheres!'
+            : 'MITIGATED: Using 3D symmetry + Parallel Axis Theorem yields exact I_tangent = 2/5 MR² + MR² = 7/5 MR².',
+      };
+    }
+
+    if (isNeet) {
+      return {
+        systemName: 'CARDIAC CONDUCTION & ECG WAVE SIMULATOR',
+        faultButtonLabel: '⚡ Induce AV Nodal Delay',
+        mitigateButtonLabel: '🛡️ Synchronize SA → Purkinje',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'PACEMAKER (0.1s)',
+            name: 'SA Node → Atria',
+            status: simMode === 'nominal' ? 'P-WAVE DEPOL' : simMode === 'fault' ? 'P-WAVE OK' : '72 BPM SYNC',
+            latency: simMode === 'nominal' ? '0.10s SYSTOLE' : simMode === 'fault' ? 'PR PROLONGED' : '0.10s ATRIAL',
+          },
+          {
+            id: 'N2',
+            role: 'VENTRICLES (0.3s)',
+            name: 'AV → Bundle of His',
+            status: simMode === 'nominal' ? 'QRS COMPLEX' : simMode === 'fault' ? 'AV BLOCK' : 'LUB (S1) CLOSED',
+            latency: simMode === 'nominal' ? '0.30s EJECTION' : simMode === 'fault' ? 'DROPPED BEAT' : 'SV = 70 mL',
+          },
+          {
+            id: 'N3',
+            role: 'DIASTOLE (0.4s)',
+            name: 'Repolarization',
+            status: simMode === 'nominal' ? 'T-WAVE + DUB' : simMode === 'fault' ? 'LOW CO' : 'CO = 5.04 L/min',
+            latency: simMode === 'nominal' ? '0.80s CYCLE' : simMode === 'fault' ? 'ARRHYTHMIA' : 'DUB (S2) SEALED',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: 0.8s Cardiac Cycle (0.1s Atrial Systole + 0.3s Ventricular Systole + 0.4s Joint Diastole) = 5L/min CO.'
+            : simMode === 'fault'
+            ? 'CONDUCTION FAULT: Impaired AV node conduction delays QRS ventricular depolarization and reduces stroke volume.'
+            : 'MITIGATED: Coordinated SA → AV → Purkinje firing restores sharp QRS complex and 70 mL Stroke Volume.',
       };
     }
 

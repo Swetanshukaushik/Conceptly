@@ -1,15 +1,27 @@
 {
   "expo": {
-    "name": "Conceptly",
+    "name": "Conceptly — 2040 Visual Micro-Learning",
     "slug": "conceptly",
     "scheme": "conceptly",
     "privacy": "public",
     "platforms": ["ios", "android", "web"],
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "jsEngine": "hermes",
     "assetBundlePatterns": ["**/*"],
     "plugins": ["expo-router"],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Conceptly — 45s Visual Revision OS",
+      "shortName": "Conceptly",
+      "description": "High-yield 45-second visual reels, interactive system topologies, Bionic reading, and SM-2 spaced repetition across Tech, PM, Finance, UPSC, JEE, NEET & School.",
+      "lang": "en",
+      "themeColor": "#05070B",
+      "backgroundColor": "#05070B",
+      "display": "standalone",
+      "orientation": "any"
+    },
     "experiments": {
       "tsconfigPaths": true,
       "typedRoutes": true

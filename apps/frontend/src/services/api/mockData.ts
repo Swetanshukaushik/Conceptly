@@ -1642,6 +1642,67 @@ export const mockFlashcards: Record<string, FlashcardDto[]> = {
       topicId: 'topic-consistent-hashing',
       frontQuestion: 'How many keys need remapping when a cache server is added in Consistent Hashing?',
       backAnswer: 'Only k / N keys on average (where k is total keys, N is number of servers). Standard hash(k) % N remaps almost 100% of keys.',
+      bullets: [
+        'Virtual nodes (vnodes) prevent hot-spotting when physical nodes are heterogeneous.',
+      ],
+    },
+  ],
+  'topic-circles-method': [
+    {
+      id: 'fc-pm-1',
+      topicId: 'topic-circles-method',
+      frontQuestion: 'What do the 7 letters of the CIRCLES Product Design framework stand for?',
+      backAnswer: 'Comprehend situation, Identify customer, Report customer needs, Cut through prioritization, List solutions, Evaluate trade-offs, Summarize.',
+      bullets: [
+        'Never jump to solutions before clarifying the goal, target persona, and pain points.',
+        'Always define a North Star metric before evaluating trade-offs.',
+      ],
+    },
+  ],
+  'topic-basic-structure': [
+    {
+      id: 'fc-upsc-1',
+      topicId: 'topic-basic-structure',
+      frontQuestion: 'Which landmark 1973 Supreme Court case established the Basic Structure Doctrine?',
+      backAnswer: 'Kesavananda Bharati v. State of Kerala (1973) by a razor-thin 7:6 majority bench.',
+      bullets: [
+        'Parliament can amend any part of the Constitution under Article 368 EXCEPT its Basic Structure.',
+        'Judicial Review, Secularism, Federalism, and Free & Fair Elections are part of the Basic Structure.',
+      ],
+    },
+  ],
+  'topic-cardiac-cycle': [
+    {
+      id: 'fc-neet-1',
+      topicId: 'topic-cardiac-cycle',
+      frontQuestion: 'What physiological events correspond to the P wave, QRS complex, and T wave on an ECG?',
+      backAnswer: 'P wave = Atrial depolarization; QRS complex = Ventricular depolarization; T wave = Ventricular repolarization.',
+      bullets: [
+        'Atrial systole lasts 0.1s, ventricular systole 0.3s, and joint diastole 0.4s (Total = 0.8s at 72 bpm).',
+        'Lub (S1) is closure of AV valves; Dub (S2) is closure of semilunar valves.',
+      ],
+    },
+  ],
+  'topic-moment-inertia': [
+    {
+      id: 'fc-jee-1',
+      topicId: 'topic-moment-inertia',
+      frontQuestion: 'When does the Perpendicular Axis Theorem (Iz = Ix + Iy) apply, and when does it fail?',
+      backAnswer: 'It applies ONLY to 2D planar lamina bodies where Ix and Iy lie in the plane of the lamina and Iz is perpendicular to it. It FAILS for 3D bodies like spheres or cylinders.',
+      bullets: [
+        'Parallel Axis Theorem (I = I_cm + M*d^2) works for ANY 2D or 3D rigid body.',
+      ],
+    },
+  ],
+  'topic-dcf-model': [
+    {
+      id: 'fc-fin-1',
+      topicId: 'topic-dcf-model',
+      frontQuestion: 'How do you calculate Unlevered Free Cash Flow (UFCF) in a DCF valuation?',
+      backAnswer: 'UFCF = EBIT × (1 - Tax Rate) + D&A - CapEx - Change in Net Working Capital.',
+      bullets: [
+        'UFCF is discounted using WACC to yield Enterprise Value (EV) available to all capital providers.',
+      ],
     },
   ],
 };
