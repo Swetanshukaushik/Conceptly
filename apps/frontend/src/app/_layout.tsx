@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { AppProviders } from './providers/AppProviders';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
+import { NeuralOmnibar } from '@/components/ui/NeuralOmnibar';
 import { useAppStore, hydrateAppStore } from '@/store/useAppStore';
 import { educationApi } from '@/services/api/educationApi';
 
@@ -47,6 +48,7 @@ export default function RootLayout() {
           <StatusBar style="light" />
           <AppErrorBoundary>
             <Stack screenOptions={{ headerShown: false }} />
+            <NeuralOmnibar />
           </AppErrorBoundary>
         </AppProviders>
       </SafeAreaProvider>

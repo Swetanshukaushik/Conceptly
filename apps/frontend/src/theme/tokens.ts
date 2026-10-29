@@ -13,6 +13,11 @@ export const lightTheme: ThemeColors = {
   border: '#E2E8F0',
   borderSubtle: '#EEF2F6',
   borderActive: '#1D4ED8',
+  borderSpecular: '#FFFFFF',
+
+  gridDot: 'rgba(15, 23, 42, 0.06)',
+  ambientAura: 'rgba(29, 78, 216, 0.05)',
+  telemetryMono: '#1D4ED8',
 
   textPrimary: '#0F172A',
   textSecondary: '#475569',
@@ -119,6 +124,11 @@ export const darkTheme: ThemeColors = {
   border: '#1E2B42',
   borderSubtle: '#141C2B',
   borderActive: '#38BDF8',
+  borderSpecular: 'rgba(125, 211, 252, 0.22)',
+
+  gridDot: 'rgba(56, 189, 248, 0.11)',
+  ambientAura: 'rgba(56, 189, 248, 0.08)',
+  telemetryMono: '#38BDF8',
 
   textPrimary: '#F8FAFC',
   textSecondary: '#94A3B8',
@@ -225,6 +235,11 @@ export const greyTheme: ThemeColors = {
   border: '#373B45',
   borderSubtle: '#2D3038',
   borderActive: '#F59E0B',
+  borderSpecular: 'rgba(253, 230, 138, 0.20)',
+
+  gridDot: 'rgba(245, 158, 11, 0.10)',
+  ambientAura: 'rgba(245, 158, 11, 0.07)',
+  telemetryMono: '#FBBF24',
 
   textPrimary: '#F1F2F5',
   textSecondary: '#9DA1B0',

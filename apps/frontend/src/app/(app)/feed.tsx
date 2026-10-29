@@ -12,6 +12,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
+import { CognitiveTelemetryBar } from '@/components/ui/CognitiveTelemetryBar';
+import { BionicText } from '@/components/ui/BionicText';
 
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -109,6 +111,8 @@ export default function FeedScreen() {
         title="Conceptly Focus"
         subtitle="Atomic clarity for everything"
       />
+
+      <CognitiveTelemetryBar />
 
       {/* Pre-Interview Speed Run Banner */}
       <Pressable
@@ -209,6 +213,13 @@ export default function FeedScreen() {
                       <AppText variant="title" style={{ marginTop: 4 }}>
                         {item.title}
                       </AppText>
+                      {(item as any).cheatSheetSummary?.[0] && (
+                        <BionicText
+                          text={(item as any).cheatSheetSummary[0]}
+                          numberOfLines={2}
+                          style={{ fontSize: 12, lineHeight: 17, marginTop: 6 }}
+                        />
+                      )}
                     </View>
                     <View
                       style={[
@@ -273,6 +284,13 @@ export default function FeedScreen() {
                       <AppText variant="title" style={{ marginTop: 4 }}>
                         {item.title}
                       </AppText>
+                      {(item as any).cheatSheetSummary?.[0] && (
+                        <BionicText
+                          text={(item as any).cheatSheetSummary[0]}
+                          numberOfLines={2}
+                          style={{ fontSize: 12, lineHeight: 17, marginTop: 6 }}
+                        />
+                      )}
                     </View>
                     <View
                       style={[
@@ -334,6 +352,13 @@ export default function FeedScreen() {
                       <AppText variant="title" style={{ marginTop: 4 }}>
                         {item.title}
                       </AppText>
+                      {(item as any).cheatSheetSummary?.[0] && (
+                        <BionicText
+                          text={(item as any).cheatSheetSummary[0]}
+                          numberOfLines={2}
+                          style={{ fontSize: 12, lineHeight: 17, marginTop: 6 }}
+                        />
+                      )}
                     </View>
                     <View
                       style={[

@@ -12,6 +12,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Chip } from '@/components/ui/Chip';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Icon } from '@/components/ui/Icon';
+import { CognitiveTelemetryBar } from '@/components/ui/CognitiveTelemetryBar';
+import { ConstellationGraph } from '@/components/ui/ConstellationGraph';
 
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -27,6 +29,8 @@ export default function ExploreScreen() {
   const setExamType = useAppStore((s) => s.setExamType);
   const setSubjectId = useAppStore((s) => s.setSubjectId);
   const viewMode = useAppStore((s) => s.viewMode);
+  const exploreLayoutMode = useAppStore((s) => s.exploreLayoutMode);
+  const setExploreLayoutMode = useAppStore((s) => s.setExploreLayoutMode);
   const { colors } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
   const language = useAppStore((s) => s.language) ?? 'en';
@@ -128,6 +132,8 @@ export default function ExploreScreen() {
   return (
     <ScreenContainer scroll>
       <AppHeader title="Conceptly Explorer" subtitle="Instant search & curriculum index" />
+
+      <CognitiveTelemetryBar />
 
       {/* 🔍 Search Input Bar */}
       <View style={{ marginTop: 12, marginBottom: 12 }}>
@@ -335,21 +341,113 @@ export default function ExploreScreen() {
             </View>
           )}
 
-          {/* Topics List for selected chapter */}
+          {/* Topics List or 2040 Neural Constellation for selected chapter */}
           <View className="mt-2 mb-8">
-            <View className="flex-row items-center justify-between mb-3">
-              <AppText variant="h3">
-                {activeChapter
-                  ? (typeof activeChapter.title === 'object'
-                      ? (activeChapter.title[language] ?? activeChapter.title.en)
-                      : activeChapter.title)
-                  : 'Topics'}
-              </AppText>
-              {topics && (
-                <AppText variant="caption" tone="muted">
-                  {topics.length} topics
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              <View>
+                <AppText variant="h3">
+                  {activeChapter
+                    ? (typeof activeChapter.title === 'object'
+                        ? (activeChapter.title[language] ?? activeChapter.title.en)
+                        : activeChapter.title)
+                    : 'Topics'}
                 </AppText>
-              )}
+                {topics && (
+                  <AppText variant="caption" tone="muted">
+                    {topics.length} cognitive nodes in module
+                  </AppText>
+                )}
+              </View>
+
+              {/* 2040 Constellation vs Matrix Grid Switcher */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  backgroundColor: colors.surfaceSubtle,
+                  borderRadius: 12,
+                  padding: 3,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  gap: 4,
+                }}
+              >
+                <Pressable
+                  onPress={() => setExploreLayoutMode('constellation')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 9,
+                    backgroundColor:
+                      exploreLayoutMode === 'constellation' ? colors.primary : 'transparent',
+                  }}
+                >
+                  <Icon
+                    name="git-network"
+                    size={13}
+                    color={
+                      exploreLayoutMode === 'constellation'
+                        ? colors.textInverse
+                        : colors.textSecondary
+                    }
+                  />
+                  <AppText
+                    variant="micro"
+                    style={{
+                      fontWeight: '800',
+                      color:
+                        exploreLayoutMode === 'constellation'
+                          ? colors.textInverse
+                          : colors.textSecondary,
+                    }}
+                  >
+                    Constellation
+                  </AppText>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setExploreLayoutMode('grid')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 9,
+                    backgroundColor:
+                      exploreLayoutMode === 'grid' ? colors.primary : 'transparent',
+                  }}
+                >
+                  <Icon
+                    name="grid-outline"
+                    size={13}
+                    color={
+                      exploreLayoutMode === 'grid' ? colors.textInverse : colors.textSecondary
+                    }
+                  />
+                  <AppText
+                    variant="micro"
+                    style={{
+                      fontWeight: '800',
+                      color:
+                        exploreLayoutMode === 'grid' ? colors.textInverse : colors.textSecondary,
+                    }}
+                  >
+                    Matrix Grid
+                  </AppText>
+                </Pressable>
+              </View>
             </View>
 
             {topicsLoading ? (
@@ -360,6 +458,17 @@ export default function ExploreScreen() {
               <EmptyState
                 title="No topics in this module"
                 description="Select another chapter above to view visual lessons."
+              />
+            ) : exploreLayoutMode === 'constellation' ? (
+              <ConstellationGraph
+                topics={topics}
+                chapterTitle={
+                  activeChapter
+                    ? typeof activeChapter.title === 'object'
+                      ? activeChapter.title[language] ?? activeChapter.title.en
+                      : activeChapter.title
+                    : 'Core Module'
+                }
               />
             ) : (
               <View className={isDesktop ? "flex-row flex-wrap gap-4" : "gap-3"}>

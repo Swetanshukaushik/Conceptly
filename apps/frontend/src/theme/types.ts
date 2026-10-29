@@ -23,6 +23,12 @@ export interface ThemeColors {
   border: string;          // Standard hairline divider
   borderSubtle: string;    // Soft interior divider
   borderActive: string;    // Focused or selected border
+  borderSpecular: string;  // 2040 top-edge overhead light highlight
+
+  // Spatial 2040 Optics
+  gridDot: string;         // CAD blueprint dot-matrix reticle color
+  ambientAura: string;     // Sub-surface radial ambient glow
+  telemetryMono: string;   // Tabular monospace HUD readout color
 
   // Text
   textPrimary: string;     // Highest contrast text

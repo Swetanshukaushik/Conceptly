@@ -35,11 +35,19 @@ export function ScreenContainer({
   const containerBg = isDesktop ? colors.screenBg : colors.screenBg;
   const outerBg = colors.canvasBg;
 
+  const webGridStyle: any = isWeb
+    ? {
+        backgroundImage: `radial-gradient(${colors.gridDot} 1px, transparent 1px), radial-gradient(circle at 50% 0%, ${colors.ambientAura}, transparent 65%)`,
+        backgroundSize: '24px 24px, 100% 100%',
+      }
+    : undefined;
+
   return (
     <View
       style={[
         styles.outerRoot,
         { backgroundColor: outerBg },
+        webGridStyle,
       ]}
     >
       {/* Floating Viewport Toggle on Web when in mobile view */}
@@ -64,6 +72,7 @@ export function ScreenContainer({
                   borderRightWidth: isDesktop ? 0 : 1,
                   shadowColor: isDark ? '#000000' : '#0F172A',
                 },
+                webGridStyle,
                 style,
               ]}
               {...props}
@@ -93,6 +102,7 @@ export function ScreenContainer({
                   borderLeftWidth: isDesktop ? 0 : 1,
                   borderRightWidth: isDesktop ? 0 : 1,
                 },
+                webGridStyle,
                 style,
               ]}
               {...props}

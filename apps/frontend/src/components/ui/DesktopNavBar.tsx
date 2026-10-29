@@ -4,7 +4,9 @@ import { useRouter, usePathname } from 'expo-router';
 import { Icon } from './Icon';
 import { ViewportToggle } from './ViewportToggle';
 import { ThemeToggle } from './ThemeToggle';
+import { BionicToggle } from './BionicText';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { useAppStore } from '@/store/useAppStore';
 
 const NAV_ITEMS = [
   { label: 'Home', path: '/feed', icon: 'home-outline', activeIcon: 'home' },
@@ -18,6 +20,7 @@ export function DesktopNavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { colors, isDark } = useTheme();
+  const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
 
   return (
     <View
@@ -91,8 +94,42 @@ export function DesktopNavBar() {
           })}
         </View>
 
-        {/* Action Controls: Theme Switcher + Viewport Switcher */}
+        {/* Action Controls: Omnibar + Bionic + Theme Switcher + Viewport Switcher */}
         <View style={styles.actionsRow}>
+          <Pressable
+            onPress={() => setCommandPaletteOpen(true)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+              borderRadius: 10,
+              borderWidth: 1,
+              backgroundColor: colors.surfaceSubtle,
+              borderColor: colors.primaryBorder,
+            }}
+          >
+            <Icon name="search" size={13} color={colors.primaryText} />
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textPrimary }}>
+              Omnibar
+            </Text>
+            <View
+              style={{
+                paddingHorizontal: 5,
+                paddingVertical: 1,
+                borderRadius: 4,
+                backgroundColor: colors.primarySoft,
+                borderWidth: 1,
+                borderColor: colors.primaryBorder,
+              }}
+            >
+              <Text style={{ fontSize: 10, fontWeight: '800', color: colors.primaryText }}>
+                ⌘K
+              </Text>
+            </View>
+          </Pressable>
+          <BionicToggle compact={true} />
           <ThemeToggle compact={false} />
           <ViewportToggle inline={true} />
         </View>

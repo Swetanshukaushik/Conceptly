@@ -50,6 +50,7 @@ export function AppCard({
         return {
           backgroundColor: colors.surface,
           borderColor: colors.border,
+          borderTopColor: colors.borderSpecular,
         };
     }
   };
@@ -59,7 +60,7 @@ export function AppCard({
     getToneStyle(),
     {
       shadowColor: isDark ? "#000000" : "#0F172A",
-      shadowOpacity: isDark ? 0.25 : 0.04,
+      shadowOpacity: isDark ? 0.32 : 0.05,
     },
     style,
   ];

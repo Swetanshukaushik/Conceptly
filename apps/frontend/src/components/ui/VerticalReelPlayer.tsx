@@ -15,6 +15,8 @@ import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
 import { Icon } from './Icon';
 import { ViewportToggle } from './ViewportToggle';
 import { ThemeToggle } from './ThemeToggle';
+import { InteractiveSchematic } from './InteractiveSchematic';
+import { BionicText, BionicToggle } from './BionicText';
 import { educationApi } from '@/services/api/educationApi';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -163,6 +165,7 @@ function ReelCheatSheetModal({
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <BionicToggle compact={true} />
                 <ThemeToggle compact={true} />
                 <Pressable onPress={onClose} style={styles.modalCloseButton}>
                   <Icon name="close" size={18} color={colors.textSecondary} />
@@ -175,9 +178,10 @@ function ReelCheatSheetModal({
             {/* Key Takeaway Banner */}
             <View style={styles.modalTakeawayBanner}>
               <Text style={styles.modalTakeawayHeader}>🎯 CORE INTERVIEW TAKEAWAY</Text>
-              <Text style={styles.modalTakeawayBody}>
-                {reel.keyTakeaway ?? 'Master this mental model to confidently explain trade-offs during interviews.'}
-              </Text>
+              <BionicText
+                text={reel.keyTakeaway ?? 'Master this mental model to confidently explain trade-offs during interviews.'}
+                style={styles.modalTakeawayBody}
+              />
             </View>
 
             {/* 🎤 30-Second Verbatim Pitch */}
@@ -188,24 +192,19 @@ function ReelCheatSheetModal({
                   <Text style={styles.pitchHeaderText}>30-SECOND INTERVIEW PITCH</Text>
                 </View>
                 <Text style={styles.pitchSubheader}>Say this directly when asked by the interviewer:</Text>
-                <Text style={styles.pitchBody}>"{reel.interviewPitch}"</Text>
+                <BionicText
+                  text={`"${reel.interviewPitch}"`}
+                  style={styles.pitchBody}
+                />
               </View>
             )}
 
-            {/* 📐 Visual Architecture Flow Diagram */}
-            {reel.architectureDiagram && (
-              <View style={styles.modalDiagramContainer}>
-                <View style={styles.diagramHeaderRow}>
-                  <Icon name="git-network" size={15} color={colors.primary} />
-                  <Text style={styles.diagramHeaderText}>VISUAL ARCHITECTURE FLOW</Text>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.diagramScroll}>
-                  <Text style={styles.diagramMonospace}>
-                    {reel.architectureDiagram.trim()}
-                  </Text>
-                </ScrollView>
-              </View>
-            )}
+            {/* 📐 2040 Interactive System Schematic & Architecture Simulator */}
+            <InteractiveSchematic
+              title={reel.title}
+              topicId={reel.topicId}
+              asciiDiagram={reel.architectureDiagram}
+            />
 
             {/* ⚠️ Interview Red Flags & Mistakes to Avoid */}
             {reel.pitfalls && reel.pitfalls.length > 0 && (
@@ -218,7 +217,7 @@ function ReelCheatSheetModal({
                   {reel.pitfalls.map((pitfall, pIdx) => (
                     <View key={pIdx} style={styles.pitfallRow}>
                       <Text style={styles.pitfallCross}>✗</Text>
-                      <Text style={styles.pitfallText}>{pitfall}</Text>
+                      <BionicText text={pitfall} style={styles.pitfallText} />
                     </View>
                   ))}
                 </View>
@@ -238,7 +237,7 @@ function ReelCheatSheetModal({
               ).map((note, idx) => (
                 <View key={idx} style={styles.bulletRow}>
                   <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{note}</Text>
+                  <BionicText text={note} style={styles.bulletText} />
                 </View>
               ))}
             </View>
@@ -1257,18 +1256,108 @@ function DesktopStudioPlayer({
 
         {/* Right Column: Pinned Revision Studio Panel */}
         <View style={styles.desktopStudioPanel}>
-          <View style={styles.studioPanelHeader}>
-            <Text style={styles.studioPanelTitle}>⚡ Interactive Revision Studio</Text>
-            <Text style={styles.studioPanelSubtitle}>{reel.title}</Text>
+          <View style={[styles.studioPanelHeader, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={styles.studioPanelTitle}>⚡ 2040 Interactive Revision Studio</Text>
+              <Text style={styles.studioPanelSubtitle} numberOfLines={1}>{reel.title}</Text>
+            </View>
+            <BionicToggle />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.studioScroll}>
             {/* Core Interview Takeaway */}
             <View style={styles.modalTakeawayBanner}>
               <Text style={styles.modalTakeawayHeader}>🎯 CORE INTERVIEW TAKEAWAY</Text>
-              <Text style={styles.modalTakeawayBody}>
-                {reel.keyTakeaway ?? 'Master this mental model to confidently explain trade-offs during interviews.'}
-              </Text>
+              <BionicText
+                text={reel.keyTakeaway ?? 'Master this mental model to confidently explain trade-offs during interviews.'}
+                style={styles.modalTakeawayBody}
+              />
+            </View>
+
+            {/* 📐 2040 Interactive Live System Schematic Simulator */}
+            <InteractiveSchematic
+              title={reel.title}
+              topicId={reel.topicId}
+              asciiDiagram={reel.architectureDiagram}
+            />
+
+            {/* ⏱️ Scrubbable Time-Synced Neural Transcript Matrix */}
+            <View
+              style={{
+                backgroundColor: colors.surfaceSubtle,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderTopColor: colors.borderSpecular,
+                padding: 12,
+                marginBottom: 16,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="pulse" size={14} color={colors.telemetryMono} />
+                  <Text style={[styles.diagramHeaderText, { color: colors.textPrimary }]}>
+                    TIME-SYNCED INTERACTIVE TRANSCRIPT (CLICK TO SEEK)
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: colors.telemetryMono }}>
+                  T+{currentSec}s
+                </Text>
+              </View>
+              <View style={{ gap: 6 }}>
+                {captionSegments.map((seg, sIdx) => {
+                  const isActiveCue = currentSec >= seg.startSec && currentSec < seg.endSec;
+                  return (
+                    <Pressable
+                      key={sIdx}
+                      onPress={() => {
+                        setCurrentPlaybackMillis(seg.startSec * 1000);
+                        videoRef.current?.setPositionAsync(seg.startSec * 1000).catch(() => {});
+                      }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        gap: 8,
+                        paddingVertical: 7,
+                        paddingHorizontal: 10,
+                        borderRadius: 10,
+                        borderLeftWidth: 3,
+                        borderLeftColor: isActiveCue ? colors.primary : colors.border,
+                        backgroundColor: isActiveCue ? colors.primarySoft : colors.surface,
+                      }}
+                    >
+                      <View
+                        style={{
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                          backgroundColor: isActiveCue ? colors.primary : colors.surfaceSubtle,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 9,
+                            fontWeight: '800',
+                            color: isActiveCue ? colors.textInverse : colors.telemetryMono,
+                          }}
+                        >
+                          {formatSeconds(seg.startSec)}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <BionicText
+                          text={seg.text}
+                          style={{
+                            fontSize: 12,
+                            lineHeight: 17,
+                            color: isActiveCue ? colors.textPrimary : colors.textSecondary,
+                          }}
+                        />
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             {/* 30-Sec Pitch */}
@@ -1279,22 +1368,10 @@ function DesktopStudioPlayer({
                   <Text style={styles.pitchHeaderText}>30-SECOND INTERVIEW PITCH</Text>
                 </View>
                 <Text style={styles.pitchSubheader}>Say this directly when asked by the interviewer:</Text>
-                <Text style={styles.pitchBody}>"{reel.interviewPitch}"</Text>
-              </View>
-            )}
-
-            {/* Architecture Flow Diagram */}
-            {reel.architectureDiagram && (
-              <View style={styles.modalDiagramContainer}>
-                <View style={styles.diagramHeaderRow}>
-                  <Icon name="git-network" size={15} color={colors.primary} />
-                  <Text style={styles.diagramHeaderText}>VISUAL ARCHITECTURE FLOW</Text>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.diagramScroll}>
-                  <Text style={styles.diagramMonospace}>
-                    {reel.architectureDiagram.trim()}
-                  </Text>
-                </ScrollView>
+                <BionicText
+                  text={`"${reel.interviewPitch}"`}
+                  style={styles.pitchBody}
+                />
               </View>
             )}
 
@@ -1309,7 +1386,7 @@ function DesktopStudioPlayer({
                   {reel.pitfalls.map((pitfall, pIdx) => (
                     <View key={pIdx} style={styles.pitfallRow}>
                       <Text style={styles.pitfallCross}>✗</Text>
-                      <Text style={styles.pitfallText}>{pitfall}</Text>
+                      <BionicText text={pitfall} style={styles.pitfallText} />
                     </View>
                   ))}
                 </View>
@@ -1322,7 +1399,7 @@ function DesktopStudioPlayer({
               {(reel.summaryNotes || []).map((note, idx) => (
                 <View key={idx} style={styles.bulletRow}>
                   <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{note}</Text>
+                  <BionicText text={note} style={styles.bulletText} />
                 </View>
               ))}
             </View>
@@ -1647,12 +1724,13 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
       overflow: 'hidden',
       backgroundColor: '#000000',
       position: 'relative',
-      shadowColor: isDark ? '#000000' : '#0F172A',
+      shadowColor: colors.primary,
       shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: isDark ? 0.45 : 0.1,
-      shadowRadius: 20,
+      shadowOpacity: isDark ? 0.28 : 0.12,
+      shadowRadius: 24,
       borderWidth: 1,
       borderColor: colors.border,
+      borderTopColor: colors.borderSpecular,
     },
     desktopVideoPressable: {
       width: 400,
@@ -1713,6 +1791,7 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
       padding: 24,
       borderWidth: 1,
       borderColor: colors.border,
+      borderTopColor: colors.borderSpecular,
       shadowColor: isDark ? '#000000' : '#0F172A',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: isDark ? 0.35 : 0.08,

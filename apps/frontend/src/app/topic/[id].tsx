@@ -10,6 +10,8 @@ import { AppCard } from '@/components/ui/AppCard';
 import { AppButton } from '@/components/ui/AppButton';
 import { Icon } from '@/components/ui/Icon';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { CognitiveTelemetryBar } from '@/components/ui/CognitiveTelemetryBar';
+import { BionicText } from '@/components/ui/BionicText';
 
 import { useTopicByIdQuery } from '@/services/api/hooks/useTopicByIdQuery';
 import { useReelsByTopicQuery } from '@/services/api/hooks/useReelsByTopicQuery';
@@ -36,6 +38,8 @@ export default function TopicDetailScreen() {
   const [cardIndex, setCardIndex] = useState(0);
 
   const watchedReels = useAppStore((s) => s.watchedReels);
+  const flashcardSRS = useAppStore((s) => s.flashcardSRS);
+  const rateFlashcard = useAppStore((s) => s.rateFlashcard);
   const viewMode = useAppStore((s) => s.viewMode);
   const { colors } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
@@ -122,6 +126,8 @@ export default function TopicDetailScreen() {
     <ScreenContainer scroll>
       <AppHeader title="Topic Revision" onBack={() => router.back()} />
 
+      <CognitiveTelemetryBar />
+
       <View className="mt-3">
         {/* Main Topic Header Card */}
         <AppCard tone="primarySoft" style={{ marginBottom: 16 }}>
@@ -141,9 +147,10 @@ export default function TopicDetailScreen() {
                   Core Mental Model
                 </AppText>
               </View>
-              <AppText variant="caption" tone="secondary" style={{ lineHeight: 18 }}>
-                {topic.cheatSheetSummary[0]}
-              </AppText>
+              <BionicText
+                text={topic.cheatSheetSummary[0]}
+                style={{ fontSize: 13, lineHeight: 19 }}
+              />
             </View>
           )}
 
@@ -436,6 +443,7 @@ export default function TopicDetailScreen() {
 
               const safeIndex = Math.min(cardIndex, cards.length - 1);
               const fc = cards[safeIndex];
+              const srsState = flashcardSRS[fc.id];
 
               return (
                 <View>
@@ -453,10 +461,19 @@ export default function TopicDetailScreen() {
                       }}
                     >
                       <View className="flex-row items-center justify-between mb-3">
-                        <View style={{ backgroundColor: colors.surfaceSubtle, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
-                          <AppText variant="micro" tone="secondary" style={{ fontWeight: '700' }}>
-                            {isCardFlipped ? '💡 ANSWER & ARCHITECTURE' : '❓ ACTIVE RECALL PROMPT'}
-                          </AppText>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ backgroundColor: colors.surfaceSubtle, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
+                            <AppText variant="micro" tone="secondary" style={{ fontWeight: '700' }}>
+                              {isCardFlipped ? '💡 ANSWER & ARCHITECTURE' : '❓ ACTIVE RECALL PROMPT'}
+                            </AppText>
+                          </View>
+                          {srsState && (
+                            <View style={{ backgroundColor: colors.accentTealSoft, borderColor: colors.accentTeal, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
+                              <AppText variant="micro" style={{ color: colors.accentTealText, fontWeight: '800' }}>
+                                LEITNER BOX {srsState.box}/5
+                              </AppText>
+                            </View>
+                          )}
                         </View>
                         <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
                           Tap to Flip ↻
@@ -464,16 +481,25 @@ export default function TopicDetailScreen() {
                       </View>
 
                       <View className="my-auto py-2">
-                        <AppText variant="h3" style={{ lineHeight: 24 }}>
-                          {isCardFlipped ? fc.backAnswer : fc.frontQuestion}
-                        </AppText>
+                        {isCardFlipped ? (
+                          <BionicText
+                            text={fc.backAnswer}
+                            style={{ fontSize: 18, lineHeight: 26, color: colors.textPrimary }}
+                          />
+                        ) : (
+                          <AppText variant="h3" style={{ lineHeight: 24 }}>
+                            {fc.frontQuestion}
+                          </AppText>
+                        )}
 
                         {isCardFlipped && fc.bullets && fc.bullets.length > 0 && (
                           <View className="mt-4 gap-1.5">
                             {fc.bullets.map((b, bIdx) => (
-                              <AppText key={bIdx} variant="caption" tone="secondary">
-                                • {b}
-                              </AppText>
+                              <BionicText
+                                key={bIdx}
+                                text={`• ${b}`}
+                                style={{ fontSize: 13, lineHeight: 19 }}
+                              />
                             ))}
                           </View>
                         )}
@@ -481,12 +507,70 @@ export default function TopicDetailScreen() {
 
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
                         <AppText variant="micro" tone="muted">
-                          Self-test your memory before the reel
+                          {isCardFlipped
+                            ? 'Rate synaptic recall below to schedule next review'
+                            : 'Self-test your memory before flipping'}
                         </AppText>
                         <Icon name="swap-horizontal" size={18} color={colors.primaryText} />
                       </View>
                     </AppCard>
                   </Pressable>
+
+                  {/* 🧠 2040 Spaced Repetition (SM-2 / Leitner) Synaptic Recall Matrix */}
+                  <View
+                    style={{
+                      marginTop: 12,
+                      padding: 12,
+                      borderRadius: 14,
+                      backgroundColor: colors.surfaceSubtle,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <AppText variant="micro" tone="secondary" style={{ fontWeight: '700', letterSpacing: 0.5 }}>
+                        SPACED REPETITION TELEMETRY (SM-2)
+                      </AppText>
+                      <AppText variant="micro" style={{ color: colors.telemetryMono, fontWeight: '700' }}>
+                        {srsState ? `LAST: ${srsState.lastGrade.toUpperCase()}` : 'UNGRADED'}
+                      </AppText>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {[
+                        { grade: 'again' as const, label: 'Again', sub: '10m', bg: colors.dangerSoft, border: colors.danger, text: colors.dangerText },
+                        { grade: 'hard' as const, label: 'Hard', sub: '1d', bg: colors.warningSoft, border: colors.warning, text: colors.warningText },
+                        { grade: 'good' as const, label: 'Good', sub: '3d', bg: colors.primarySoft, border: colors.primary, text: colors.primaryText },
+                        { grade: 'easy' as const, label: 'Easy', sub: '7d', bg: colors.successSoft, border: colors.success, text: colors.successText },
+                      ].map((btn) => (
+                        <Pressable
+                          key={btn.grade}
+                          onPress={() => {
+                            rateFlashcard(fc.id, btn.grade);
+                            if (safeIndex < cards.length - 1) {
+                              setIsCardFlipped(false);
+                              setCardIndex((prev) => prev + 1);
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 8,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            backgroundColor: btn.bg,
+                            borderColor: btn.border,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <AppText variant="caption" style={{ color: btn.text, fontWeight: '800' }}>
+                            {btn.label}
+                          </AppText>
+                          <AppText variant="micro" style={{ color: btn.text, opacity: 0.85 }}>
+                            {btn.sub}
+                          </AppText>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
 
                   {/* Deck Paging Controls */}
                   {cards.length > 1 && (

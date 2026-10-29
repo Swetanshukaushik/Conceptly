@@ -68,6 +68,9 @@ function savePersistedState(state: AppState) {
     userEmail: state.userEmail,
     userName: state.userName,
     captionsEnabled: state.captionsEnabled,
+    bionicReading: state.bionicReading,
+    flashcardSRS: state.flashcardSRS,
+    exploreLayoutMode: state.exploreLayoutMode,
   };
 
   const jsonStr = JSON.stringify(toSave);
@@ -105,6 +108,15 @@ export async function hydrateAppStore() {
   }
 }
 
+export type FlashcardGrade = 'again' | 'hard' | 'good' | 'easy';
+
+export interface FlashcardSRSRecord {
+  box: number;
+  nextReviewAt: number;
+  lastGrade: FlashcardGrade;
+  updatedAt: number;
+}
+
 export type AppState = {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
@@ -122,6 +134,14 @@ export type AppState = {
   captionsEnabled: boolean;
   toggleCaptions: () => void;
   setCaptionsEnabled: (enabled: boolean) => void;
+  bionicReading: boolean;
+  toggleBionicReading: () => void;
+  commandPaletteOpen: boolean;
+  setCommandPaletteOpen: (open: boolean) => void;
+  exploreLayoutMode: 'grid' | 'constellation';
+  setExploreLayoutMode: (mode: 'grid' | 'constellation') => void;
+  flashcardSRS: Record<string, FlashcardSRSRecord>;
+  rateFlashcard: (cardId: string, grade: FlashcardGrade) => void;
   apiDataSource: ApiDataSource;
   authToken: string | null;
   userEmail: string | null;
@@ -189,6 +209,65 @@ export const useAppStore = create<AppState>((set) => ({
     setTimeout(() => {
       savePersistedState(useAppStore.getState());
     }, 0);
+  },
+  bionicReading: (initialPersisted as any).bionicReading ?? false,
+  toggleBionicReading: () => {
+    set((state) => {
+      const next = !state.bionicReading;
+      setTimeout(() => {
+        savePersistedState(useAppStore.getState());
+      }, 0);
+      return { bionicReading: next };
+    });
+  },
+  commandPaletteOpen: false,
+  setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
+  exploreLayoutMode: (initialPersisted as any).exploreLayoutMode ?? 'constellation',
+  setExploreLayoutMode: (mode: 'grid' | 'constellation') => {
+    set({ exploreLayoutMode: mode });
+    setTimeout(() => {
+      savePersistedState(useAppStore.getState());
+    }, 0);
+  },
+  flashcardSRS: (initialPersisted as any).flashcardSRS ?? {},
+  rateFlashcard: (cardId: string, grade: FlashcardGrade) => {
+    set((state) => {
+      const current = state.flashcardSRS[cardId] ?? {
+        box: 1,
+        nextReviewAt: Date.now(),
+        lastGrade: 'good' as FlashcardGrade,
+        updatedAt: Date.now(),
+      };
+      let nextBox = current.box;
+      let intervalMs = 24 * 60 * 60 * 1000;
+      if (grade === 'again') {
+        nextBox = 1;
+        intervalMs = 10 * 60 * 1000; // 10 minutes
+      } else if (grade === 'hard') {
+        nextBox = Math.max(1, current.box);
+        intervalMs = 24 * 60 * 60 * 1000; // 1 day
+      } else if (grade === 'good') {
+        nextBox = Math.min(5, current.box + 1);
+        intervalMs = 3 * 24 * 60 * 60 * 1000; // 3 days
+      } else if (grade === 'easy') {
+        nextBox = Math.min(5, current.box + 2);
+        intervalMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+      }
+
+      const updated = {
+        ...state.flashcardSRS,
+        [cardId]: {
+          box: nextBox,
+          nextReviewAt: Date.now() + intervalMs,
+          lastGrade: grade,
+          updatedAt: Date.now(),
+        },
+      };
+      setTimeout(() => {
+        savePersistedState(useAppStore.getState());
+      }, 0);
+      return { flashcardSRS: updated };
+    });
   },
   apiDataSource:
     initialPersisted.apiDataSource ??

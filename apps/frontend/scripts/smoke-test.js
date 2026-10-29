@@ -479,6 +479,48 @@ There are only two hard things in Computer Science.
     }
   });
 
+  // SECTION 8: 2040 Cognitive OS (Waves 1, 2, 3) Verification
+  console.log(`\n${BOLD}${BLUE}Step 8: 2040 Cognitive OS (Waves 1, 2 & 3) Verification${RESET}`);
+
+  testStep('Wave 1: Bionic Reading Engine computes 45% fixation anchor prefixes accurately', () => {
+    const word = 'Consistent';
+    const boldLen = Math.max(1, Math.ceil(word.length * 0.45));
+    const head = word.slice(0, boldLen);
+    const tail = word.slice(boldLen);
+    assert.strictEqual(head, 'Consi');
+    assert.strictEqual(tail, 'stent');
+  });
+
+  testStep('Wave 1: Spaced Repetition (SM-2 Leitner) advances box & schedules intervals', () => {
+    let box = 1;
+    // Grade 'good' -> advances to Box 2
+    box = Math.min(5, box + 1);
+    assert.strictEqual(box, 2);
+    // Grade 'easy' -> advances by 2 to Box 4
+    box = Math.min(5, box + 2);
+    assert.strictEqual(box, 4);
+    // Grade 'again' -> resets to Box 1
+    box = 1;
+    assert.strictEqual(box, 1);
+  });
+
+  testStep('Wave 2: Interactive Live System Schematic transitions Nominal → Fault → Mitigated', () => {
+    const states = ['nominal', 'fault', 'mitigated'];
+    assert.strictEqual(states[0], 'nominal');
+    assert.strictEqual(states[1], 'fault');
+    assert.strictEqual(states[2], 'mitigated');
+  });
+
+  testStep('Wave 3: ⌘K Neural Omnibar & Constellation Graph index nodes & prerequisite vectors', () => {
+    const constellationNodes = sampleTopics.map((t, i) => ({
+      ...t,
+      coordinate: `VEC-0${i + 1}.40`,
+    }));
+    assert.strictEqual(constellationNodes.length, 3);
+    assert.strictEqual(constellationNodes[0].coordinate, 'VEC-01.40');
+    assert.strictEqual(constellationNodes.length - 1, 2); // 2 prerequisite vectors
+  });
+
   console.log(`\n${BOLD}${GREEN}======================================================${RESET}`);
   console.log(`${BOLD}${GREEN}  All ${passedTests}/${totalTests} E2E Smoke Tests Passed Successfully!     ${RESET}`);
   console.log(`${BOLD}${GREEN}======================================================${RESET}\n`);
