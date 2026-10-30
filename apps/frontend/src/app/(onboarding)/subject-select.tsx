@@ -77,7 +77,7 @@ export default function SubjectSelectScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1 mt-2">
         <AppText variant="body" tone="secondary">
-          Select the subject module you want to focus on first. You can switch subjects anytime from Explore or ⌘K.
+          Select the subject module you want to focus on first. You can switch subjects anytime from Explore or Search.
         </AppText>
 
         <View className="mt-5 gap-3 mb-6">

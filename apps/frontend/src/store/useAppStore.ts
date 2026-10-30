@@ -204,7 +204,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   userBookmarks: initialPersisted.userBookmarks ?? mockBookmarks,
   userProgress: initialPersisted.userProgress ?? mockProgress,
-  captionsEnabled: (initialPersisted as any).captionsEnabled ?? true,
+  captionsEnabled: (initialPersisted as any).captionsEnabled ?? false,
   toggleCaptions: () => {
     set((state) => {
       const next = !state.captionsEnabled;
@@ -281,7 +281,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   apiDataSource:
     initialPersisted.apiDataSource ??
-    ((process.env.EXPO_PUBLIC_DATA_SOURCE as any) || 'live'),
+    ((process.env.EXPO_PUBLIC_DATA_SOURCE as any) || 'mock'),
   authToken: initialPersisted.authToken ?? null,
   userEmail: initialPersisted.userEmail ?? null,
   userName: initialPersisted.userName ?? null,

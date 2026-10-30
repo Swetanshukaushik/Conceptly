@@ -3,15 +3,16 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { Icon } from './Icon';
-import { BionicToggle } from './BionicText';
 
 export function CognitiveTelemetryBar() {
   const { colors } = useTheme();
+  const viewMode = useAppStore((s) => s.viewMode);
   const watchedReels = useAppStore((s) => s.watchedReels);
   const playbackSpeed = useAppStore((s) => s.playbackSpeed);
-  const bionicReading = useAppStore((s) => s.bionicReading);
   const flashcardSRS = useAppStore((s) => s.flashcardSRS);
   const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
+
+  const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
   const metrics = useMemo(() => {
     const watchedCount = Object.values(watchedReels).filter(Boolean).length;
@@ -21,7 +22,7 @@ export function CognitiveTelemetryBar() {
         ? srsEntries.reduce((acc, r) => acc + r.box, 0) / srsEntries.length
         : 3.4;
     const synapticRetention = Math.min(99.4, 82.0 + watchedCount * 2.1 + avgBox * 1.8).toFixed(1);
-    const effectiveVelocity = (playbackSpeed * (bionicReading ? 1.6 : 1.0)).toFixed(2);
+    const effectiveVelocity = playbackSpeed.toFixed(1);
     const dueCount = srsEntries.filter((r) => r.nextReviewAt <= Date.now()).length;
 
     return {
@@ -30,7 +31,7 @@ export function CognitiveTelemetryBar() {
       watchedCount,
       dueCount,
     };
-  }, [watchedReels, playbackSpeed, bionicReading, flashcardSRS]);
+  }, [watchedReels, playbackSpeed, flashcardSRS]);
 
   return (
     <View
@@ -47,14 +48,16 @@ export function CognitiveTelemetryBar() {
         {/* Live Pulse Indicator */}
         <View style={styles.statusChip}>
           <View style={[styles.pulseDot, { backgroundColor: colors.success }]} />
-          <Text style={[styles.monoLabel, { color: colors.textMuted }]}>NEURAL HUD</Text>
+          <Text style={[styles.monoLabel, { color: colors.textMuted }]}>
+            {isDesktop ? 'NEURAL HUD' : 'SYNC'}
+          </Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* Synaptic Stability */}
         <View style={styles.metricItem}>
-          <Text style={[styles.metricKey, { color: colors.textMuted }]}>SYNAPTIC</Text>
+          {isDesktop && <Text style={[styles.metricKey, { color: colors.textMuted }]}>SYNAPTIC</Text>}
           <Text style={[styles.metricVal, { color: colors.telemetryMono }]}>
             {metrics.synapticRetention}%
           </Text>
@@ -64,7 +67,7 @@ export function CognitiveTelemetryBar() {
 
         {/* Cognitive Velocity */}
         <View style={styles.metricItem}>
-          <Text style={[styles.metricKey, { color: colors.textMuted }]}>VELOCITY</Text>
+          {isDesktop && <Text style={[styles.metricKey, { color: colors.textMuted }]}>VELOCITY</Text>}
           <Text style={[styles.metricVal, { color: colors.accentTealText }]}>
             {metrics.effectiveVelocity}x
           </Text>
@@ -74,16 +77,14 @@ export function CognitiveTelemetryBar() {
 
         {/* Checkpoints */}
         <View style={styles.metricItem}>
-          <Text style={[styles.metricKey, { color: colors.textMuted }]}>NODES</Text>
+          {isDesktop && <Text style={[styles.metricKey, { color: colors.textMuted }]}>NODES</Text>}
           <Text style={[styles.metricVal, { color: colors.textPrimary }]}>
-            {metrics.watchedCount} SYNCED
+            {metrics.watchedCount} {isDesktop ? 'SYNCED' : 'REELS'}
           </Text>
         </View>
       </View>
 
       <View style={styles.actionsGroup}>
-        <BionicToggle compact={Platform.OS !== 'web'} />
-
         <Pressable
           onPress={() => setCommandPaletteOpen(true)}
           style={[
@@ -95,18 +96,22 @@ export function CognitiveTelemetryBar() {
           ]}
         >
           <Icon name="search" size={12} color={colors.primaryText} />
-          <Text style={[styles.omnibarText, { color: colors.textPrimary }]}>Omnibar</Text>
-          <View
-            style={[
-              styles.kbdBadge,
-              {
-                backgroundColor: colors.primarySoft,
-                borderColor: colors.primaryBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.kbdText, { color: colors.primaryText }]}>⌘K</Text>
-          </View>
+          <Text style={[styles.omnibarText, { color: colors.textPrimary }]}>
+            {isDesktop ? 'Omnibar' : 'Search'}
+          </Text>
+          {isDesktop && (
+            <View
+              style={[
+                styles.kbdBadge,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderColor: colors.primaryBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.kbdText, { color: colors.primaryText }]}>⌘K</Text>
+            </View>
+          )}
         </Pressable>
       </View>
     </View>

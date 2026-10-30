@@ -163,7 +163,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <ScreenContainer scroll hideToggle={true}>
+    <ScreenContainer scroll>
       {/* ⚡ Top Landing Bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -190,8 +190,8 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <ThemeToggle compact={true} />
-          {isWeb && <ViewportToggle inline={true} />}
+          {isDesktop && <ThemeToggle compact={true} />}
+          {isDesktop && <ViewportToggle inline={true} />}
           <Pressable
             onPress={() => router.push('/feed')}
             style={{
@@ -478,8 +478,8 @@ export default function WelcomeScreen() {
       {/* 📚 What You Can Revise: The 7 Domain Tracks */}
       <View className="my-6">
         <View className="flex-row items-center justify-between mb-4">
-          <View>
-            <AppText variant="h2" className="text-slate-900 font-extrabold">
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <AppText variant="h2" style={{ fontWeight: '800' }}>
               Choose Your Target Track
             </AppText>
             <AppText variant="caption" tone="secondary" className="mt-0.5">
@@ -487,8 +487,8 @@ export default function WelcomeScreen() {
             </AppText>
           </View>
           <Pressable onPress={() => router.push('/explore')}>
-            <AppText variant="caption" tone="primary" className="font-bold">
-              View All Topics →
+            <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
+              View All →
             </AppText>
           </Pressable>
         </View>

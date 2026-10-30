@@ -105,15 +105,15 @@ export default function ProgressScreen() {
 
       {/* 2040 4-Axis Cognitive Readiness Matrix */}
       <AppCard tone="default" style={{ marginTop: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
             <Icon name="pulse" size={16} color={colors.telemetryMono} />
-            <AppText variant="caption" style={{ fontWeight: '800', letterSpacing: 0.6 }}>
-              BIOMETRIC COGNITIVE READINESS MATRIX
+            <AppText variant="caption" style={{ fontWeight: '800', letterSpacing: 0.5 }}>
+              COGNITIVE READINESS MATRIX
             </AppText>
           </View>
           <AppText variant="micro" style={{ color: colors.telemetryMono, fontWeight: '700' }}>
-            EBBINGHAUS TELEMETRY: ACTIVE
+            EBBINGHAUS: ACTIVE
           </AppText>
         </View>
 

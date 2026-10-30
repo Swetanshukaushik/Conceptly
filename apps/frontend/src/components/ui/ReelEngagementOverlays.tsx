@@ -33,69 +33,71 @@ export function ReelTimelineScrubber({
   );
 
   return (
-    <View style={[styles.scrubberWrapper, compact && { marginBottom: 4 }]}>
-      {/* Phase Jump Pills + +/-5s Tactile Seek Controls */}
-      <View style={styles.phaseRow}>
-        <View style={styles.phasePillsGroup}>
-          {phases.map((p, idx) => {
-            const nextSec = phases[idx + 1]?.sec ?? total + 1;
-            const isActive = currentSec >= p.sec && currentSec < nextSec;
-            return (
-              <Pressable
-                key={p.label}
-                onPress={() => onSeek(p.sec)}
-                style={[
-                  styles.phasePill,
-                  {
-                    backgroundColor: isActive
-                      ? colors.primarySoft
-                      : isDark
-                      ? 'rgba(15, 23, 42, 0.75)'
-                      : 'rgba(255, 255, 255, 0.85)',
-                    borderColor: isActive ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text
+    <View style={[styles.scrubberWrapper, compact && { marginBottom: 6 }]}>
+      {/* Phase Jump Pills + +/-5s Tactile Seek Controls (Hidden in compact mode) */}
+      {!compact && (
+        <View style={styles.phaseRow}>
+          <View style={styles.phasePillsGroup}>
+            {phases.map((p, idx) => {
+              const nextSec = phases[idx + 1]?.sec ?? total + 1;
+              const isActive = currentSec >= p.sec && currentSec < nextSec;
+              return (
+                <Pressable
+                  key={p.label}
+                  onPress={() => onSeek(p.sec)}
                   style={[
-                    styles.phasePillText,
-                    { color: isActive ? colors.primaryText : colors.textSecondary },
+                    styles.phasePill,
+                    {
+                      backgroundColor: isActive
+                        ? colors.primarySoft
+                        : isDark
+                        ? 'rgba(15, 23, 42, 0.75)'
+                        : 'rgba(255, 255, 255, 0.85)',
+                      borderColor: isActive ? colors.primary : colors.border,
+                    },
                   ]}
                 >
-                  {p.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[
+                      styles.phasePillText,
+                      { color: isActive ? colors.primaryText : colors.textSecondary },
+                    ]}
+                  >
+                    {p.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        <View style={styles.seekNudgeGroup}>
-          <Pressable
-            onPress={() => onSeek(Math.max(0, currentSec - 5))}
-            style={[
-              styles.nudgeBtn,
-              {
-                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.nudgeBtnText, { color: colors.textPrimary }]}>-5s</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onSeek(Math.min(total - 1, currentSec + 5))}
-            style={[
-              styles.nudgeBtn,
-              {
-                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.nudgeBtnText, { color: colors.textPrimary }]}>+5s</Text>
-          </Pressable>
+          <View style={styles.seekNudgeGroup}>
+            <Pressable
+              onPress={() => onSeek(Math.max(0, currentSec - 5))}
+              style={[
+                styles.nudgeBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.nudgeBtnText, { color: colors.textPrimary }]}>-5s</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onSeek(Math.min(total - 1, currentSec + 5))}
+              style={[
+                styles.nudgeBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.nudgeBtnText, { color: colors.textPrimary }]}>+5s</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Progress Bar Track */}
       <View

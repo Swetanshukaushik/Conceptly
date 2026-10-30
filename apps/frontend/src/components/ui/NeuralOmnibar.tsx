@@ -28,14 +28,15 @@ interface OmnibarCommand {
 export function NeuralOmnibar() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const viewMode = useAppStore((s) => s.viewMode);
   const isOpen = useAppStore((s) => s.commandPaletteOpen);
   const setOpen = useAppStore((s) => s.setCommandPaletteOpen);
   const setTheme = useAppStore((s) => s.setTheme);
-  const toggleBionicReading = useAppStore((s) => s.toggleBionicReading);
-  const bionicReading = useAppStore((s) => s.bionicReading);
   const toggleCaptions = useAppStore((s) => s.toggleCaptions);
   const captionsEnabled = useAppStore((s) => s.captionsEnabled);
   const setExploreLayoutMode = useAppStore((s) => s.setExploreLayoutMode);
+
+  const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -101,18 +102,6 @@ export function NeuralOmnibar() {
 
     const sysCommands: OmnibarCommand[] = [
       {
-        id: 'sys-bionic',
-        category: 'SYSTEM COMMAND',
-        title: `${bionicReading ? 'Disable' : 'Enable'} 2040 Bionic Reading Mode`,
-        subtitle: 'High-velocity eye-fixation typography across all cheat sheets & notes',
-        badge: bionicReading ? 'ACTIVE' : 'TOGGLE',
-        icon: 'eye',
-        onExecute: () => {
-          toggleBionicReading();
-          setOpen(false);
-        },
-      },
-      {
         id: 'sys-constellation',
         category: 'SYSTEM COMMAND',
         title: 'Open Neural Knowledge Constellation Map',
@@ -164,7 +153,7 @@ export function NeuralOmnibar() {
     ];
 
     return [...sysCommands, ...topicCommands];
-  }, [bionicReading, captionsEnabled, router, setExploreLayoutMode, setOpen, setTheme, toggleBionicReading, toggleCaptions]);
+  }, [captionsEnabled, router, setExploreLayoutMode, setOpen, setTheme, toggleCaptions]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -239,7 +228,11 @@ export function NeuralOmnibar() {
             <Icon name="search" size={18} color={colors.primaryText} />
             <TextInput
               autoFocus={true}
-              placeholder="Type a concept, command, or topic (e.g. CAP, Cache, Bionic, Constellation)..."
+              placeholder={
+                isDesktop
+                  ? 'Type a concept, command, or topic (e.g. CAP, Cache, Rotational, Constellation)...'
+                  : 'Search topics or commands...'
+              }
               placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
@@ -252,7 +245,9 @@ export function NeuralOmnibar() {
                 { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
             >
-              <Text style={[styles.escText, { color: colors.textMuted }]}>ESC</Text>
+              <Text style={[styles.escText, { color: colors.textMuted }]}>
+                {isDesktop ? 'ESC' : '✕'}
+              </Text>
             </Pressable>
           </View>
 
@@ -264,7 +259,7 @@ export function NeuralOmnibar() {
                   No neural nodes matched "{query}"
                 </Text>
                 <Text style={[styles.emptySub, { color: colors.textMuted }]}>
-                  Try searching for "CAP", "Cache", "Rate", "Bionic", or "Constellation".
+                  Try searching for "CAP", "Cache", "Rate", "Rotational", or "Constellation".
                 </Text>
               </View>
             ) : (
@@ -346,7 +341,9 @@ export function NeuralOmnibar() {
             ]}
           >
             <Text style={[styles.footerHint, { color: colors.textMuted }]}>
-              ↑↓ Navigate • ↵ Teleport • ⌘K Toggle Omnibar
+              {isDesktop
+                ? '↑↓ Navigate • ↵ Teleport • ⌘K Toggle Omnibar'
+                : 'Tap any concept or command to open'}
             </Text>
             <Text style={[styles.footerHint, { color: colors.telemetryMono }]}>
               {filtered.length} NODES INDEXED

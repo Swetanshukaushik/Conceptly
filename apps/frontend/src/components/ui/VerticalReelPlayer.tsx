@@ -300,6 +300,8 @@ function MobileVerticalReelPlayer({
   const totalCount = reels.length;
 
   const videoRef = useRef<Video>(null);
+  const isPlayingRef = useRef<boolean>(true);
+  const isTurboHoldRef = useRef<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isBuffering, setIsBuffering] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(isWeb);
@@ -340,22 +342,43 @@ function MobileVerticalReelPlayer({
   const prevReel = activeIndex > 0 ? reels[activeIndex - 1] : null;
 
   useEffect(() => {
+    isPlayingRef.current = true;
     setIsPlaying(true);
     videoRef.current?.playAsync().catch(() => {});
     videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     if (reel?.id) {
       markReelWatched(reel.id);
     }
-  }, [reel?.id, playbackSpeed, markReelWatched]);
+  }, [reel?.id, markReelWatched]);
 
-  const togglePlayPause = async () => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      await videoRef.current.pauseAsync().catch(() => {});
-      setIsPlaying(false);
+  useEffect(() => {
+    videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
+  }, [playbackSpeed]);
+
+  const togglePlayPause = () => {
+    const next = !isPlayingRef.current;
+    isPlayingRef.current = next;
+    setIsPlaying(next);
+    if (!next) {
+      videoRef.current?.pauseAsync().catch(() => {});
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.querySelectorAll('video').forEach((v) => {
+          try {
+            v.pause();
+          } catch {}
+        });
+      }
     } else {
-      await videoRef.current.playAsync().catch(() => {});
-      setIsPlaying(true);
+      videoRef.current?.playAsync().catch(() => {});
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.querySelectorAll('video').forEach((v) => {
+          if (v.clientWidth > 50) {
+            try {
+              v.play().catch(() => {});
+            } catch {}
+          }
+        });
+      }
     }
   };
 
@@ -412,12 +435,14 @@ function MobileVerticalReelPlayer({
   };
 
   const handleLongPressStart = () => {
+    isTurboHoldRef.current = true;
     setIsTurboHold(true);
     videoRef.current?.setRateAsync(2.0, true).catch(() => {});
   };
 
   const handleLongPressEnd = () => {
-    if (isTurboHold) {
+    if (isTurboHoldRef.current) {
+      isTurboHoldRef.current = false;
       setIsTurboHold(false);
       videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     }
@@ -430,6 +455,19 @@ function MobileVerticalReelPlayer({
     }
     setIsBuffering(status.isBuffering);
     setCurrentPlaybackMillis((status as any).positionMillis ?? 0);
+
+    // Prevent underlying video element from continuing playback while paused
+    if (!isPlayingRef.current && (status as any).isPlaying) {
+      videoRef.current?.pauseAsync().catch(() => {});
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.querySelectorAll('video').forEach((v) => {
+          try {
+            v.pause();
+          } catch {}
+        });
+      }
+      return;
+    }
 
     if (status.didJustFinish) {
       educationApi.recordReelView(reel.id, {
@@ -526,465 +564,461 @@ function MobileVerticalReelPlayer({
 
   return (
     <View style={styles.mobileOuterContainer}>
-      <View
-        style={styles.mobilePlayerFrame}
-        {...panResponder.panHandlers}
-      >
-        {/* Background Video Pre-fetch Engine for Zero-Buffering */}
-        <View style={styles.preloaderHidden} pointerEvents="none">
-          {nextReel && (
-            <Video
-              source={{ uri: nextReel.videoUrl }}
-              style={styles.preloaderVideo}
-              shouldPlay={false}
-              isMuted={true}
-              positionMillis={0}
-            />
-          )}
-          {prevReel && (
-            <Video
-              source={{ uri: prevReel.videoUrl }}
-              style={styles.preloaderVideo}
-              shouldPlay={false}
-              isMuted={true}
-              positionMillis={0}
-            />
-          )}
-        </View>
-
-        {/* Full Video Area (Tap to play/pause, Double-Tap to Bookmark, Hold for 2.0x Turbo) */}
-        <Pressable
-          onPress={handleVideoPress}
-          onLongPress={handleLongPressStart}
-          onPressOut={handleLongPressEnd}
-          delayLongPress={240}
-          style={styles.mobileVideoPressable}
+      <View style={styles.mobileColumnWrapper}>
+        {/* 🔝 Solid Top Utility & Navigation Bar (Never floating over the reel video) */}
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            zIndex: 40,
+          }}
         >
-          <Video
-            ref={videoRef}
-            source={{ uri: reel.videoUrl }}
-            style={styles.mobileVideo}
-            resizeMode={ResizeMode.COVER}
-            isLooping={!autoAdvance}
-            isMuted={isMuted}
-            shouldPlay={isPlaying}
-            onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-            useNativeControls={false}
-          />
-
-          {/* Buffering Indicator */}
-          {isBuffering && (
-            <View style={styles.bufferingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-          )}
-
-          {/* Pause Overlay Icon */}
-          {!isPlaying && !isBuffering && (
-            <View style={styles.pauseOverlay}>
-              <View style={styles.pauseIconBadge}>
-                <Icon name="play" size={36} color={colors.textPrimary} />
-              </View>
-            </View>
-          )}
-        </Pressable>
-
-        {/* ⚡ Tactile Gesture & 2.0x Turbo Hold Toast */}
-        <ReelGestureBadge message={gestureToast} isTurboHold={isTurboHold} />
-
-        {/* ⚡ Active Recall 10s Micro-Check Card */}
-        <ReelMicroCheckOverlay
-          reel={reel}
-          visible={showMicroCheck}
-          onClose={() => setShowMicroCheck(false)}
-          onCorrect={() => triggerToast('🎉 +15 Synaptic XP Earned!')}
-        />
-
-        {/* 🎤 30s Verbatim Interview Pitch Teleprompter */}
-        <ReelPitchTeleprompter
-          reel={reel}
-          visible={showPitchMode}
-          onClose={() => setShowPitchMode(false)}
-        />
-
-        {/* 🔝 Top Header Overlay */}
-        <View style={styles.mobileTopHeader} pointerEvents="box-none">
-          {onBack && (
-            <Pressable onPress={onBack} style={styles.mobileBackButton}>
-              <Icon name="arrow-back" size={16} color={colors.textPrimary} />
-              <Text style={styles.mobileBackText}>Back</Text>
-            </Pressable>
-          )}
-
-          <View style={styles.mobileTopicBadge}>
-            <Text style={styles.mobileTopicBadgeText} numberOfLines={1}>
-              {reel.topic?.title ?? 'Revision Reel'}
-            </Text>
-          </View>
-
-          {/* Auto-Next vs Loop Toggle */}
-          <Pressable
-            onPress={() => {
-              const next = !autoAdvance;
-              setAutoAdvance(next);
-              triggerToast(next ? '⏭️ Auto-Advance Playlist ON' : '🔁 Single-Reel Loop ON');
-            }}
-            style={[
-              styles.mobileBackButton,
-              autoAdvance && { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-            ]}
-          >
-            <Text
+          {/* Universal Web Controls Row */}
+          {isWeb && (
+            <View
               style={{
-                fontSize: 10,
-                fontWeight: '800',
-                color: autoAdvance ? colors.primaryText : colors.textSecondary,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.borderSubtle,
               }}
             >
-              {autoAdvance ? '⏭️ Auto' : '🔁 Loop'}
-            </Text>
-          </Pressable>
+              <ThemeToggle compact={true} />
+              <ViewportToggle inline={true} />
+            </View>
+          )}
 
-          {/* Focus / Cinema HUD Toggle */}
-          <Pressable
-            onPress={() => {
-              const next = !focusHud;
-              setFocusHud(next);
-              triggerToast(next ? '👁️ Focus HUD Active' : 'HUD Restored');
+          {/* Reel Navigation & Topic Bar */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              gap: 8,
             }}
-            style={[
-              styles.mobileBackButton,
-              focusHud && { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-            ]}
           >
-            <Icon
-              name={focusHud ? 'eye-off-outline' : 'eye-outline'}
-              size={14}
-              color={focusHud ? colors.primaryText : colors.textPrimary}
-            />
-          </Pressable>
+            {onBack && (
+              <Pressable onPress={onBack} style={styles.mobileBackButton}>
+                <Icon name="arrow-back" size={15} color={colors.textPrimary} />
+                <Text style={styles.mobileBackText}>Back</Text>
+              </Pressable>
+            )}
 
-          <ThemeToggle compact={true} overlay={true} />
+            <View style={{ flex: 1, paddingHorizontal: 4 }}>
+              <Text
+                style={{
+                  color: colors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: '700',
+                }}
+                numberOfLines={1}
+              >
+                {reel.topic?.title ?? 'Revision Reel'}
+              </Text>
+              <Text
+                style={{
+                  color: colors.textMuted,
+                  fontSize: 10,
+                  fontWeight: '600',
+                  marginTop: 1,
+                }}
+                numberOfLines={1}
+              >
+                Checkpoint {activeIndex + 1} of {totalCount} •{' '}
+                {remainingCount === 0 ? 'All watched' : `${remainingCount} left`}
+              </Text>
+            </View>
 
-          {isWeb && <ViewportToggle inline />}
-        </View>
+            {/* Auto-Next vs Loop Toggle */}
+            <Pressable
+              onPress={() => {
+                const next = !autoAdvance;
+                setAutoAdvance(next);
+                triggerToast(next ? '⏭️ Auto-Advance Playlist ON' : '🔁 Single-Reel Loop ON');
+              }}
+              style={[
+                styles.mobileBackButton,
+                autoAdvance && { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+              ]}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '800',
+                  color: autoAdvance ? colors.primaryText : colors.textSecondary,
+                }}
+              >
+                {autoAdvance ? '⏭️ Auto' : '🔁 Loop'}
+              </Text>
+            </Pressable>
 
-        {/* ↕ Swipe Hint Pill on first reel */}
-        {activeIndex === 0 && totalCount > 1 && (
-          <View style={styles.swipeHintPill}>
-            <Icon name="swap-vertical" size={13} color={colors.textPrimary} />
-            <Text style={styles.swipeHintText}>Swipe up for next reel</Text>
+            {/* Focus / Cinema HUD Toggle */}
+            <Pressable
+              onPress={() => {
+                const next = !focusHud;
+                setFocusHud(next);
+                triggerToast(next ? '👁️ Focus HUD Active' : 'HUD Restored');
+              }}
+              style={[
+                styles.mobileBackButton,
+                focusHud && { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+              ]}
+            >
+              <Icon
+                name={focusHud ? 'eye-off-outline' : 'eye-outline'}
+                size={14}
+                color={focusHud ? colors.primaryText : colors.textPrimary}
+              />
+            </Pressable>
           </View>
-        )}
 
-        {/* 📍 Checkpoint Track Layer */}
-        <View style={styles.mobileTrackContainer}>
-          <View style={styles.checkpointTrackRow}>
+          {/* Segmented Checkpoint Bar along bottom edge of header */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 12,
+              paddingBottom: 6,
+            }}
+          >
             {Array.from({ length: totalCount }).map((_, i) => {
               const targetReelId = reels[i]?.id;
-              const isPastOrWatched = i < activeIndex || (targetReelId && watchedReels[targetReelId]);
+              const isPastOrWatched =
+                i < activeIndex || (targetReelId && watchedReels[targetReelId]);
               const isCurrent = i === activeIndex;
-
               return (
-                <React.Fragment key={i}>
-                  <Pressable
-                    onPress={() => setActiveIndex(i)}
-                    style={[
-                      styles.checkpointDot,
-                      isCurrent && styles.checkpointDotCurrent,
-                      isPastOrWatched && !isCurrent && styles.checkpointDotCompleted,
-                    ]}
-                  >
-                    {isPastOrWatched && !isCurrent && (
-                      <Icon name="checkmark" size={10} color={colors.textInverse} />
-                    )}
-                    {isCurrent && <View style={styles.currentDotPulse} />}
-                  </Pressable>
-
-                  {i < totalCount - 1 && (
-                    <View
-                      style={[
-                        styles.trackSegment,
-                        i < activeIndex && styles.trackSegmentActive,
-                      ]}
-                    />
-                  )}
-                </React.Fragment>
+                <Pressable
+                  key={i}
+                  onPress={() => setActiveIndex(i)}
+                  style={{
+                    flex: 1,
+                    height: 4,
+                    borderRadius: 2,
+                    backgroundColor: isCurrent
+                      ? colors.primary
+                      : isPastOrWatched
+                      ? colors.success
+                      : colors.border,
+                  }}
+                />
               );
             })}
           </View>
-
-          <View style={styles.trackSummaryRow}>
-            <Text style={styles.trackSummaryText}>
-              Checkpoint {activeIndex + 1} of {totalCount}
-            </Text>
-            <Text style={styles.trackRemainingText}>
-              {remainingCount === 0 ? '🎉 All reels watched!' : `${remainingCount} remaining`}
-            </Text>
-          </View>
         </View>
 
-        {/* 👉 Right Side Action Controls (Hidden when Focus HUD is active) */}
-        {!focusHud && (
-          <View style={styles.mobileRightActions}>
-            {/* Instagram-style Step Arrows */}
-            {activeIndex > 0 && (
-              <Pressable onPress={goToPrev} style={styles.floatingArrowBtn}>
-                <Icon name="chevron-up" size={20} color={colors.textPrimary} />
-              </Pressable>
+        <View
+          style={styles.mobilePlayerFrame}
+          {...panResponder.panHandlers}
+        >
+          {/* Background Video Pre-fetch Engine for Zero-Buffering */}
+          <View style={styles.preloaderHidden} pointerEvents="none">
+            {nextReel && (
+              <Video
+                source={{ uri: nextReel.videoUrl }}
+                style={styles.preloaderVideo}
+                shouldPlay={false}
+                isMuted={true}
+                positionMillis={0}
+              />
             )}
-
-            {activeIndex < totalCount - 1 && (
-              <Pressable onPress={goToNext} style={styles.floatingArrowBtn}>
-                <Icon name="chevron-down" size={20} color={colors.textPrimary} />
-              </Pressable>
+            {prevReel && (
+              <Video
+                source={{ uri: prevReel.videoUrl }}
+                style={styles.preloaderVideo}
+                shouldPlay={false}
+                isMuted={true}
+                positionMillis={0}
+              />
             )}
+          </View>
 
-            {/* Speed switcher (1x, 1.25x, 1.5x, 2x) */}
-            <Pressable onPress={cycleSpeed} style={styles.actionCircleButton}>
-              <Text style={styles.speedText}>{isTurboHold ? '2.0x' : `${playbackSpeed}x`}</Text>
-              <Text style={styles.actionLabel}>Speed</Text>
-            </Pressable>
+          {/* Full Video Area (Tap to play/pause, Double-Tap to Bookmark, Hold for 2.0x Turbo) */}
+          <Pressable
+            onPress={handleVideoPress}
+            onLongPress={handleLongPressStart}
+            onPressOut={handleLongPressEnd}
+            delayLongPress={240}
+            style={styles.mobileVideoPressable}
+          >
+            <Video
+              ref={videoRef}
+              source={{ uri: reel.videoUrl }}
+              style={styles.mobileVideo}
+              resizeMode={ResizeMode.COVER}
+              isLooping={!autoAdvance}
+              isMuted={isMuted}
+              shouldPlay={isPlaying}
+              onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+              useNativeControls={false}
+            />
 
-            {/* Closed Captions toggle */}
-            <Pressable
-              onPress={toggleCaptions}
-              style={[
-                styles.actionCircleButton,
-                captionsEnabled && styles.actionCircleButtonActive,
-              ]}
-            >
-              <View style={styles.ccBadgeContainer}>
-                <Text
-                  style={[
-                    styles.ccBadgeText,
-                    captionsEnabled && { color: colors.primaryText, fontWeight: '800' },
-                  ]}
-                >
-                  CC
-                </Text>
+            {/* Buffering Indicator */}
+            {isBuffering && (
+              <View style={styles.bufferingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
               </View>
-              <Text
+            )}
+
+            {/* Pause Overlay Icon */}
+            {!isPlaying && !isBuffering && (
+              <View style={styles.pauseOverlay}>
+                <View style={styles.pauseIconBadge}>
+                  <Icon name="play" size={36} color={colors.textPrimary} />
+                </View>
+              </View>
+            )}
+          </Pressable>
+
+          {/* ⚡ Tactile Gesture & 2.0x Turbo Hold Toast */}
+          <ReelGestureBadge message={gestureToast} isTurboHold={isTurboHold} />
+
+          {/* ⚡ Active Recall 10s Micro-Check Card */}
+          <ReelMicroCheckOverlay
+            reel={reel}
+            visible={showMicroCheck}
+            onClose={() => setShowMicroCheck(false)}
+            onCorrect={() => triggerToast('🎉 +15 Synaptic XP Earned!')}
+          />
+
+          {/* 🎤 30s Verbatim Interview Pitch Teleprompter */}
+          <ReelPitchTeleprompter
+            reel={reel}
+            visible={showPitchMode}
+            onClose={() => setShowPitchMode(false)}
+          />
+
+          {/* 👉 Right Side Action Controls (Hidden when Focus HUD is active) */}
+          {!focusHud && (
+            <View style={styles.mobileRightActions}>
+              {/* Mute toggle */}
+              <Pressable onPress={toggleMute} style={styles.actionCircleButton}>
+                <Icon
+                  name={isMuted ? 'volume-mute' : 'volume-high'}
+                  size={18}
+                  color={colors.textPrimary}
+                />
+                <Text style={styles.actionLabel}>{isMuted ? 'Muted' : 'Audio'}</Text>
+              </Pressable>
+
+              {/* Speed switcher (1x, 1.25x, 1.5x, 2x) */}
+              <Pressable onPress={cycleSpeed} style={styles.actionCircleButton}>
+                <Text style={styles.speedText}>{isTurboHold ? '2.0x' : `${playbackSpeed}x`}</Text>
+                <Text style={styles.actionLabel}>Speed</Text>
+              </Pressable>
+
+              {/* Closed Captions toggle */}
+              <Pressable
+                onPress={toggleCaptions}
                 style={[
-                  styles.actionLabel,
-                  captionsEnabled && { color: colors.primaryText, fontWeight: '700' },
+                  styles.actionCircleButton,
+                  captionsEnabled && styles.actionCircleButtonActive,
                 ]}
               >
-                {captionsEnabled ? 'CC On' : 'CC Off'}
-              </Text>
-            </Pressable>
-
-            {/* ⚡ 10s Active Recall Micro-Check Button */}
-            <Pressable
-              onPress={() => {
-                setShowPitchMode(false);
-                setShowMicroCheck((prev) => !prev);
-              }}
-              style={[
-                styles.actionCircleButton,
-                showMicroCheck && styles.actionCircleButtonActive,
-              ]}
-            >
-              <Icon
-                name="flash"
-                size={19}
-                color={showMicroCheck ? colors.primaryText : colors.warning}
-              />
-              <Text style={styles.actionLabel}>Check</Text>
-            </Pressable>
-
-            {/* 🎤 30s Pitch Teleprompter Button */}
-            <Pressable
-              onPress={() => {
-                setShowMicroCheck(false);
-                setShowPitchMode((prev) => !prev);
-              }}
-              style={[
-                styles.actionCircleButton,
-                showPitchMode && styles.actionCircleButtonActive,
-              ]}
-            >
-              <Icon
-                name="mic"
-                size={19}
-                color={showPitchMode ? colors.primaryText : colors.accentTealText}
-              />
-              <Text style={styles.actionLabel}>Pitch</Text>
-            </Pressable>
-
-            {/* Cheat-Sheet / Notes Drawer Button */}
-            <Pressable onPress={() => setShowNotesDrawer(true)} style={styles.actionCircleButton}>
-              <Icon name="document-text" size={20} color={colors.textPrimary} />
-              <Text style={styles.actionLabel}>Notes</Text>
-            </Pressable>
-
-            {/* Mute toggle */}
-            <Pressable onPress={toggleMute} style={styles.actionCircleButton}>
-              <Icon
-                name={isMuted ? 'volume-mute' : 'volume-high'}
-                size={20}
-                color={colors.textPrimary}
-              />
-              <Text style={styles.actionLabel}>{isMuted ? 'Muted' : 'Audio'}</Text>
-            </Pressable>
-
-            {/* Bookmark Button */}
-            <Pressable onPress={handleBookmarkToggle} style={styles.actionCircleButton}>
-              <Icon
-                name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                size={20}
-                color={isSaved ? colors.warning : colors.textPrimary}
-              />
-              <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
-            </Pressable>
-
-            {/* Practice Quiz Button */}
-            {onQuizPress && (
-              <Pressable
-                onPress={() => onQuizPress(reel.topicId)}
-                style={[styles.actionCircleButton, styles.quizCircleButton]}
-              >
-                <Icon name="help-circle" size={22} color={colors.textInverse} />
-                <Text style={[styles.actionLabel, { color: colors.textInverse }]}>Quiz</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
-
-        {/* 💬 Synchronized Subtitles / Closed Captions Overlay */}
-        {captionsEnabled && !!activeCaption && (
-          <View style={styles.captionOverlayContainer} pointerEvents="none">
-            <View style={styles.captionPill}>
-              <Text style={styles.captionText}>{activeCaption}</Text>
-            </View>
-          </View>
-        )}
-
-        {/* 🔻 Bottom Details, Timeline Scrubber & Key Takeaway Overlay */}
-        {!focusHud && (
-          <View style={styles.mobileBottomOverlay} pointerEvents="box-none">
-            <ReelTimelineScrubber
-              currentSec={currentSec}
-              durationSec={reel.durationSec}
-              onSeek={handleSeek}
-            />
-
-            <View style={styles.chapterBadgeRow}>
-              <View style={styles.subjectTag}>
-                <Text style={styles.subjectTagText}>
-                  {reel.subject?.name ?? 'Topic'}
-                </Text>
-              </View>
-              <Text style={styles.chapterSubtitleText} numberOfLines={1}>
-                {reel.chapter?.title ?? 'Module'}
-              </Text>
-            </View>
-
-            <Text style={styles.reelTitleText}>{reel.title}</Text>
-
-            {/* Key takeaway quick pill */}
-            {reel.keyTakeaway && (
-              <View style={styles.takeawayPill}>
-                <Icon name="bulb" size={14} color={colors.warning} />
-                <Text style={styles.takeawayText} numberOfLines={2}>
-                  {reel.keyTakeaway}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.bottomMetaRow}>
-              <View style={styles.durationPill}>
-                <Icon name="time-outline" size={13} color={colors.textSecondary} />
-                <Text style={styles.durationText}>
-                  {formatSeconds(currentSec)} / {formatSeconds(reel.durationSec)}
-                </Text>
-              </View>
-
-              <View style={styles.actionButtonsRow}>
-                {/* Cheat Sheet Quick View */}
-                <Pressable
-                  onPress={() => setShowNotesDrawer(true)}
-                  style={styles.sheetTriggerButton}
-                >
-                  <Icon name="reader-outline" size={14} color={colors.textPrimary} />
-                  <Text style={styles.sheetTriggerText}>Cheat Sheet</Text>
-                </Pressable>
-
-                {/* Quiz Banner */}
-                {onQuizPress && (
-                  <Pressable
-                    onPress={() => onQuizPress(reel.topicId)}
-                    style={styles.quizBannerButton}
+                <View style={styles.ccBadgeContainer}>
+                  <Text
+                    style={[
+                      styles.ccBadgeText,
+                      captionsEnabled && { color: colors.primaryText, fontWeight: '800' },
+                    ]}
                   >
-                    <Icon name="school-outline" size={14} color={colors.textInverse} />
-                    <Text style={styles.quizBannerText}>Take Quiz</Text>
-                  </Pressable>
-                )}
+                    CC
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.actionLabel,
+                    captionsEnabled && { color: colors.primaryText, fontWeight: '700' },
+                  ]}
+                >
+                  {captionsEnabled ? 'CC On' : 'CC Off'}
+                </Text>
+              </Pressable>
+
+              {/* ⚡ 10s Active Recall Micro-Check Button */}
+              <Pressable
+                onPress={() => {
+                  setShowPitchMode(false);
+                  setShowMicroCheck((prev) => !prev);
+                }}
+                style={[
+                  styles.actionCircleButton,
+                  showMicroCheck && styles.actionCircleButtonActive,
+                ]}
+              >
+                <Icon
+                  name="flash"
+                  size={18}
+                  color={showMicroCheck ? colors.primaryText : colors.warning}
+                />
+                <Text style={styles.actionLabel}>Check</Text>
+              </Pressable>
+
+              {/* 🎤 30s Pitch Teleprompter Button */}
+              <Pressable
+                onPress={() => {
+                  setShowMicroCheck(false);
+                  setShowPitchMode((prev) => !prev);
+                }}
+                style={[
+                  styles.actionCircleButton,
+                  showPitchMode && styles.actionCircleButtonActive,
+                ]}
+              >
+                <Icon
+                  name="mic"
+                  size={18}
+                  color={showPitchMode ? colors.primaryText : colors.accentTealText}
+                />
+                <Text style={styles.actionLabel}>Pitch</Text>
+              </Pressable>
+
+              {/* Bookmark Button */}
+              <Pressable onPress={handleBookmarkToggle} style={styles.actionCircleButton}>
+                <Icon
+                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                  size={18}
+                  color={isSaved ? colors.warning : colors.textPrimary}
+                />
+                <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* 💬 Synchronized Subtitles / Closed Captions Overlay */}
+          {captionsEnabled && !!activeCaption && (
+            <View style={styles.captionOverlayContainer} pointerEvents="none">
+              <View style={styles.captionPill}>
+                <Text style={styles.captionText}>{activeCaption}</Text>
               </View>
             </View>
+          )}
+
+          {/* 🔻 Bottom Details, Timeline Scrubber & Key Takeaway Overlay */}
+          {!focusHud && (
+            <View style={styles.mobileBottomOverlay} pointerEvents="box-none">
+              <ReelTimelineScrubber
+                currentSec={currentSec}
+                durationSec={reel.durationSec}
+                onSeek={handleSeek}
+                compact
+              />
+
+              <View style={styles.chapterBadgeRow}>
+                <View style={styles.subjectTag}>
+                  <Text style={styles.subjectTagText}>
+                    {reel.subject?.name ?? 'Topic'}
+                  </Text>
+                </View>
+                <Text style={styles.chapterSubtitleText} numberOfLines={1}>
+                  {reel.chapter?.title ?? 'Module'}
+                </Text>
+              </View>
+
+              <Text style={styles.reelTitleText} numberOfLines={2}>
+                {reel.title}
+              </Text>
+
+              <View style={styles.bottomMetaRow}>
+                <View style={styles.durationPill}>
+                  <Icon name="time-outline" size={13} color={colors.textSecondary} />
+                  <Text style={styles.durationText}>
+                    {formatSeconds(currentSec)} / {formatSeconds(reel.durationSec)}
+                  </Text>
+                </View>
+
+                <View style={styles.actionButtonsRow}>
+                  {/* Cheat Sheet Quick View */}
+                  <Pressable
+                    onPress={() => setShowNotesDrawer(true)}
+                    style={styles.sheetTriggerButton}
+                  >
+                    <Icon name="reader-outline" size={14} color={colors.textPrimary} />
+                    <Text style={styles.sheetTriggerText}>Cheat Sheet</Text>
+                  </Pressable>
+
+                  {/* Quiz Banner */}
+                  {onQuizPress && (
+                    <Pressable
+                      onPress={() => onQuizPress(reel.topicId)}
+                      style={styles.quizBannerButton}
+                    >
+                      <Icon name="school-outline" size={14} color={colors.textInverse} />
+                      <Text style={styles.quizBannerText}>Take Quiz</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* 🔄 Bottom Reel Pager (Prev / Next) */}
+          <View style={styles.mobilePagerBar}>
+            <Pressable
+              onPress={() => setActiveIndex(Math.max(0, activeIndex - 1))}
+              disabled={activeIndex === 0}
+              style={[
+                styles.mobilePagerBtn,
+                activeIndex === 0 && styles.mobilePagerBtnDisabled,
+              ]}
+            >
+              <Icon
+                name="chevron-back"
+                size={15}
+                color={activeIndex === 0 ? colors.textMuted : colors.textPrimary}
+              />
+              <Text
+                style={[
+                  styles.mobilePagerBtnText,
+                  activeIndex === 0 && styles.mobilePagerBtnTextDisabled,
+                ]}
+              >
+                Prev
+              </Text>
+            </Pressable>
+
+            <Text style={styles.mobilePagerCountText}>
+              Reel {activeIndex + 1} of {totalCount}
+            </Text>
+
+            <Pressable
+              onPress={() => setActiveIndex(Math.min(totalCount - 1, activeIndex + 1))}
+              disabled={activeIndex === totalCount - 1}
+              style={[
+                styles.mobilePagerBtn,
+                activeIndex === totalCount - 1 && styles.mobilePagerBtnDisabled,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.mobilePagerBtnText,
+                  activeIndex === totalCount - 1 && styles.mobilePagerBtnTextDisabled,
+                ]}
+              >
+                Next
+              </Text>
+              <Icon
+                name="chevron-forward"
+                size={15}
+                color={activeIndex === totalCount - 1 ? colors.textMuted : colors.textPrimary}
+              />
+            </Pressable>
           </View>
-        )}
 
-        {/* 🔄 Bottom Reel Pager (Prev / Next) */}
-        <View style={styles.mobilePagerBar}>
-          <Pressable
-            onPress={() => setActiveIndex(Math.max(0, activeIndex - 1))}
-            disabled={activeIndex === 0}
-            style={[
-              styles.mobilePagerBtn,
-              activeIndex === 0 && styles.mobilePagerBtnDisabled,
-            ]}
-          >
-            <Icon
-              name="chevron-back"
-              size={15}
-              color={activeIndex === 0 ? colors.textMuted : colors.textPrimary}
-            />
-            <Text
-              style={[
-                styles.mobilePagerBtnText,
-                activeIndex === 0 && styles.mobilePagerBtnTextDisabled,
-              ]}
-            >
-              Prev
-            </Text>
-          </Pressable>
-
-          <Text style={styles.mobilePagerCountText}>
-            Reel {activeIndex + 1} of {totalCount}
-          </Text>
-
-          <Pressable
-            onPress={() => setActiveIndex(Math.min(totalCount - 1, activeIndex + 1))}
-            disabled={activeIndex === totalCount - 1}
-            style={[
-              styles.mobilePagerBtn,
-              activeIndex === totalCount - 1 && styles.mobilePagerBtnDisabled,
-            ]}
-          >
-            <Text
-              style={[
-                styles.mobilePagerBtnText,
-                activeIndex === totalCount - 1 && styles.mobilePagerBtnTextDisabled,
-              ]}
-            >
-              Next
-            </Text>
-            <Icon
-              name="chevron-forward"
-              size={15}
-              color={activeIndex === totalCount - 1 ? colors.textMuted : colors.textPrimary}
-            />
-          </Pressable>
+          {/* 📑 Instant Cheat Sheet Drawer Modal */}
+          <ReelCheatSheetModal
+            visible={showNotesDrawer}
+            onClose={() => setShowNotesDrawer(false)}
+            reel={reel}
+            onQuizPress={onQuizPress}
+          />
         </View>
-
-        {/* 📑 Instant Cheat Sheet Drawer Modal */}
-        <ReelCheatSheetModal
-          visible={showNotesDrawer}
-          onClose={() => setShowNotesDrawer(false)}
-          reel={reel}
-          onQuizPress={onQuizPress}
-        />
       </View>
     </View>
   );
@@ -1017,6 +1051,8 @@ function DesktopStudioPlayer({
   const totalCount = reels.length;
 
   const videoRef = useRef<Video>(null);
+  const isPlayingRef = useRef<boolean>(true);
+  const isTurboHoldRef = useRef<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isBuffering, setIsBuffering] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
@@ -1056,22 +1092,43 @@ function DesktopStudioPlayer({
   const prevReel = activeIndex > 0 ? reels[activeIndex - 1] : null;
 
   useEffect(() => {
+    isPlayingRef.current = true;
     setIsPlaying(true);
     videoRef.current?.playAsync().catch(() => {});
     videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     if (reel?.id) {
       markReelWatched(reel.id);
     }
-  }, [reel?.id, playbackSpeed, markReelWatched]);
+  }, [reel?.id, markReelWatched]);
 
-  const togglePlayPause = async () => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      await videoRef.current.pauseAsync().catch(() => {});
-      setIsPlaying(false);
+  useEffect(() => {
+    videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
+  }, [playbackSpeed]);
+
+  const togglePlayPause = () => {
+    const next = !isPlayingRef.current;
+    isPlayingRef.current = next;
+    setIsPlaying(next);
+    if (!next) {
+      videoRef.current?.pauseAsync().catch(() => {});
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.querySelectorAll('video').forEach((v) => {
+          try {
+            v.pause();
+          } catch {}
+        });
+      }
     } else {
-      await videoRef.current.playAsync().catch(() => {});
-      setIsPlaying(true);
+      videoRef.current?.playAsync().catch(() => {});
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.querySelectorAll('video').forEach((v) => {
+          if (v.clientWidth > 50) {
+            try {
+              v.play().catch(() => {});
+            } catch {}
+          }
+        });
+      }
     }
   };
 
@@ -1128,12 +1185,14 @@ function DesktopStudioPlayer({
   };
 
   const handleLongPressStart = () => {
+    isTurboHoldRef.current = true;
     setIsTurboHold(true);
     videoRef.current?.setRateAsync(2.0, true).catch(() => {});
   };
 
   const handleLongPressEnd = () => {
-    if (isTurboHold) {
+    if (isTurboHoldRef.current) {
+      isTurboHoldRef.current = false;
       setIsTurboHold(false);
       videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     }
@@ -1146,6 +1205,19 @@ function DesktopStudioPlayer({
     }
     setIsBuffering(status.isBuffering);
     setCurrentPlaybackMillis((status as any).positionMillis ?? 0);
+
+    // Prevent underlying video element from continuing playback while paused
+    if (!isPlayingRef.current && (status as any).isPlaying) {
+      videoRef.current?.pauseAsync().catch(() => {});
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        document.querySelectorAll('video').forEach((v) => {
+          try {
+            v.pause();
+          } catch {}
+        });
+      }
+      return;
+    }
 
     if (status.didJustFinish) {
       educationApi.recordReelView(reel.id, {
@@ -1370,204 +1442,204 @@ function DesktopStudioPlayer({
                   </View>
                 </View>
               )}
+            </Pressable>
 
-              {/* ⚡ Tactile Gesture & 2.0x Turbo Hold Toast */}
-              <ReelGestureBadge message={gestureToast} isTurboHold={isTurboHold} />
+            {/* ⚡ Tactile Gesture & 2.0x Turbo Hold Toast */}
+            <ReelGestureBadge message={gestureToast} isTurboHold={isTurboHold} />
 
-              {/* ⚡ Active Recall 10s Micro-Check Card */}
-              <ReelMicroCheckOverlay
-                reel={reel}
-                visible={showMicroCheck}
-                onClose={() => setShowMicroCheck(false)}
-                onCorrect={() => triggerToast('🎉 +15 Synaptic XP Earned!')}
-              />
+            {/* ⚡ Active Recall 10s Micro-Check Card */}
+            <ReelMicroCheckOverlay
+              reel={reel}
+              visible={showMicroCheck}
+              onClose={() => setShowMicroCheck(false)}
+              onCorrect={() => triggerToast('🎉 +15 Synaptic XP Earned!')}
+            />
 
-              {/* 🎤 30s Verbatim Interview Pitch Teleprompter */}
-              <ReelPitchTeleprompter
-                reel={reel}
-                visible={showPitchMode}
-                onClose={() => setShowPitchMode(false)}
-              />
+            {/* 🎤 30s Verbatim Interview Pitch Teleprompter */}
+            <ReelPitchTeleprompter
+              reel={reel}
+              visible={showPitchMode}
+              onClose={() => setShowPitchMode(false)}
+            />
 
-              {/* Checkpoint Track Overlay inside Video */}
-              <View style={[styles.trackContainer, { top: 16 }]}>
-                <View style={styles.checkpointTrackRow}>
-                  {Array.from({ length: totalCount }).map((_, i) => {
-                    const targetReelId = reels[i]?.id;
-                    const isPastOrWatched = i < activeIndex || (targetReelId && watchedReels[targetReelId]);
-                    const isCurrent = i === activeIndex;
-                    return (
-                      <React.Fragment key={i}>
-                        <Pressable
-                          onPress={() => setActiveIndex(i)}
-                          style={[
-                            styles.checkpointDot,
-                            isPastOrWatched && !isCurrent && styles.checkpointDotCompleted,
-                            isCurrent && styles.checkpointDotCurrent,
-                          ]}
-                        >
-                          {isPastOrWatched && !isCurrent && (
-                            <Icon name="checkmark" size={10} color={colors.textInverse} />
-                          )}
-                          {isCurrent && <View style={styles.currentDotPulse} />}
-                        </Pressable>
-
-                        {i < totalCount - 1 && (
-                          <View
-                            style={[
-                              styles.trackSegment,
-                              i < activeIndex && styles.trackSegmentActive,
-                            ]}
-                          />
+            {/* Checkpoint Track Overlay inside Video */}
+            <View style={[styles.trackContainer, { top: 16 }]}>
+              <View style={styles.checkpointTrackRow}>
+                {Array.from({ length: totalCount }).map((_, i) => {
+                  const targetReelId = reels[i]?.id;
+                  const isPastOrWatched = i < activeIndex || (targetReelId && watchedReels[targetReelId]);
+                  const isCurrent = i === activeIndex;
+                  return (
+                    <React.Fragment key={i}>
+                      <Pressable
+                        onPress={() => setActiveIndex(i)}
+                        style={[
+                          styles.checkpointDot,
+                          isPastOrWatched && !isCurrent && styles.checkpointDotCompleted,
+                          isCurrent && styles.checkpointDotCurrent,
+                        ]}
+                      >
+                        {isPastOrWatched && !isCurrent && (
+                          <Icon name="checkmark" size={10} color={colors.textInverse} />
                         )}
-                      </React.Fragment>
-                    );
-                  })}
-                </View>
-                <View style={styles.trackSummaryRow}>
-                  <Text style={styles.trackSummaryText}>
-                    Checkpoint {activeIndex + 1} of {totalCount}
+                        {isCurrent && <View style={styles.currentDotPulse} />}
+                      </Pressable>
+
+                      {i < totalCount - 1 && (
+                        <View
+                          style={[
+                            styles.trackSegment,
+                            i < activeIndex && styles.trackSegmentActive,
+                          ]}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </View>
+              <View style={styles.trackSummaryRow}>
+                <Text style={styles.trackSummaryText}>
+                  Checkpoint {activeIndex + 1} of {totalCount}
+                </Text>
+                <Text style={styles.trackRemainingText}>
+                  {remainingCount === 0 ? '🎉 All watched!' : `${remainingCount} remaining`}
+                </Text>
+              </View>
+            </View>
+
+            {/* Right Side Actions (Hidden when Focus HUD is active) */}
+            {!focusHud && (
+              <View style={[styles.rightActionsContainer, { bottom: 118 }]}>
+                <Pressable onPress={cycleSpeed} style={styles.actionCircleButton}>
+                  <Text style={styles.speedText}>{isTurboHold ? '2.0x' : `${playbackSpeed}x`}</Text>
+                  <Text style={styles.actionLabel}>Speed</Text>
+                </Pressable>
+
+                {/* Closed Captions toggle */}
+                <Pressable
+                  onPress={toggleCaptions}
+                  style={[
+                    styles.actionCircleButton,
+                    captionsEnabled && styles.actionCircleButtonActive,
+                  ]}
+                >
+                  <View style={styles.ccBadgeContainer}>
+                    <Text
+                      style={[
+                        styles.ccBadgeText,
+                        captionsEnabled && { color: colors.primaryText, fontWeight: '800' },
+                      ]}
+                    >
+                      CC
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.actionLabel,
+                      captionsEnabled && { color: colors.primaryText, fontWeight: '700' },
+                    ]}
+                  >
+                    {captionsEnabled ? 'CC On' : 'CC Off'}
                   </Text>
-                  <Text style={styles.trackRemainingText}>
-                    {remainingCount === 0 ? '🎉 All watched!' : `${remainingCount} remaining`}
+                </Pressable>
+
+                {/* ⚡ 10s Active Recall Micro-Check Button */}
+                <Pressable
+                  onPress={() => {
+                    setShowPitchMode(false);
+                    setShowMicroCheck((prev) => !prev);
+                  }}
+                  style={[
+                    styles.actionCircleButton,
+                    showMicroCheck && styles.actionCircleButtonActive,
+                  ]}
+                >
+                  <Icon
+                    name="flash"
+                    size={19}
+                    color={showMicroCheck ? colors.primaryText : colors.warning}
+                  />
+                  <Text style={styles.actionLabel}>Check</Text>
+                </Pressable>
+
+                {/* 🎤 30s Pitch Teleprompter Button */}
+                <Pressable
+                  onPress={() => {
+                    setShowMicroCheck(false);
+                    setShowPitchMode((prev) => !prev);
+                  }}
+                  style={[
+                    styles.actionCircleButton,
+                    showPitchMode && styles.actionCircleButtonActive,
+                  ]}
+                >
+                  <Icon
+                    name="mic"
+                    size={19}
+                    color={showPitchMode ? colors.primaryText : colors.accentTealText}
+                  />
+                  <Text style={styles.actionLabel}>Pitch</Text>
+                </Pressable>
+
+                <Pressable onPress={toggleMute} style={styles.actionCircleButton}>
+                  <Icon
+                    name={isMuted ? 'volume-mute' : 'volume-high'}
+                    size={20}
+                    color={colors.textPrimary}
+                  />
+                  <Text style={styles.actionLabel}>{isMuted ? 'Muted' : 'Audio'}</Text>
+                </Pressable>
+
+                <Pressable onPress={handleBookmarkToggle} style={styles.actionCircleButton}>
+                  <Icon
+                    name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                    size={20}
+                    color={isSaved ? colors.warning : colors.textPrimary}
+                  />
+                  <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {/* 💬 Synchronized Subtitles / Closed Captions Overlay */}
+            {captionsEnabled && !!activeCaption && (
+              <View style={styles.desktopCaptionOverlayContainer} pointerEvents="none">
+                <View style={styles.captionPill}>
+                  <Text style={styles.captionText}>{activeCaption}</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Bottom Details & Timeline Scrubber Overlay */}
+            {!focusHud && (
+              <View style={[styles.bottomOverlay, { bottom: 0, paddingBottom: 14, paddingTop: 18 }]}>
+                <ReelTimelineScrubber
+                  currentSec={currentSec}
+                  durationSec={reel.durationSec}
+                  onSeek={handleSeek}
+                  compact
+                />
+                <View style={styles.chapterBadgeRow}>
+                  <View style={styles.subjectTag}>
+                    <Text style={styles.subjectTagText}>
+                      {reel.subject?.name ?? 'Topic'}
+                    </Text>
+                  </View>
+                  <Text style={styles.chapterSubtitleText} numberOfLines={1}>
+                    {reel.chapter?.title ?? 'Module'}
+                  </Text>
+                </View>
+                <Text style={[styles.reelTitleText, { fontSize: 15, marginBottom: 4 }]}>
+                  {reel.title}
+                </Text>
+                <View style={styles.durationPill}>
+                  <Icon name="time-outline" size={13} color={colors.textSecondary} />
+                  <Text style={styles.durationText}>
+                    {formatSeconds(currentSec)} / {formatSeconds(reel.durationSec)}
                   </Text>
                 </View>
               </View>
-
-              {/* Right Side Actions (Hidden when Focus HUD is active) */}
-              {!focusHud && (
-                <View style={[styles.rightActionsContainer, { bottom: 118 }]}>
-                  <Pressable onPress={cycleSpeed} style={styles.actionCircleButton}>
-                    <Text style={styles.speedText}>{isTurboHold ? '2.0x' : `${playbackSpeed}x`}</Text>
-                    <Text style={styles.actionLabel}>Speed</Text>
-                  </Pressable>
-
-                  {/* Closed Captions toggle */}
-                  <Pressable
-                    onPress={toggleCaptions}
-                    style={[
-                      styles.actionCircleButton,
-                      captionsEnabled && styles.actionCircleButtonActive,
-                    ]}
-                  >
-                    <View style={styles.ccBadgeContainer}>
-                      <Text
-                        style={[
-                          styles.ccBadgeText,
-                          captionsEnabled && { color: colors.primaryText, fontWeight: '800' },
-                        ]}
-                      >
-                        CC
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.actionLabel,
-                        captionsEnabled && { color: colors.primaryText, fontWeight: '700' },
-                      ]}
-                    >
-                      {captionsEnabled ? 'CC On' : 'CC Off'}
-                    </Text>
-                  </Pressable>
-
-                  {/* ⚡ 10s Active Recall Micro-Check Button */}
-                  <Pressable
-                    onPress={() => {
-                      setShowPitchMode(false);
-                      setShowMicroCheck((prev) => !prev);
-                    }}
-                    style={[
-                      styles.actionCircleButton,
-                      showMicroCheck && styles.actionCircleButtonActive,
-                    ]}
-                  >
-                    <Icon
-                      name="flash"
-                      size={19}
-                      color={showMicroCheck ? colors.primaryText : colors.warning}
-                    />
-                    <Text style={styles.actionLabel}>Check</Text>
-                  </Pressable>
-
-                  {/* 🎤 30s Pitch Teleprompter Button */}
-                  <Pressable
-                    onPress={() => {
-                      setShowMicroCheck(false);
-                      setShowPitchMode((prev) => !prev);
-                    }}
-                    style={[
-                      styles.actionCircleButton,
-                      showPitchMode && styles.actionCircleButtonActive,
-                    ]}
-                  >
-                    <Icon
-                      name="mic"
-                      size={19}
-                      color={showPitchMode ? colors.primaryText : colors.accentTealText}
-                    />
-                    <Text style={styles.actionLabel}>Pitch</Text>
-                  </Pressable>
-
-                  <Pressable onPress={toggleMute} style={styles.actionCircleButton}>
-                    <Icon
-                      name={isMuted ? 'volume-mute' : 'volume-high'}
-                      size={20}
-                      color={colors.textPrimary}
-                    />
-                    <Text style={styles.actionLabel}>{isMuted ? 'Muted' : 'Audio'}</Text>
-                  </Pressable>
-
-                  <Pressable onPress={handleBookmarkToggle} style={styles.actionCircleButton}>
-                    <Icon
-                      name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                      size={20}
-                      color={isSaved ? colors.warning : colors.textPrimary}
-                    />
-                    <Text style={styles.actionLabel}>{isSaved ? 'Saved' : 'Save'}</Text>
-                  </Pressable>
-                </View>
-              )}
-
-              {/* 💬 Synchronized Subtitles / Closed Captions Overlay */}
-              {captionsEnabled && !!activeCaption && (
-                <View style={styles.desktopCaptionOverlayContainer} pointerEvents="none">
-                  <View style={styles.captionPill}>
-                    <Text style={styles.captionText}>{activeCaption}</Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Bottom Details & Timeline Scrubber Overlay */}
-              {!focusHud && (
-                <View style={[styles.bottomOverlay, { bottom: 0, paddingBottom: 14, paddingTop: 18 }]}>
-                  <ReelTimelineScrubber
-                    currentSec={currentSec}
-                    durationSec={reel.durationSec}
-                    onSeek={handleSeek}
-                    compact
-                  />
-                  <View style={styles.chapterBadgeRow}>
-                    <View style={styles.subjectTag}>
-                      <Text style={styles.subjectTagText}>
-                        {reel.subject?.name ?? 'Topic'}
-                      </Text>
-                    </View>
-                    <Text style={styles.chapterSubtitleText} numberOfLines={1}>
-                      {reel.chapter?.title ?? 'Module'}
-                    </Text>
-                  </View>
-                  <Text style={[styles.reelTitleText, { fontSize: 15, marginBottom: 4 }]}>
-                    {reel.title}
-                  </Text>
-                  <View style={styles.durationPill}>
-                    <Icon name="time-outline" size={13} color={colors.textSecondary} />
-                    <Text style={styles.durationText}>
-                      {formatSeconds(currentSec)} / {formatSeconds(reel.durationSec)}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </Pressable>
+            )}
           </View>
 
           {/* Reel Pager Switcher below Video */}
@@ -1841,16 +1913,23 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    mobilePlayerFrame: {
+    mobileColumnWrapper: {
+      flex: 1,
       width: '100%',
       maxWidth: 500,
       height: '100%',
-      position: 'relative',
       overflow: 'hidden',
       backgroundColor: '#000000',
       borderLeftWidth: Platform.OS === 'web' ? 1 : 0,
       borderRightWidth: Platform.OS === 'web' ? 1 : 0,
       borderColor: colors.border,
+    },
+    mobilePlayerFrame: {
+      flex: 1,
+      width: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+      backgroundColor: '#000000',
     },
     mobileVideoPressable: {
       width: '100%',
@@ -1921,9 +2000,9 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
     mobileRightActions: {
       position: 'absolute',
       right: 12,
-      bottom: 128,
+      bottom: 176,
       alignItems: 'center',
-      gap: 12,
+      gap: 10,
       zIndex: 25,
     },
     mobileBottomOverlay: {
@@ -1931,9 +2010,9 @@ function getReelStyles(colors: ThemeColors, isDark: boolean) {
       left: 0,
       right: 0,
       bottom: 46,
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
       paddingBottom: 10,
-      paddingTop: 24,
+      paddingTop: 12,
       backgroundColor: isDark ? 'rgba(11, 15, 25, 0.92)' : 'rgba(255, 255, 255, 0.95)',
       borderTopWidth: 1,
       borderTopColor: colors.border,
