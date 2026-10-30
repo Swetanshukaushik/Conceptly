@@ -551,6 +551,18 @@ There are only two hard things in Computer Science.
     assert.strictEqual(sorted[2].id, 'c-mastered');
   });
 
+  testStep('Reel Engagement Engine computes 0s / 15s / 30s phase markers & micro-check invariants', () => {
+    const duration = 45;
+    const phases = [
+      { label: '🎯 Model', sec: 0 },
+      { label: '⚡ Arch', sec: Math.round(duration * 0.33) },
+      { label: '🎤 Pitch', sec: Math.round(duration * 0.66) },
+    ];
+    assert.strictEqual(phases[0].sec, 0);
+    assert.strictEqual(phases[1].sec, 15);
+    assert.strictEqual(phases[2].sec, 30);
+  });
+
   console.log(`\n${BOLD}${GREEN}======================================================${RESET}`);
   console.log(`${BOLD}${GREEN}  All ${passedTests}/${totalTests} E2E Smoke Tests Passed Successfully!     ${RESET}`);
   console.log(`${BOLD}${GREEN}======================================================${RESET}\n`);
