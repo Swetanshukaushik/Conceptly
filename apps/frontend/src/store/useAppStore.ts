@@ -222,7 +222,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   commandPaletteOpen: false,
   setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
-  exploreLayoutMode: (initialPersisted as any).exploreLayoutMode ?? 'constellation',
+  exploreLayoutMode: (initialPersisted as any).exploreLayoutMode ?? 'grid',
   setExploreLayoutMode: (mode: 'grid' | 'constellation') => {
     set({ exploreLayoutMode: mode });
     setTimeout(() => {
