@@ -16,8 +16,7 @@ const THEMES: Array<{
   accent: string;
 }> = [
   { key: 'light', label: 'Light', icon: '☀️', accent: '#1D4ED8' },
-  { key: 'dark', label: 'Dark', icon: '🌙', accent: '#38BDF8' },
-  { key: 'grey', label: 'Grey', icon: '🔘', accent: '#F59E0B' },
+  { key: 'dark', label: 'Dark', icon: '🌙', accent: '#F59E0B' },
 ];
 
 export function ThemeToggle({ compact = false, overlay = false, style }: ThemeToggleProps) {

@@ -37,8 +37,12 @@ function loadPersistedState(): Partial<AppState> {
     try {
       const params = new URLSearchParams(window.location.search);
       const urlTheme = params.get('theme');
-      if (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'grey') {
-        state.theme = urlTheme;
+      if (urlTheme === 'light') {
+        state.theme = 'light';
+      } else if (urlTheme === 'dark' || urlTheme === 'grey') {
+        state.theme = 'dark';
+      } else if ((state.theme as string) === 'grey') {
+        state.theme = 'dark';
       }
       const urlViewMode = params.get('viewMode');
       if (urlViewMode === 'desktop' || urlViewMode === 'mobile') {
@@ -97,6 +101,9 @@ export async function hydrateAppStore() {
       }
       if (raw) {
         const parsed = JSON.parse(raw);
+        if (parsed.theme === 'grey') {
+          parsed.theme = 'dark';
+        }
         useAppStore.setState((state) => ({
           ...state,
           ...parsed,
@@ -169,7 +176,10 @@ export type AppState = {
 const initialPersisted = loadPersistedState();
 
 export const useAppStore = create<AppState>((set) => ({
-  theme: (initialPersisted.theme as ThemeMode) ?? 'dark',
+  theme:
+    initialPersisted.theme === 'light'
+      ? 'light'
+      : 'dark',
   setTheme: (theme: ThemeMode) => {
     set({ theme });
     setTimeout(() => {

@@ -140,24 +140,12 @@ export function NeuralOmnibar() {
       {
         id: 'sys-theme-dark',
         category: 'SYSTEM COMMAND',
-        title: 'Switch Optical Theme → Luminescent Dark',
-        subtitle: 'Deep obsidian canvas with Ice Sky telemetry accents',
+        title: 'Switch Optical Theme → Studio Graphite Dark',
+        subtitle: 'Machined titanium surface with Horology Amber accents',
         badge: 'THEME',
         icon: 'moon',
         onExecute: () => {
           setTheme('dark');
-          setOpen(false);
-        },
-      },
-      {
-        id: 'sys-theme-grey',
-        category: 'SYSTEM COMMAND',
-        title: 'Switch Optical Theme → Industrial Graphite Grey',
-        subtitle: 'Machined titanium surface with Horology Amber accents',
-        badge: 'THEME',
-        icon: 'contrast',
-        onExecute: () => {
-          setTheme('grey');
           setOpen(false);
         },
       },

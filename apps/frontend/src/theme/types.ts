@@ -1,4 +1,4 @@
-export type ThemeMode = 'light' | 'dark' | 'grey';
+export type ThemeMode = 'light' | 'dark';
 
 export interface TrackPalette {
   badgeBg: string;

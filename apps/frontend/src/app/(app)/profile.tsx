@@ -40,17 +40,8 @@ const THEME_OPTIONS: Array<{
   {
     id: 'dark',
     name: 'Dark',
-    tagline: 'Obsidian Midnight',
-    icon: '🌙',
-    bgPreview: '#0B0F17',
-    cardPreview: '#111722',
-    accentPreview: '#38BDF8',
-  },
-  {
-    id: 'grey',
-    name: 'Grey',
     tagline: 'Studio Graphite',
-    icon: '🔘',
+    icon: '🌙',
     bgPreview: '#1B1C20',
     cardPreview: '#23252A',
     accentPreview: '#F59E0B',

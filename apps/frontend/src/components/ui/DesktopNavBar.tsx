@@ -130,7 +130,7 @@ export function DesktopNavBar() {
             </View>
           </Pressable>
           <BionicToggle compact={true} />
-          <ThemeToggle compact={true} />
+          <ThemeToggle compact={false} />
           <ViewportToggle inline={true} />
         </View>
       </View>

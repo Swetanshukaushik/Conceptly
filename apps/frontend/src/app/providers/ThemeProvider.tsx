@@ -35,11 +35,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined' && window.location) {
       try {
         const params = new URLSearchParams(window.location.search);
-        const urlTheme = params.get('theme') as ThemeMode;
-        if (urlTheme && (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'grey')) {
-          if (urlTheme !== storeTheme) {
-            setTheme(urlTheme);
-          }
+        const rawTheme = params.get('theme');
+        const normalizedTheme: ThemeMode | null =
+          rawTheme === 'light'
+            ? 'light'
+            : rawTheme === 'dark' || rawTheme === 'grey'
+            ? 'dark'
+            : null;
+        if (normalizedTheme && normalizedTheme !== storeTheme) {
+          setTheme(normalizedTheme);
         }
       } catch (e) {}
     }
