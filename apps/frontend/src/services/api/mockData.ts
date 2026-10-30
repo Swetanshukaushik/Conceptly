@@ -456,7 +456,7 @@ function findTopic(id: string): TopicDetailDto {
 function makeReel(
   id: string,
   title: string,
-  videoIndex: number,
+  videoIndexOrUrl: number | string,
   durationSec: number,
   topicOrId: TopicDetailDto | string,
   keyTakeaway: string,
@@ -466,10 +466,14 @@ function makeReel(
   pitfalls: string[]
 ): ReelDto {
   const topicDetail = typeof topicOrId === 'string' ? findTopic(topicOrId) : topicOrId;
+  const videoUrl =
+    typeof videoIndexOrUrl === 'string'
+      ? videoIndexOrUrl
+      : SAMPLE_VIDEOS[videoIndexOrUrl % SAMPLE_VIDEOS.length];
   return {
     id,
     title,
-    videoUrl: SAMPLE_VIDEOS[videoIndex % SAMPLE_VIDEOS.length],
+    videoUrl,
     durationSec,
     topicId: topicDetail.id,
     topic: { id: topicDetail.id, title: topicDetail.title, difficulty: topicDetail.difficulty },
@@ -851,21 +855,48 @@ export const mockReels: ReelDto[] = [
   // --- IIT-JEE: ROTATIONAL MOTION ---
   makeReel(
     'reel-jee-rotational-1',
-    'Parallel Axis Theorem vs Perpendicular Axis Theorem',
-    7,
-    48,
+    'Parallel Axis Theorem (I = I_cm + Md²): The Center-of-Mass Reference Trap',
+    '/physics_reels/reel-jee-rotational-1.mp4',
+    45,
     mockTopicDetails[25],
-    'Perpendicular axis theorem ONLY applies to 2D planar laminae, never 3D bodies!',
+    'Parallel Axis shift d must ALWAYS be measured from the Center of Mass (COM) axis, never between two non-COM axes!',
     [
-      'Parallel Axis Theorem: I = I_cm + M * d^2 (works for ANY rigid body).',
-      'Perpendicular Axis Theorem: I_z = I_x + I_y (ONLY for thin flat planar objects).',
+      'Parallel Axis Theorem: I = I_cm + M * d² (valid for ANY 2D or 3D rigid body).',
+      'Example (Solid Sphere): I_cm = 2/5 MR² ──► I_tangent = 2/5 MR² + MR² = 7/5 MR².',
+      'To shift between two non-COM axes A and B: first shift A ──► COM, then COM ──► B.',
     ],
-    `  [ PARALLEL AXIS ]                  [ PERPENDICULAR AXIS ]
-  Valid for ANY 3D body!             Valid ONLY for 2D flat sheets!
-  I = I_cm + M * d^2                 I_z = I_x + I_y`,
-    'In rotational dynamics, remember that while the Parallel Axis Theorem applies to arbitrary 3D rigid bodies rotating about parallel axes through their center of mass, the Perpendicular Axis Theorem strictly holds true for two-dimensional planar laminae.',
+    `  [ SOLID SPHERE INERTIA SHIFT ]
+       COM Axis (I_cm = 2/5 MR²)
+          │
+          ├──── d = R ────► Tangent Axis
+          │
+   I_tangent = I_cm + M·R² = 2/5 MR² + MR² = 7/5 MR²`,
+    'In JEE rotational mechanics, the Parallel Axis Theorem (I = I_cm + Md²) works for any 3D rigid body, provided d is measured strictly from the Center of Mass axis. If a question gives moment of inertia about one non-COM axis and asks for another, always route back to I_cm first before shifting to the target axis.',
     [
-      "DON'T apply Perpendicular Axis Theorem to a solid cylinder, sphere, or cone; doing so is a frequent JEE negative marking trap.",
+      "DON'T shift directly between two arbitrary parallel axes using I₂ = I₁ + Md²; the base term MUST be I_cm.",
+    ]
+  ),
+  makeReel(
+    'reel-jee-rotational-2',
+    'Perpendicular Axis Theorem (Iz = Ix + Iy): Why It Fails on 3D Bodies',
+    '/physics_reels/reel-jee-rotational-2.mp4',
+    45,
+    mockTopicDetails[25],
+    'Perpendicular Axis Theorem (Iz = Ix + Iy) applies ONLY to flat 2D planar laminas (z = 0), never 3D spheres or cylinders!',
+    [
+      'Perpendicular Axis Theorem: I_z = I_x + I_y where X and Y lie in the flat plane of the lamina and Z is perpendicular.',
+      'For a thin uniform disc: I_z = 1/2 MR², so by symmetry I_x = I_y = 1/4 MR².',
+      'Fails on 3D bodies because mass elements have non-zero z-coordinates (r² ≠ x² + y²).',
+    ],
+    `  [ 2D PLANAR LAMINA (z = 0) ]          [ 3D SPHERE (z ≠ 0) ]
+        Z (Perpendicular)                    ❌ Iz = Ix + Iy FAILS!
+        │                                    Use 3D Symmetry instead:
+        └───► Y                              Ix = Iy = Iz = 2/5 MR²
+       ╱
+      X   ──► Iz = Ix + Iy (VALID)`,
+    'The Perpendicular Axis Theorem (Iz = Ix + Iy) is exclusively valid for flat two-dimensional planar laminas like rings, discs, and thin plates where z equals zero everywhere. Never apply it to a 3D sphere, cone, or cylinder—that is the single most common negative-marking trap in JEE rotational dynamics.',
+    [
+      "DON'T apply Perpendicular Axis Theorem to a solid sphere or cylinder; for 3D bodies, z ≠ 0 so Iz ≠ Ix + Iy.",
     ]
   ),
 
@@ -915,26 +946,45 @@ export const mockReels: ReelDto[] = [
     ]
   ),
   makeReel(
-    'reel-school-ohms-1',
-    'Ohms Law Visualized: Voltage, Current & Resistance',
-    2,
-    46,
+    'reel-school-ohm-1',
+    "Ohm's Law (V = IR) & Resistivity (R = ρL/A): The Wire-Stretching Trap",
+    '/physics_reels/reel-school-ohm-1.mp4',
+    45,
     mockTopicDetails[35],
-    'Current is directly proportional to voltage across a metallic conductor: V = IR.',
+    'Stretching a wire to 2x length increases its resistance by 4x (R ∝ L² at constant volume), while resistivity ρ stays unchanged!',
     [
-      'V = Potential Difference (Volts), I = Current (Amperes), R = Resistance (Ohms).',
-      'In Series: R_eq = R1 + R2 + R3 (current stays same, voltage divides).',
-      'In Parallel: 1/R_eq = 1/R1 + 1/R2 + 1/R3 (voltage stays same, current divides).',
+      'Ohm Law: V = I * R at constant temperature.',
+      'Resistance R = ρ * (L / A); when stretched n times, L becomes nL and A becomes A/n, so R_new = n²R.',
+      'Resistivity (ρ) is an intrinsic material property—it depends only on material and temperature, NEVER on length or area.',
     ],
-    `  [ OHMS LAW TRIANGLE ]
-           /   V   \\
-          /─────────\\
-         /  I  *  R  \\
-        ───────────────
-  Series: R = R1 + R2      Parallel: 1/R = 1/R1 + 1/R2`,
-    'Ohms law states that at constant temperature, the current flowing through a conductor is directly proportional to the potential difference across its terminals (V = I x R). In domestic wiring, circuits are connected in parallel so each appliance receives full supply voltage independently.',
+    `  [ WIRE STRETCHED TO 2x LENGTH (Constant Volume V = A·L) ]
+  • Length:  L ──► 2L
+  • Area:    A ──► A / 2
+  • R_new = ρ (2L) / (A/2) = 4 · (ρL/A) = 4R!`,
+    'Under Ohm Law (V = IR), resistance equals ρL/A. In board exams, watch out for the wire-stretching trap: when a wire is stretched to double its length, its volume remains constant so its cross-sectional area halves, quadrupling the resistance to 4R while resistivity ρ remains completely unchanged.',
     [
-      "DON'T state Ohms law without specifying the condition of constant temperature and physical dimensions, as resistance varies with temperature.",
+      "DON'T say resistivity ρ increases when a wire is stretched; ρ only changes if the material or temperature changes.",
+    ]
+  ),
+  makeReel(
+    'reel-school-ohm-2',
+    'Series vs Parallel Circuits: Why Home Appliances Are Wired in Parallel',
+    '/physics_reels/reel-school-ohm-2.mp4',
+    45,
+    mockTopicDetails[35],
+    'Home circuits are wired in Parallel so every appliance gets full 220V and works independently if another appliance turns off.',
+    [
+      'Series: R_eq = R₁ + R₂ + R₃ (Current I is constant, Voltage V divides).',
+      'Parallel: 1/R_eq = 1/R₁ + 1/R₂ + 1/R₃ (Voltage V is constant, Current I divides).',
+      'In parallel, equivalent resistance is always smaller than the smallest individual resistor.',
+    ],
+    `  [ SERIES CIRCUIT ]                  [ PARALLEL HOME CIRCUIT ]
+  • Same Current (I)                  • Same Voltage (220V across each)
+  • R_eq = R₁ + R₂                    • 1/R_eq = 1/R₁ + 1/R₂
+  • 1 Fused Bulb = All OFF ❌         • Independent Switches = All Work ✅`,
+    'In series circuits, current remains identical across resistors and resistances add directly (R_eq = R1 + R2), meaning one broken component breaks the entire loop. Domestic wiring always uses parallel connections so every appliance receives a constant 220V supply and operates on its own independent switch.',
+    [
+      "DON'T forget to take the reciprocal at the end when calculating parallel resistance from 1/R_eq = 1/R₁ + 1/R₂.",
     ]
   ),
 
@@ -1316,24 +1366,48 @@ export const mockReels: ReelDto[] = [
   // --- JEE: GAUSS LAW & FLUX ---
   makeReel(
     'reel-jee-gauss-1',
-    'Gauss Law & Electric Flux for Symmetrical Charge Distributions',
-    2,
-    49,
+    "Gauss's Law (∮ E·dA = q_in/ε₀): External Charges vs Enclosed Flux",
+    '/physics_reels/reel-jee-gauss-1.mp4',
+    45,
     'topic-gauss-flux',
-    'Total electric flux through any closed Gaussian surface equals Q_enclosed / ε₀.',
+    'Net electric flux Φ through a closed Gaussian surface depends ONLY on enclosed charge (q_in), while Electric Field E depends on ALL charges!',
     [
-      'Flux Φ = ∮ E · dA = Q_in / ε₀.',
-      'Infinite straight line of charge: E = λ / (2πε₀r).',
-      'Infinite thin planar sheet: E = σ / (2ε₀) (independent of distance r).',
+      'Gauss Law: Φ_net = ∮ E · dA = q_enclosed / ε₀.',
+      'External charges (q_out) contribute zero net flux because every field line entering the closed surface also exits it.',
+      'However, the Electric Field vector E at any point on the surface is the superposition of BOTH inside and outside charges.',
     ],
-    `  ∮ E · dA = Q_in / ε₀
-
-  1. Infinite Line Charge:  Cylindrical Gaussian surface ──► E = λ / (2πε₀r)
-  2. Infinite Sheet:        Pillbox cylinder surface    ──► E = σ / (2ε₀)
-  3. Conducting Sphere:     Spherical shell surface     ──► E_inside = 0, E_out = kQ/r²`,
-    'Gauss Law provides an elegant formulation of electrostatics by stating that the closed surface integral of electric field flux is directly proportional to the total enclosed charge divided by permittivity ε₀. By choosing Gaussian surfaces that match system symmetry—such as cylinders for line charges or spheres for point charges—we evaluate electric field strength without complex vector integrations.',
+    `  [ GAUSSIAN SURFACE ]
+    ╭───────────────╮
+    │   +q_in       │  ◄─── Net Flux Φ = q_in / ε₀ (ONLY q_in!)
+    ╰───────────────╯
+           ▲
+           │ Field lines enter & exit (Net Flux = 0)
+        +q_out (External Charge still affects E at surface points!)`,
+    'In JEE electrostatics, never confuse Net Flux with Electric Field in Gauss Law (∮ E·dA = q_in/ε₀). While the total flux through a closed surface depends strictly on the enclosed charge q_in, the electric field vector E at any point on that surface is determined by all charges—both inside and outside.',
     [
-      "DON'T forget that Gauss Law is valid for any closed surface, but only useful for analytically computing E when the charge distribution possesses cylindrical, planar, or spherical symmetry.",
+      "DON'T claim E is zero on a Gaussian surface just because q_enclosed is zero; external charges still produce a non-zero E field that enters and exits with zero net flux.",
+    ]
+  ),
+  makeReel(
+    'reel-jee-gauss-2',
+    'Gaussian Symmetry Shortcuts: Charge at Center, Face, Edge & Corner of a Cube',
+    '/physics_reels/reel-jee-gauss-2.mp4',
+    45,
+    'topic-gauss-flux',
+    'Use 3D cube symmetry to solve flux in 5 seconds: Center = q/ε₀, Face = q/2ε₀, Edge = q/4ε₀, Corner = q/8ε₀.',
+    [
+      'Charge at Cube Center: Total flux = q/ε₀; flux through 1 face = q / (6ε₀).',
+      'Charge at Cube Corner: Shared by 8 surrounding cubes ──► Total cube flux = q / (8ε₀).',
+      'For a corner charge, flux through the 3 faces touching the corner is 0; flux through each of the 3 opposite faces is q / (24ε₀).',
+    ],
+    `  [ CUBE SYMMETRY FLUX SHORTCUTS ]
+  • Center of Cube : Φ_total = q / ε₀     │ Φ_face = q / 6ε₀
+  • Face Center    : Φ_total = q / 2ε₀    │ (Shared by 2 cubes)
+  • Edge Center    : Φ_total = q / 4ε₀    │ (Shared by 4 cubes)
+  • Corner Vertex  : Φ_total = q / 8ε₀    │ Φ_far_face = q / 24ε₀`,
+    'To solve Gaussian cube flux problems in under 5 seconds, tile identical cubes around the charge to enclose it symmetrically. A corner charge requires 8 cubes to enclose, giving q/8ε₀ total flux through one cube—and since field lines graze the 3 adjacent faces with zero flux, the remaining 3 faces each receive exactly q/24ε₀.',
+    [
+      "DON'T divide q/8ε₀ by 6 for a corner charge! Field lines are parallel to the 3 faces meeting at that corner, so flux is shared only among the 3 non-adjacent faces (q/24ε₀).",
     ]
   ),
 
@@ -1433,27 +1507,51 @@ export const mockReels: ReelDto[] = [
   // --- NEET: TOTAL INTERNAL REFLECTION ---
   makeReel(
     'reel-neet-tir-1',
-    'Total Internal Reflection: Critical Angle & Optical Fibers',
-    7,
-    46,
+    'Total Internal Reflection (TIR): Denser-to-Rarer Condition & sin(θc) = n₂/n₁',
+    '/physics_reels/reel-neet-tir-1.mp4',
+    45,
     'topic-total-internal-reflection',
-    'Light travelling from denser to rarer medium with angle i > θc reflects 100% with zero refraction.',
+    'TIR requires light to travel from optically denser (n₁) to rarer (n₂) medium at an angle i > θc = sin⁻¹(n₂/n₁).',
     [
-      'Conditions: 1. Light must travel from denser to rarer medium. 2. Angle of incidence > Critical angle.',
-      'Critical Angle formula: sin(θc) = n_rarer / n_denser.',
-      'Key Applications: Optical fiber communication, diamond brilliance, mirage in deserts, endoscopes.',
+      'Condition 1: Light MUST travel from optically denser to optically rarer medium (n₁ > n₂).',
+      'Condition 2: Angle of incidence i must exceed Critical Angle θc, where sin(θc) = n₂ / n₁ = 1 / μ.',
+      'At i = θc, the refracted ray grazes the boundary at r = 90°; for i > θc, 100% of light reflects internally.',
     ],
     `             Normal
                 │
-  Rarer (n2)    │         Refracted ray along boundary (at critical angle)
-  ──────────────┼─────────────────────────────── Boundary
-  Denser (n1)   │      ↗  Total Internal Reflection! (when i > θc)
+  Rarer (n₂)    │         Refracted ray grazes at r = 90° (when i = θc)
+  ──────────────┼───────────────────────────────► Boundary
+  Denser (n₁)   │      ↗  100% Total Internal Reflection! (when i > θc)
                 │    ↗
-                │  ↗
-                │ ↗   Angle of incidence i > sin⁻¹(n2 / n1)`,
-    'Total internal reflection occurs when light travelling in an optically denser medium impinges upon the boundary of a rarer medium at an angle of incidence exceeding the critical angle (sin θc = n2/n1). Because 100% of the electromagnetic energy is reflected back into the core without absorption loss, TIR serves as the operational foundation for modern optical fiber telecommunications and medical endoscopes.',
+                │ ↗   sin(θc) = n₂ / n₁`,
+    'Total Internal Reflection occurs only when two strict conditions are met: light travels from an optically denser medium to a rarer medium, and the angle of incidence exceeds the critical angle θc where sin(θc) equals n₂ over n₁. Beyond θc, refraction is mathematically impossible and 100% of light intensity reflects back.',
     [
-      "DON'T attempt to calculate critical angle when light travels from rarer to denser medium; total internal reflection strictly requires n_incident > n_refracted.",
+      "DON'T try to compute a critical angle when light moves from air into glass or water; TIR is physically impossible from rarer to denser media.",
+    ]
+  ),
+  makeReel(
+    'reel-neet-tir-2',
+    'TIR in Action: Optical Fibers, Medical Endoscopes & Diamond Brilliance (θc = 24.4°)',
+    '/physics_reels/reel-neet-tir-2.mp4',
+    45,
+    'topic-total-internal-reflection',
+    'Optical fibers trap light with zero signal loss using a high-index Core (n₁) surrounded by a lower-index Cladding (n₂).',
+    [
+      'Optical Fiber & Endoscope: Inner Core has higher refractive index (n₁ ≈ 1.52) than outer Cladding (n₂ ≈ 1.48).',
+      'Diamond Brilliance: High refractive index (n = 2.42) gives a tiny critical angle θc = 24.4°, trapping light for multiple internal reflections.',
+      'Mirage in Deserts: Hot air near ground is optically rarer than cooler air above, bending sky light upward via TIR.',
+    ],
+    `  [ OPTICAL FIBER STRUCTURE ]
+  ┌───────────────────────────────────────────────────┐
+  │ Cladding (Lower Index n₂ ≈ 1.48)                  │
+  ├───────────────────────────────────────────────────┤
+  │ Core (Higher Index n₁ ≈ 1.52)  ──► ╱╲  ╱╲  ╱╲ ──► │
+  ├───────────────────────────────────────────────────┤
+  │ Cladding (Lower Index n₂ ≈ 1.48)                  │
+  └───────────────────────────────────────────────────┘`,
+    'Every real-world TIR application relies on keeping light inside a high-index core. In optical fibers and medical endoscopes, the inner glass core has a higher refractive index than the outer cladding so laser pulses bounce miles with virtually zero attenuation. Similarly, diamond’s high refractive index of 2.42 shrinks its critical angle to just 24.4 degrees, trapping light to create its signature sparkle.',
+    [
+      "DON'T swap core and cladding refractive indices in NEET questions: n_core MUST always be strictly greater than n_cladding.",
     ]
   ),
 

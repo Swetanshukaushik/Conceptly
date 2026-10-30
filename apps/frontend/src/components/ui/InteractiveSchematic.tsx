@@ -28,6 +28,9 @@ export function InteractiveSchematic({
     const isFin = lower.includes('dcf') || lower.includes('valuation') || lower.includes('wacc') || lower.includes('profit');
     const isUpsc = lower.includes('basic') || lower.includes('structure') || lower.includes('polity') || lower.includes('article') || lower.includes('constitution');
     const isJee = lower.includes('inertia') || lower.includes('rotat') || lower.includes('axis') || lower.includes('torque');
+    const isGauss = lower.includes('gauss') || lower.includes('flux') || lower.includes('electro');
+    const isTir = lower.includes('internal reflection') || lower.includes('tir') || lower.includes('critical angle') || lower.includes('optic');
+    const isOhm = lower.includes('ohm') || lower.includes('resist') || lower.includes('parallel') || lower.includes('circuit');
     const isNeet = lower.includes('cardiac') || lower.includes('ecg') || lower.includes('heart') || lower.includes('circulation');
 
     if (isCap) {
@@ -249,6 +252,117 @@ export function InteractiveSchematic({
             : simMode === 'fault'
             ? 'JEE EXAM TRAP: Perpendicular Axis Theorem (Iz = Ix + Iy) ONLY works for 2D planar laminas, never 3D spheres!'
             : 'MITIGATED: Using 3D symmetry + Parallel Axis Theorem yields exact I_tangent = 2/5 MR² + MR² = 7/5 MR².',
+      };
+    }
+
+    if (isGauss) {
+      return {
+        systemName: 'GAUSSIAN SURFACE & CUBE FLUX SIMULATOR',
+        faultButtonLabel: '⚡ Add External Charge (+Q_out)',
+        mitigateButtonLabel: '🛡️ Corner Cube Symmetry (8x)',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'CHARGE SOURCE',
+            name: 'Enclosed q_in',
+            status: simMode === 'nominal' ? 'CENTER +q' : simMode === 'fault' ? '+q_in & +Q_out' : 'CORNER +q',
+            latency: simMode === 'nominal' ? 'SYM: 6 FACES' : simMode === 'fault' ? 'E-FIELD SHIFT' : '8 CUBES TILE',
+          },
+          {
+            id: 'N2',
+            role: 'SURFACE INTEGRAL',
+            name: '∮ E · dA',
+            status: simMode === 'nominal' ? 'q / ε₀' : simMode === 'fault' ? 'Φ_out = 0 NET' : 'q / (8ε₀) CUBE',
+            latency: simMode === 'nominal' ? 'ALL INWARD=0' : simMode === 'fault' ? 'ENTER = EXIT' : '3 ADJ FACES=0',
+          },
+          {
+            id: 'N3',
+            role: 'FACE FLUX',
+            name: 'Single Face Φ',
+            status: simMode === 'nominal' ? 'q / (6ε₀)' : simMode === 'fault' ? 'Φ UNCHANGED!' : 'q / (24ε₀)',
+            latency: simMode === 'nominal' ? 'EXACT' : simMode === 'fault' ? 'E≠0, ΔΦ=0' : '3 FAR FACES',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: Charge +q at cube center produces total flux q/ε₀ and equal flux q/(6ε₀) through each of the 6 faces.'
+            : simMode === 'fault'
+            ? 'JEE TRAP: External charge +Q_out alters the Electric Field E at surface points, but contributes ZERO net flux (lines enter & exit).'
+            : 'MITIGATED: For a corner charge, 8 cubes enclose +q (Φ_cube = q/8ε₀); 3 touching faces get 0 flux, so 3 far faces each get q/(24ε₀).',
+      };
+    }
+
+    if (isTir) {
+      return {
+        systemName: 'OPTICAL FIBER & CRITICAL ANGLE LAB',
+        faultButtonLabel: '⚡ Swap to Rarer → Denser',
+        mitigateButtonLabel: '🛡️ Set θ_i > θ_c (24.4° Diamond)',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'INCIDENT RAY',
+            name: 'Core Medium (n₁)',
+            status: simMode === 'nominal' ? 'n₁ = 1.52' : simMode === 'fault' ? 'AIR n₁ = 1.00' : 'DIAMOND n₁=2.42',
+            latency: simMode === 'nominal' ? 'DENSER CORE' : simMode === 'fault' ? 'RARER INPUT' : 'θ_c = 24.4°',
+          },
+          {
+            id: 'N2',
+            role: 'BOUNDARY CHECK',
+            name: 'sin(θ_c) = n₂/n₁',
+            status: simMode === 'nominal' ? 'θ_i > θ_c' : simMode === 'fault' ? 'sin θ_c > 1 ❌' : 'θ_i = 45° > 24.4°',
+            latency: simMode === 'nominal' ? 'CLADDING 1.48' : simMode === 'fault' ? 'BENDS TO NORM' : 'GRAZING EXCEED',
+          },
+          {
+            id: 'N3',
+            role: 'OPTICAL OUTPUT',
+            name: 'Waveguide Path',
+            status: simMode === 'nominal' ? '100% TIR' : simMode === 'fault' ? 'REFRACTED OUT' : 'SPARKLE LOCK',
+            latency: simMode === 'nominal' ? '0.0 dB LOSS' : simMode === 'fault' ? 'SIGNAL LOST' : '100% REFLECT',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: Light in high-index fiber core (n₁ > n₂) striking at θ_i > θ_c undergoes 100% Total Internal Reflection.'
+            : simMode === 'fault'
+            ? 'NEET TRAP: When light travels from rarer (air) to denser (glass), it bends toward the normal—TIR is impossible at any angle!'
+            : 'MITIGATED: Enforcing n_core > n_cladding and θ_i > sin⁻¹(n₂/n₁) traps 100% of light energy inside the waveguide.',
+      };
+    }
+
+    if (isOhm) {
+      return {
+        systemName: 'OHM LAW & WIRE STRETCHING SIMULATOR',
+        faultButtonLabel: '⚡ Stretch Wire to 2× Length',
+        mitigateButtonLabel: '🛡️ Wire Home in Parallel (220V)',
+        nodes: [
+          {
+            id: 'N1',
+            role: 'CONDUCTOR GEOMETRY',
+            name: 'Length & Area',
+            status: simMode === 'nominal' ? 'L, Area A' : simMode === 'fault' ? '2L, Area A/2' : 'PARALLEL BUS',
+            latency: simMode === 'nominal' ? 'VOL = A·L' : simMode === 'fault' ? 'CONST VOLUME' : '220V CONST',
+          },
+          {
+            id: 'N2',
+            role: 'MATERIAL PROPERTY',
+            name: 'Resistivity (ρ)',
+            status: simMode === 'nominal' ? 'R = ρL / A' : simMode === 'fault' ? 'R_new = 4R!' : '1/Req = Σ(1/Rᵢ)',
+            latency: simMode === 'nominal' ? 'ρ CONSTANT' : simMode === 'fault' ? 'ρ UNCHANGED' : 'I DIVIDES',
+          },
+          {
+            id: 'N3',
+            role: 'CIRCUIT LOAD',
+            name: 'Current V = I·R',
+            status: simMode === 'nominal' ? 'I = V / R' : simMode === 'fault' ? 'I DROPS TO I/4' : 'INDEPENDENT ON',
+            latency: simMode === 'nominal' ? 'OHMIC LINEAR' : simMode === 'fault' ? '4× RESISTANCE' : 'ZERO FAULT CASCADE',
+          },
+        ],
+        diagnostic:
+          simMode === 'nominal'
+            ? 'NOMINAL: At constant temperature, V = IR and R = ρL/A. Resistivity ρ depends only on material & temperature.'
+            : simMode === 'fault'
+            ? 'BOARD EXAM TRAP: Stretching a wire to 2L halves its cross-section (A/2), quadrupling resistance to 4R (while ρ stays constant)!'
+            : 'MITIGATED: Parallel domestic wiring ensures every appliance gets full 220V and one fused bulb never breaks the rest of the home.',
       };
     }
 

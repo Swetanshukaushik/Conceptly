@@ -434,6 +434,15 @@ export const educationApi = {
   },
 
   async getReelsByTopic(topicId: string): Promise<ReelDto[]> {
+    // Always prioritize locally rendered Studio reels (e.g., /physics_reels/*.mp4) in both mock & live modes
+    const studioReels = mockReels.filter(
+      (reel) => reel.topicId === topicId && reel.videoUrl.startsWith('/physics_reels/')
+    );
+    if (studioReels.length > 0) {
+      offlineCache.set(`reels:${topicId}`, studioReels);
+      return studioReels;
+    }
+
     if (isMockMode()) {
       await sleep(200);
       const filtered = mockReels.filter((reel) => reel.topicId === topicId);
@@ -523,6 +532,13 @@ export const educationApi = {
   },
 
   async getReelById(reelId: string): Promise<ReelDto> {
+    const studioReel = mockReels.find(
+      (r) => r.id === reelId && r.videoUrl.startsWith('/physics_reels/')
+    );
+    if (studioReel) {
+      return studioReel;
+    }
+
     if (isMockMode()) {
       await sleep(150);
       const reel = mockReels.find((r) => r.id === reelId);
