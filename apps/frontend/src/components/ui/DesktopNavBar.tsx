@@ -10,6 +10,7 @@ import { useAppStore } from '@/store/useAppStore';
 
 const NAV_ITEMS = [
   { label: 'Home', path: '/feed', icon: 'home-outline', activeIcon: 'home' },
+  { label: 'Trending', path: '/trending', icon: 'flame-outline', activeIcon: 'flame' },
   { label: 'Explore', path: '/explore', icon: 'compass-outline', activeIcon: 'compass' },
   { label: 'Saved', path: '/bookmarks', icon: 'bookmark-outline', activeIcon: 'bookmark' },
   { label: 'Progress', path: '/progress', icon: 'stats-chart-outline', activeIcon: 'stats-chart' },

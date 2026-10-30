@@ -12,6 +12,9 @@ export type AnalyticsEventName =
   | 'topic_viewed'
   | 'reel_viewed'
   | 'reel_completed'
+  | 'reel_liked'
+  | 'reel_shared'
+  | 'trending_feed_opened'
   | 'quiz_started'
   | 'quiz_completed'
   | 'topic_bookmarked';

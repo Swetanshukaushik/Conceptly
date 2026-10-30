@@ -81,6 +81,7 @@ function savePersistedState(state: AppState) {
     flashcardSRS: state.flashcardSRS,
     exploreLayoutMode: state.exploreLayoutMode,
     onlyTopicsWithReels: state.onlyTopicsWithReels,
+    likedReels: state.likedReels,
   };
 
   const jsonStr = JSON.stringify(toSave);
@@ -156,6 +157,8 @@ export type AppState = {
   onlyTopicsWithReels: boolean;
   setOnlyTopicsWithReels: (enabled: boolean) => void;
   toggleOnlyTopicsWithReels: () => void;
+  likedReels: Record<string, boolean>;
+  toggleReelLike: (reelId: string) => void;
   flashcardSRS: Record<string, FlashcardSRSRecord>;
   rateFlashcard: (cardId: string, grade: FlashcardGrade) => void;
   apiDataSource: ApiDataSource;
@@ -201,15 +204,25 @@ export const useAppStore = create<AppState>((set) => ({
       ? 'desktop'
       : 'mobile'),
   onboardingStep: initialPersisted.onboardingStep ?? 'welcome',
-  selectedExamType: initialPersisted.selectedExamType ?? 'TECH_INTERVIEW',
+  selectedExamType:
+    ((initialPersisted as any).onlyTopicsWithReels ?? true) &&
+    (!initialPersisted.selectedExamType ||
+      !EXAM_TYPES_WITH_REAL_REELS.has(initialPersisted.selectedExamType))
+      ? 'IIT_JEE'
+      : (initialPersisted.selectedExamType ?? 'IIT_JEE'),
   selectedClassId: initialPersisted.selectedClassId ?? 10,
-  selectedSubjectId: initialPersisted.selectedSubjectId ?? 'tech-sysdesign',
-  selectedChapterId: initialPersisted.selectedChapterId ?? 'ch-sd-distributed',
+  selectedSubjectId:
+    ((initialPersisted as any).onlyTopicsWithReels ?? true) &&
+    (!initialPersisted.selectedSubjectId ||
+      !SUBJECTS_WITH_REAL_REELS.has(initialPersisted.selectedSubjectId))
+      ? 'jee-physics'
+      : (initialPersisted.selectedSubjectId ?? 'jee-physics'),
+  selectedChapterId: initialPersisted.selectedChapterId ?? 'ch-jee-rotational',
   language: initialPersisted.language ?? 'en',
   playbackSpeed: initialPersisted.playbackSpeed ?? 1.0,
   watchedReels: initialPersisted.watchedReels ?? {
-    'reel-cap-1': true,
-    'reel-hashing-1': true,
+    'reel-jee-rotational-1': true,
+    'reel-jee-gauss-1': true,
   },
   userBookmarks: initialPersisted.userBookmarks ?? mockBookmarks,
   userProgress: initialPersisted.userProgress ?? mockProgress,
@@ -248,7 +261,7 @@ export const useAppStore = create<AppState>((set) => ({
       savePersistedState(useAppStore.getState());
     }, 0);
   },
-  onlyTopicsWithReels: Boolean((initialPersisted as any).onlyTopicsWithReels ?? false),
+  onlyTopicsWithReels: Boolean((initialPersisted as any).onlyTopicsWithReels ?? true),
   setOnlyTopicsWithReels: (enabled: boolean) => {
     set((state) => {
       const updates: Partial<AppState> = { onlyTopicsWithReels: enabled };
@@ -278,6 +291,22 @@ export const useAppStore = create<AppState>((set) => ({
   toggleOnlyTopicsWithReels: () => {
     const next = !useAppStore.getState().onlyTopicsWithReels;
     useAppStore.getState().setOnlyTopicsWithReels(next);
+  },
+  likedReels: (initialPersisted as any).likedReels ?? {
+    'reel-jee-rotational-1': true,
+    'reel-jee-gauss-1': true,
+  },
+  toggleReelLike: (reelId: string) => {
+    set((state) => {
+      const nextLiked = {
+        ...state.likedReels,
+        [reelId]: !state.likedReels[reelId],
+      };
+      setTimeout(() => {
+        savePersistedState(useAppStore.getState());
+      }, 0);
+      return { likedReels: nextLiked };
+    });
   },
   flashcardSRS: (initialPersisted as any).flashcardSRS ?? {},
   rateFlashcard: (cardId: string, grade: FlashcardGrade) => {

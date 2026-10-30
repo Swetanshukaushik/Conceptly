@@ -12,10 +12,18 @@ import { VerticalReelPlayer } from '@/components/ui/VerticalReelPlayer';
 import { educationApi } from '@/services/api/educationApi';
 import { queryKeys } from '@/services/api/queryKeys';
 import { useReelsByTopicQuery } from '@/services/api/hooks/useReelsByTopicQuery';
+import { useTrendingReelsQuery } from '@/services/api/hooks/useTrendingReelsQuery';
+import type { TrendingReelSortBy } from '@/services/api/types';
 
 export default function ReelPlayerScreen() {
   const router = useRouter();
-  const { id, topicId } = useLocalSearchParams<{ id: string; topicId?: string }>();
+  const { id, topicId, playlist, sortBy } = useLocalSearchParams<{
+    id: string;
+    topicId?: string;
+    playlist?: string;
+    sortBy?: string;
+  }>();
+  const isTrendingPlaylist = playlist === 'trending';
 
   // Fetch specific reel first if topicId is not passed
   const { data: singleReel, isLoading: reelLoading } = useQuery({
@@ -27,7 +35,11 @@ export default function ReelPlayerScreen() {
   const effectiveTopicId = topicId || singleReel?.topicId || '';
 
   const handleSafeBack = () => {
-    const fallback = effectiveTopicId ? `/topic/${effectiveTopicId}` : '/feed';
+    const fallback = isTrendingPlaylist
+      ? '/trending'
+      : effectiveTopicId
+      ? `/topic/${effectiveTopicId}`
+      : '/feed';
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (window.history.length > 1 && router.canGoBack()) {
         router.back();
@@ -43,19 +55,26 @@ export default function ReelPlayerScreen() {
     }
   };
 
-  // Fetch all reels for the topic so user can vertically swipe through them
+  // Fetch all reels for the topic OR all trending community reels if launched from Trending feed
   const { data: topicReels, isLoading: topicReelsLoading } = useReelsByTopicQuery(effectiveTopicId);
+  const { data: trendingFeed, isLoading: trendingLoading } = useTrendingReelsQuery({
+    sortBy: (sortBy as TrendingReelSortBy) ?? 'trending',
+    timeWindow: '24h',
+  });
 
   useEffect(() => {
     if (singleReel) {
       educationApi.trackAnalyticsEvent('reel_viewed', {
         reelId: singleReel.id,
-        topicId: singleReel.topicId
+        topicId: singleReel.topicId,
+        playlist: isTrendingPlaylist ? 'trending' : 'topic',
       });
     }
-  }, [singleReel]);
+  }, [singleReel, isTrendingPlaylist]);
 
-  const isLoading = reelLoading || (effectiveTopicId ? topicReelsLoading : false);
+  const isLoading =
+    reelLoading ||
+    (isTrendingPlaylist ? trendingLoading : effectiveTopicId ? topicReelsLoading : false);
 
   if (isLoading) {
     return (
@@ -67,9 +86,11 @@ export default function ReelPlayerScreen() {
     );
   }
 
-  // Combine either all reels for the topic or single reel as fallback
+  // Combine either trending community reels, all reels for the topic, or single reel as fallback
   const reelsToDisplay =
-    topicReels && topicReels.length > 0
+    isTrendingPlaylist && trendingFeed?.items && trendingFeed.items.length > 0
+      ? trendingFeed.items
+      : topicReels && topicReels.length > 0
       ? topicReels
       : singleReel
       ? [singleReel]
@@ -78,7 +99,13 @@ export default function ReelPlayerScreen() {
   if (reelsToDisplay.length === 0) {
     return (
       <ScreenContainer>
-        <AppHeader title="Lesson Reel" fallbackRoute={effectiveTopicId ? `/topic/${effectiveTopicId}` : '/feed'} onBack={handleSafeBack} />
+        <AppHeader
+          title="Lesson Reel"
+          fallbackRoute={
+            isTrendingPlaylist ? '/trending' : effectiveTopicId ? `/topic/${effectiveTopicId}` : '/feed'
+          }
+          onBack={handleSafeBack}
+        />
         <View className="flex-1 justify-center items-center px-4">
           <AppText tone="muted">No video reel found</AppText>
         </View>
@@ -88,7 +115,7 @@ export default function ReelPlayerScreen() {
 
   return (
     <VerticalReelPlayer
-      key={`${id}-${effectiveTopicId}`}
+      key={`${id}-${isTrendingPlaylist ? 'trending' : effectiveTopicId}`}
       reels={reelsToDisplay}
       initialReelId={id}
       onBack={handleSafeBack}

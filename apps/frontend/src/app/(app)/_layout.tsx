@@ -24,6 +24,7 @@ export default function AppLayout() {
         }}
       >
         <Tabs.Screen name="feed" options={{ title: 'Home' }} />
+        <Tabs.Screen name="trending" options={{ title: 'Trending' }} />
         <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
         <Tabs.Screen name="bookmarks" options={{ title: 'Saved' }} />
         <Tabs.Screen name="progress" options={{ title: 'Progress' }} />

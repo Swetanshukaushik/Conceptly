@@ -7,6 +7,7 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 
 const MOBILE_NAV_ITEMS = [
   { label: 'Home', path: '/feed', icon: 'home-outline', activeIcon: 'home' },
+  { label: 'Trending', path: '/trending', icon: 'flame-outline', activeIcon: 'flame' },
   { label: 'Explore', path: '/explore', icon: 'compass-outline', activeIcon: 'compass' },
   { label: 'Saved', path: '/bookmarks', icon: 'bookmark-outline', activeIcon: 'bookmark' },
   { label: 'Progress', path: '/progress', icon: 'stats-chart-outline', activeIcon: 'stats-chart' },
@@ -130,15 +131,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   iconPill: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabLabel: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10.5,
+    lineHeight: 13,
     textAlign: 'center',
   },
 });

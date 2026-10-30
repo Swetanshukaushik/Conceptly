@@ -125,9 +125,107 @@ export type BookmarkDto = {
   subject: { id: string; name: string; classLevel: number };
 };
 
+export type TrendingReelSortBy =
+  | 'trending'
+  | 'top_grossing'
+  | 'most_rewatched'
+  | 'community_picks';
+
+export type TrendingTimeWindow = '24h' | '7d' | '30d' | 'all_time';
+
+export type TrendingBadgeType =
+  | 'TRENDING_1'
+  | 'TOP_GROSSING'
+  | 'HIGH_RETENTION'
+  | 'COMMUNITY_FAVORITE'
+  | 'RISING_FAST';
+
+export type ReelEngagementMetricsDto = {
+  viewsCount: number;
+  completionsCount: number;
+  completionRate: number;
+  rewatchesCount: number;
+  likesCount: number;
+  bookmarksCount: number;
+  sharesCount: number;
+  commentsCount: number;
+  activeLearnersNow: number;
+  trendingScore: number;
+  velocityDeltaPercent: number;
+  quizPassRate: number;
+};
+
+export type ReelCommunityHighlightDto = {
+  authorName: string;
+  authorBadge: string;
+  topComment: string;
+  upvotesCount: number;
+  createdAt: string;
+};
+
+export type ReelViewerStateDto = {
+  isLiked: boolean;
+  isBookmarked: boolean;
+  isWatched: boolean;
+};
+
+export type TrendingReelDto = ReelDto & {
+  rank: number;
+  badge: TrendingBadgeType;
+  badgeLabel: string;
+  metrics: ReelEngagementMetricsDto;
+  communityHighlight: ReelCommunityHighlightDto;
+  viewerState?: ReelViewerStateDto;
+};
+
+export type CommunityPulseStatsDto = {
+  activeLearnersNow: number;
+  reelsWatchedToday: number;
+  totalCommunityUpvotes: number;
+  topTrendingSubject: string;
+  avgCompletionRate: number;
+};
+
+export type TrendingReelsQueryDto = {
+  sortBy?: TrendingReelSortBy;
+  timeWindow?: TrendingTimeWindow;
+  examType?: string;
+  cursor?: string;
+  limit?: number;
+};
+
+export type CommunityReelFeedResponseDto = {
+  items: TrendingReelDto[];
+  communityPulse: CommunityPulseStatsDto;
+  sortBy: TrendingReelSortBy;
+  timeWindow: TrendingTimeWindow;
+  nextCursor?: string | null;
+};
+
+export type ReelEngageActionType =
+  | 'like'
+  | 'unlike'
+  | 'share'
+  | 'rewatch'
+  | 'bookmark';
+
+export type ReelEngageRequestDto = {
+  reelId: string;
+  action: ReelEngageActionType;
+};
+
+export type ReelEngageResponseDto = {
+  reelId: string;
+  action: ReelEngageActionType;
+  updatedLikesCount: number;
+  updatedSharesCount: number;
+  trendingScore: number;
+};
+
 export type HomeFeedDto = {
   subjectShortcuts: Array<{ id: string; name: string; classLevel: number }>;
   continueLearning: TopicDetailDto[];
   recommended: TopicDetailDto[];
   quickRevision: TopicDetailDto[];
+  trendingReels?: TrendingReelDto[];
 };

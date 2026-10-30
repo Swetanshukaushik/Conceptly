@@ -187,6 +187,103 @@ export default function FeedScreen() {
         </View>
       )}
 
+      {/* Community Trending & Top-Grossing Reels Section */}
+      {data.trendingReels && data.trendingReels.length > 0 && (
+        <View style={{ marginTop: 8, marginBottom: 20 }}>
+          <SectionHeader
+            title="Trending & Top-Grossing Reels"
+            actionLabel="Community Feed"
+            onPressAction={() => router.push('/trending')}
+          />
+          <View style={isDesktop ? styles.desktopGrid : styles.mobileList}>
+            {data.trendingReels.slice(0, 4).map((reel) => (
+              <Pressable
+                key={reel.id}
+                style={isDesktop ? { width: 'calc(50% - 8px)' as any } : undefined}
+                onPress={() =>
+                  router.push(
+                    `/reel/${reel.id}?topicId=${reel.topicId}&playlist=trending` as any
+                  )
+                }
+              >
+                <AppCard tone="default">
+                  <View style={styles.cardHeader}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View
+                          style={[
+                            styles.diffBadge,
+                            {
+                              backgroundColor: colors.warningSoft,
+                              borderColor: colors.warning,
+                            },
+                          ]}
+                        >
+                          <AppText
+                            variant="micro"
+                            style={{ color: colors.warningText, fontWeight: '800' }}
+                          >
+                            #{reel.rank} {reel.rank === 1 ? 'TRENDING' : 'TOP GROSSING'}
+                          </AppText>
+                        </View>
+                        <AppText variant="caption" tone="primary" numberOfLines={1} style={{ flex: 1 }}>
+                          {reel.subject.name}
+                        </AppText>
+                      </View>
+                      <AppText variant="title" style={{ marginTop: 5 }}>
+                        {reel.title}
+                      </AppText>
+                      {reel.keyTakeaway && (
+                        <BionicText
+                          text={reel.keyTakeaway}
+                          numberOfLines={2}
+                          style={{ fontSize: 12, lineHeight: 17, marginTop: 5 }}
+                        />
+                      )}
+                    </View>
+                    <View
+                      style={[
+                        styles.reelPill,
+                        {
+                          backgroundColor: colors.successSoft,
+                          borderColor: colors.success,
+                        },
+                      ]}
+                    >
+                      <AppText
+                        variant="micro"
+                        style={{ color: colors.successText, fontWeight: '800' }}
+                      >
+                        +{reel.metrics.velocityDeltaPercent}%
+                      </AppText>
+                    </View>
+                  </View>
+                  <View style={[styles.cardFooter, { justifyContent: 'space-between' }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <AppText variant="micro" tone="secondary" style={{ fontWeight: '700' }}>
+                        {(reel.metrics.viewsCount / 1000).toFixed(1)}k views
+                      </AppText>
+                      <AppText variant="micro" style={{ color: colors.successText, fontWeight: '700' }}>
+                        {reel.metrics.completionRate}% watched
+                      </AppText>
+                      <AppText variant="micro" tone="primary" style={{ fontWeight: '700' }}>
+                        {reel.metrics.activeLearnersNow} live
+                      </AppText>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Icon name="play-circle" size={15} color={colors.primaryText} />
+                      <AppText variant="micro" tone="primary" style={{ fontWeight: '800' }}>
+                        Watch
+                      </AppText>
+                    </View>
+                  </View>
+                </AppCard>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* Continue Revising */}
       {data.continueLearning.length > 0 && (
         <View style={{ marginTop: 12, marginBottom: 20 }}>

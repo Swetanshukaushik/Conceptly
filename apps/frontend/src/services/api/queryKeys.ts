@@ -9,6 +9,8 @@ export const queryKeys = {
   quizByTopic: (topicId: string) => ['quiz', topicId] as const,
   flashcardsByTopic: (topicId: string) => ['flashcards', topicId] as const,
   homeFeed: (examType?: string, classLevel?: number) => ['homeFeed', examType, classLevel] as const,
+  trendingReels: (sortBy?: string, timeWindow?: string, examType?: string) =>
+    ['trendingReels', sortBy, timeWindow, examType] as const,
   progress: () => ['progress'] as const,
   bookmarks: () => ['bookmarks'] as const
 };

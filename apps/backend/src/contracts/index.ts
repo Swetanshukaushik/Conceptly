@@ -308,8 +308,105 @@ export interface ToggleBookmarkResultDto {
 }
 
 // ==========================================
-// 7. Feed & Analytics Contracts
+// 7. Feed, Community Trending & Analytics Contracts
 // ==========================================
+
+export type TrendingReelSortBy =
+  | 'trending'
+  | 'top_grossing'
+  | 'most_rewatched'
+  | 'community_picks';
+
+export type TrendingTimeWindow = '24h' | '7d' | '30d' | 'all_time';
+
+export type TrendingBadgeType =
+  | 'TRENDING_1'
+  | 'TOP_GROSSING'
+  | 'HIGH_RETENTION'
+  | 'COMMUNITY_FAVORITE'
+  | 'RISING_FAST';
+
+export interface ReelEngagementMetricsDto {
+  viewsCount: number;
+  completionsCount: number;
+  completionRate: number;
+  rewatchesCount: number;
+  likesCount: number;
+  bookmarksCount: number;
+  sharesCount: number;
+  commentsCount: number;
+  activeLearnersNow: number;
+  trendingScore: number;
+  velocityDeltaPercent: number;
+  quizPassRate: number;
+}
+
+export interface ReelCommunityHighlightDto {
+  authorName: string;
+  authorBadge: string;
+  topComment: string;
+  upvotesCount: number;
+  createdAt: string;
+}
+
+export interface ReelViewerStateDto {
+  isLiked: boolean;
+  isBookmarked: boolean;
+  isWatched: boolean;
+}
+
+export interface TrendingReelDto extends ReelDto {
+  rank: number;
+  badge: TrendingBadgeType;
+  badgeLabel: string;
+  metrics: ReelEngagementMetricsDto;
+  communityHighlight: ReelCommunityHighlightDto;
+  viewerState?: ReelViewerStateDto;
+}
+
+export interface CommunityPulseStatsDto {
+  activeLearnersNow: number;
+  reelsWatchedToday: number;
+  totalCommunityUpvotes: number;
+  topTrendingSubject: string;
+  avgCompletionRate: number;
+}
+
+export interface TrendingReelsQueryDto {
+  sortBy?: TrendingReelSortBy;
+  timeWindow?: TrendingTimeWindow;
+  examType?: ExamType | string;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface CommunityReelFeedResponseDto {
+  items: TrendingReelDto[];
+  communityPulse: CommunityPulseStatsDto;
+  sortBy: TrendingReelSortBy;
+  timeWindow: TrendingTimeWindow;
+  nextCursor?: string | null;
+}
+
+export type ReelEngageActionType =
+  | 'like'
+  | 'unlike'
+  | 'share'
+  | 'rewatch'
+  | 'bookmark';
+
+export interface ReelEngageRequestDto {
+  reelId: string;
+  action: ReelEngageActionType;
+}
+
+export interface ReelEngageResponseDto {
+  reelId: string;
+  action: ReelEngageActionType;
+  updatedLikesCount: number;
+  updatedSharesCount: number;
+  trendingScore: number;
+}
 
 export interface HomeFeedDto {
   subjectShortcuts: Array<{
@@ -321,6 +418,7 @@ export interface HomeFeedDto {
   continueLearning: TopicDetailDto[];
   recommended: TopicDetailDto[];
   quickRevision: TopicDetailDto[];
+  trendingReels?: TrendingReelDto[];
 }
 
 export interface AnalyticsEventRequestDto {

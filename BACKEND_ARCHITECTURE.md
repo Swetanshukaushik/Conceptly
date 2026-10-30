@@ -158,8 +158,13 @@ The backend exposes the following active routes under `/v1`.
 ### Quizzes
 - `GET /v1/topics/:topicId/quiz`
 
-### Feed
-- `GET /v1/feed/home?classLevel=<number>`
+### Feed & Community Trending Reels
+- `GET /v1/feed?examType=<string>&classLevel=<number>`
+  - returns personalized subject shortcuts, continue learning, recommended topics, quick revision, and top `trendingReels`
+- `GET /v1/feed/trending?sortBy=trending|top_grossing|most_rewatched|community_picks&timeWindow=24h|7d|30d|all_time&examType=<string>&cursor=<string>&limit=<number>`
+  - returns `CommunityReelFeedResponseDto` containing ranked `TrendingReelDto[]`, real-time `communityPulse` telemetry, and pagination/formula metadata
+- `POST /v1/feed/reels/:id/engage`
+  - ingests atomic community engagement actions (`like`, `unlike`, `share`, `rewatch`, `bookmark`, `view`, `complete`) and returns updated `ReelEngageResponseDto`
 
 ### Progress
 - `GET /v1/progress`

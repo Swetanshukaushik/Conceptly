@@ -15,6 +15,8 @@ import {
   mockFlashcards,
   mockProgress,
   mockBookmarks,
+  mockTrendingReels,
+  getMockCommunityReelFeed,
   TOPICS_WITH_REAL_REELS,
   CHAPTERS_WITH_REAL_REELS,
   SUBJECTS_WITH_REAL_REELS,
@@ -33,7 +35,11 @@ import type {
   FlashcardDto,
   TopicProgressDto,
   BookmarkDto,
-  HomeFeedDto
+  HomeFeedDto,
+  TrendingReelsQueryDto,
+  CommunityReelFeedResponseDto,
+  ReelEngageActionType,
+  ReelEngageResponseDto,
 } from './types';
 import type {
   AuthResponseDto,
@@ -853,11 +859,18 @@ export const educationApi = {
           classLevel: s.id.endsWith('-10') ? 10 : 0,
         }));
 
+        const trendingCommunity = getMockCommunityReelFeed({
+          sortBy: 'trending',
+          timeWindow: '24h',
+          onlyRealReels: true,
+        });
+
         const feedResult: HomeFeedDto = {
           subjectShortcuts,
           continueLearning: realTopics.slice(0, 2),
           recommended: realTopics,
           quickRevision: realTopics.slice(1, 4),
+          trendingReels: trendingCommunity.items.slice(0, 6),
         };
         offlineCache.set(cacheKey, feedResult);
         return feedResult;
@@ -897,11 +910,18 @@ export const educationApi = {
           ? activeTopics.slice(1, 4)
           : activeTopics.slice(0, 2);
 
+      const trendingCommunityAll = getMockCommunityReelFeed({
+        sortBy: 'trending',
+        timeWindow: '24h',
+        onlyRealReels: false,
+      });
+
       const feedResult: HomeFeedDto = {
         subjectShortcuts,
         continueLearning,
         recommended,
         quickRevision,
+        trendingReels: trendingCommunityAll.items.slice(0, 8),
       };
       offlineCache.set(cacheKey, feedResult);
       return feedResult;
@@ -914,6 +934,13 @@ export const educationApi = {
       const query = params.toString() ? `?${params.toString()}` : '';
       const res = await apiGet<HomeFeedDto>(`/v1/feed${query}`);
       if (res) {
+        if (!res.trendingReels || res.trendingReels.length === 0) {
+          res.trendingReels = getMockCommunityReelFeed({
+            sortBy: 'trending',
+            timeWindow: '24h',
+            onlyRealReels: onlyReels,
+          }).items.slice(0, 6);
+        }
         offlineCache.set(cacheKey, res);
       }
       return res;
@@ -921,7 +948,121 @@ export const educationApi = {
       console.warn('[educationApi] Live getHomeFeed failed, checking offline cache:', e);
       const cached = await offlineCache.get<HomeFeedDto>(cacheKey);
       if (cached) return cached;
-      return mockHomeFeed;
+      return {
+        ...mockHomeFeed,
+        trendingReels: mockTrendingReels.slice(0, 6),
+      };
+    }
+  },
+
+  async getTrendingReels(query?: TrendingReelsQueryDto): Promise<CommunityReelFeedResponseDto> {
+    const onlyReels = isOnlyTopicsWithReels();
+    const sortBy = query?.sortBy ?? 'trending';
+    const timeWindow = query?.timeWindow ?? '24h';
+    const examType = query?.examType;
+    const cacheKey = `trendingReels:${sortBy}:${timeWindow}:${examType ?? 'ALL'}:${onlyReels ? 'reels' : 'all'}`;
+
+    const enrichViewerState = (feed: CommunityReelFeedResponseDto): CommunityReelFeedResponseDto => {
+      const state = useAppStore.getState();
+      const likedReels = state.likedReels ?? {};
+      const watchedReels = state.watchedReels ?? {};
+      const bookmarks = state.userBookmarks ?? [];
+      return {
+        ...feed,
+        items: feed.items.map((item) => {
+          const isLiked = Boolean(likedReels[item.id]);
+          const isBookmarked = bookmarks.some((b) => b.reelId === item.id || b.topicId === item.topicId);
+          const isWatched = Boolean(watchedReels[item.id]);
+          return {
+            ...item,
+            metrics: {
+              ...item.metrics,
+              likesCount: item.metrics.likesCount + (isLiked ? 1 : 0),
+            },
+            viewerState: {
+              isLiked,
+              isBookmarked,
+              isWatched,
+            },
+          };
+        }),
+      };
+    };
+
+    if (isMockMode()) {
+      await sleep(150);
+      const result = enrichViewerState(
+        getMockCommunityReelFeed({
+          sortBy,
+          timeWindow,
+          examType,
+          onlyRealReels: onlyReels,
+        })
+      );
+      offlineCache.set(cacheKey, result);
+      return result;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.append('sortBy', sortBy);
+      params.append('timeWindow', timeWindow);
+      if (examType) params.append('examType', examType);
+      if (query?.limit) params.append('limit', String(query.limit));
+      if (query?.cursor) params.append('cursor', query.cursor);
+
+      const res = await apiGet<CommunityReelFeedResponseDto>(`/v1/feed/trending?${params.toString()}`);
+      if (res && res.items && res.items.length > 0) {
+        const enriched = enrichViewerState(res);
+        offlineCache.set(cacheKey, enriched);
+        return enriched;
+      }
+    } catch (e) {
+      console.warn('[educationApi] Live getTrendingReels failed, using fallback:', e);
+    }
+
+    const cached = await offlineCache.get<CommunityReelFeedResponseDto>(cacheKey);
+    if (cached) return enrichViewerState(cached);
+
+    return enrichViewerState(
+      getMockCommunityReelFeed({
+        sortBy,
+        timeWindow,
+        examType,
+        onlyRealReels: onlyReels,
+      })
+    );
+  },
+
+  async engageWithReel(reelId: string, action: ReelEngageActionType): Promise<ReelEngageResponseDto> {
+    if (action === 'like' || action === 'unlike') {
+      useAppStore.getState().toggleReelLike(reelId);
+    }
+
+    const state = useAppStore.getState();
+    const isLiked = Boolean(state.likedReels?.[reelId]);
+    const baseItem = mockTrendingReels.find((r) => r.id === reelId) ?? mockTrendingReels[0];
+
+    const fallbackResponse: ReelEngageResponseDto = {
+      reelId,
+      action,
+      updatedLikesCount: baseItem.metrics.likesCount + (isLiked ? 1 : 0),
+      updatedSharesCount: baseItem.metrics.sharesCount + (action === 'share' ? 1 : 0),
+      trendingScore: baseItem.metrics.trendingScore,
+    };
+
+    if (isMockMode()) {
+      await sleep(80);
+      return fallbackResponse;
+    }
+
+    try {
+      return await apiPost<ReelEngageResponseDto>(`/v1/feed/reels/${reelId}/engage`, {
+        reelId,
+        action,
+      });
+    } catch {
+      return fallbackResponse;
     }
   },
 

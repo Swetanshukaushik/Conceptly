@@ -10,6 +10,11 @@ import type {
   BookmarkDto,
   HomeFeedDto,
   FlashcardDto,
+  TrendingReelDto,
+  TrendingBadgeType,
+  TrendingReelSortBy,
+  TrendingTimeWindow,
+  CommunityReelFeedResponseDto,
 } from './types';
 
 // ==========================================
@@ -1929,4 +1934,403 @@ export const EXAM_TYPES_WITH_REAL_REELS = new Set<string>(
 export function hasRealReel(topicId: string): boolean {
   return TOPICS_WITH_REAL_REELS.has(topicId);
 }
+
+// ==========================================
+// 12. COMMUNITY TRENDING & TOP-GROSSING REELS
+// ==========================================
+const CURATED_REEL_COMMUNITY_META: Record<
+  string,
+  {
+    badge: TrendingBadgeType;
+    badgeLabel: string;
+    viewsCount: number;
+    completionsCount: number;
+    completionRate: number;
+    rewatchesCount: number;
+    likesCount: number;
+    bookmarksCount: number;
+    sharesCount: number;
+    commentsCount: number;
+    activeLearnersNow: number;
+    trendingScore: number;
+    velocityDeltaPercent: number;
+    quizPassRate: number;
+    authorName: string;
+    authorBadge: string;
+    topComment: string;
+    upvotesCount: number;
+    createdAt: string;
+  }
+> = {
+  'reel-jee-rotational-1': {
+    badge: 'TRENDING_1',
+    badgeLabel: '🔥 #1 TRENDING TODAY',
+    viewsCount: 48200,
+    completionsCount: 46270,
+    completionRate: 96,
+    rewatchesCount: 14900,
+    likesCount: 8420,
+    bookmarksCount: 5120,
+    sharesCount: 2340,
+    commentsCount: 642,
+    activeLearnersNow: 184,
+    trendingScore: 99.4,
+    velocityDeltaPercent: 485,
+    quizPassRate: 94,
+    authorName: 'Aarav Sharma',
+    authorBadge: 'IIT Bombay CSE • JEE Adv Cohort',
+    topComment:
+      'The 0:28 warning about never applying Iz = Ix + Iy to a 3D sphere saved me from a -1 negative mark trap in Allen Mock #6!',
+    upvotesCount: 1290,
+    createdAt: '2h ago',
+  },
+  'reel-jee-gauss-1': {
+    badge: 'TOP_GROSSING',
+    badgeLabel: '🏆 #1 TOP GROSSING',
+    viewsCount: 64500,
+    completionsCount: 61275,
+    completionRate: 95,
+    rewatchesCount: 19300,
+    likesCount: 11240,
+    bookmarksCount: 7840,
+    sharesCount: 3190,
+    commentsCount: 814,
+    activeLearnersNow: 156,
+    trendingScore: 98.1,
+    velocityDeltaPercent: 390,
+    quizPassRate: 93,
+    authorName: 'Ishaan Verma',
+    authorBadge: 'JEE 99.94%ile • Physics Mentor',
+    topComment:
+      'Finally understood why external charges warp the E-field on the surface while net flux still cancels out to Q_enclosed / ε0.',
+    upvotesCount: 1640,
+    createdAt: '4h ago',
+  },
+  'reel-neet-tir-1': {
+    badge: 'HIGH_RETENTION',
+    badgeLabel: '⚡ 97% COMPLETION',
+    viewsCount: 52900,
+    completionsCount: 51313,
+    completionRate: 97,
+    rewatchesCount: 16800,
+    likesCount: 9340,
+    bookmarksCount: 6410,
+    sharesCount: 2780,
+    commentsCount: 590,
+    activeLearnersNow: 142,
+    trendingScore: 96.8,
+    velocityDeltaPercent: 360,
+    quizPassRate: 96,
+    authorName: 'Dr. Ananya Nair',
+    authorBadge: 'AIIMS Delhi • NEET 705/720',
+    topComment:
+      'sin(θc) = n2/n1 visual ray transition from denser to rarer medium is crystal clear. Best 45 seconds for Ray Optics revision!',
+    upvotesCount: 1120,
+    createdAt: '3h ago',
+  },
+  'reel-school-ohm-1': {
+    badge: 'COMMUNITY_FAVORITE',
+    badgeLabel: '💎 COMMUNITY FAVORITE',
+    viewsCount: 41800,
+    completionsCount: 39290,
+    completionRate: 94,
+    rewatchesCount: 12400,
+    likesCount: 7890,
+    bookmarksCount: 4920,
+    sharesCount: 2150,
+    commentsCount: 512,
+    activeLearnersNow: 118,
+    trendingScore: 94.5,
+    velocityDeltaPercent: 310,
+    quizPassRate: 95,
+    authorName: 'Riya Kapoor',
+    authorBadge: 'CBSE Class 10 • 99.2% Scholar',
+    topComment:
+      'The non-ohmic filament bulb curve vs constant-temperature metallic conductor graph is guaranteed to come in Section C!',
+    upvotesCount: 980,
+    createdAt: '5h ago',
+  },
+  'reel-jee-rotational-2': {
+    badge: 'RISING_FAST',
+    badgeLabel: '🚀 RISING FAST (+410%)',
+    viewsCount: 36400,
+    completionsCount: 34216,
+    completionRate: 94,
+    rewatchesCount: 13200,
+    likesCount: 6740,
+    bookmarksCount: 4380,
+    sharesCount: 1890,
+    commentsCount: 428,
+    activeLearnersNow: 109,
+    trendingScore: 93.2,
+    velocityDeltaPercent: 410,
+    quizPassRate: 91,
+    authorName: 'Karan Mehta',
+    authorBadge: 'IIT Kanpur • Rotational Ace',
+    topComment:
+      'Step 1 shift to COM first (I_cm = I_given - Md1²), Step 2 shift to target axis. Never shifting directly between non-COM axes again!',
+    upvotesCount: 845,
+    createdAt: '1h ago',
+  },
+  'reel-jee-gauss-2': {
+    badge: 'HIGH_RETENTION',
+    badgeLabel: '⚡ MOST REWATCHED',
+    viewsCount: 38900,
+    completionsCount: 36955,
+    completionRate: 95,
+    rewatchesCount: 17600,
+    likesCount: 7120,
+    bookmarksCount: 5090,
+    sharesCount: 1940,
+    commentsCount: 476,
+    activeLearnersNow: 98,
+    trendingScore: 92.7,
+    velocityDeltaPercent: 295,
+    quizPassRate: 92,
+    authorName: 'Devansh Joshi',
+    authorBadge: 'JEE Advanced Top 500 Cohort',
+    topComment:
+      'Point charge at cube corner = Q / (8ε0), face center = Q / (2ε0). The 8-cube symmetry mental model makes it effortless.',
+    upvotesCount: 910,
+    createdAt: '6h ago',
+  },
+  'reel-neet-tir-2': {
+    badge: 'COMMUNITY_FAVORITE',
+    badgeLabel: '🔬 HIGH-YIELD OPTICS',
+    viewsCount: 33700,
+    completionsCount: 31678,
+    completionRate: 94,
+    rewatchesCount: 11200,
+    likesCount: 6280,
+    bookmarksCount: 4150,
+    sharesCount: 1620,
+    commentsCount: 389,
+    activeLearnersNow: 86,
+    trendingScore: 90.4,
+    velocityDeltaPercent: 270,
+    quizPassRate: 94,
+    authorName: 'Sneha Reddy',
+    authorBadge: 'NEET Physics 180/180 Scorer',
+    topComment:
+      'Optical fiber n_core > n_cladding and diamond 24.4° critical angle trap explained in under 50 seconds!',
+    upvotesCount: 760,
+    createdAt: '7h ago',
+  },
+  'reel-school-ohm-2': {
+    badge: 'TOP_GROSSING',
+    badgeLabel: '🏆 BOARD EXAM ESSENTIAL',
+    viewsCount: 39200,
+    completionsCount: 36848,
+    completionRate: 94,
+    rewatchesCount: 12900,
+    likesCount: 7050,
+    bookmarksCount: 4680,
+    sharesCount: 1840,
+    commentsCount: 445,
+    activeLearnersNow: 92,
+    trendingScore: 91.6,
+    velocityDeltaPercent: 285,
+    quizPassRate: 96,
+    authorName: 'kabir_sci10',
+    authorBadge: 'NTSE Scholar • Class 10',
+    topComment:
+      'Why home appliances use parallel wiring (independent switches + 220V constant voltage + R_eq < R_min) is summarized so cleanly.',
+    upvotesCount: 830,
+    createdAt: '5h ago',
+  },
+};
+
+// Build trending reel entries for ALL reels in mockReels (real studio reels prioritized first)
+export const mockTrendingReels: TrendingReelDto[] = (() => {
+  const realStudioReels = mockReels.filter((r) => !SAMPLE_VIDEOS.includes(r.videoUrl));
+  const otherReels = mockReels.filter((r) => SAMPLE_VIDEOS.includes(r.videoUrl));
+  const ordered = [...realStudioReels, ...otherReels];
+
+  const fallbackBadges: Array<{ badge: TrendingBadgeType; label: string }> = [
+    { badge: 'TOP_GROSSING', label: '🏆 TOP GROSSING' },
+    { badge: 'HIGH_RETENTION', label: '⚡ 93% COMPLETION' },
+    { badge: 'COMMUNITY_FAVORITE', label: '💎 COMMUNITY PICK' },
+    { badge: 'RISING_FAST', label: '🚀 TRENDING IN TRACK' },
+  ];
+
+  return ordered.map((reel, idx) => {
+    const curated = CURATED_REEL_COMMUNITY_META[reel.id];
+    if (curated) {
+      return {
+        ...reel,
+        rank: idx + 1,
+        badge: curated.badge,
+        badgeLabel: curated.badgeLabel,
+        metrics: {
+          viewsCount: curated.viewsCount,
+          completionsCount: curated.completionsCount,
+          completionRate: curated.completionRate,
+          rewatchesCount: curated.rewatchesCount,
+          likesCount: curated.likesCount,
+          bookmarksCount: curated.bookmarksCount,
+          sharesCount: curated.sharesCount,
+          commentsCount: curated.commentsCount,
+          activeLearnersNow: curated.activeLearnersNow,
+          trendingScore: curated.trendingScore,
+          velocityDeltaPercent: curated.velocityDeltaPercent,
+          quizPassRate: curated.quizPassRate,
+        },
+        communityHighlight: {
+          authorName: curated.authorName,
+          authorBadge: curated.authorBadge,
+          topComment: curated.topComment,
+          upvotesCount: curated.upvotesCount,
+          createdAt: curated.createdAt,
+        },
+      };
+    }
+
+    const fb = fallbackBadges[idx % fallbackBadges.length];
+    const viewsCount = Math.max(8500, 29000 - idx * 950);
+    const completionRate = 89 + (idx % 7);
+    const completionsCount = Math.round((viewsCount * completionRate) / 100);
+    return {
+      ...reel,
+      rank: idx + 1,
+      badge: fb.badge,
+      badgeLabel: fb.label,
+      metrics: {
+        viewsCount,
+        completionsCount,
+        completionRate,
+        rewatchesCount: Math.round(viewsCount * 0.28),
+        likesCount: Math.round(viewsCount * 0.16),
+        bookmarksCount: Math.round(viewsCount * 0.11),
+        sharesCount: Math.round(viewsCount * 0.045),
+        commentsCount: Math.max(42, 310 - idx * 9),
+        activeLearnersNow: Math.max(18, 75 - idx * 2),
+        trendingScore: Number(Math.max(72, 89.5 - idx * 0.8).toFixed(1)),
+        velocityDeltaPercent: Math.max(85, 240 - idx * 6),
+        quizPassRate: 88 + (idx % 8),
+      },
+      communityHighlight: {
+        authorName: `Conceptly Peer #${104 + idx}`,
+        authorBadge: `${reel.subject.name} Track`,
+        topComment:
+          reel.keyTakeaway ||
+          `Essential 45-second breakdown for ${reel.topic.title}. Watch twice before taking the checkpoint quiz!`,
+        upvotesCount: Math.max(95, 540 - idx * 18),
+        createdAt: `${(idx % 9) + 2}h ago`,
+      },
+    };
+  });
+})();
+
+export function getMockCommunityReelFeed(options: {
+  sortBy?: TrendingReelSortBy;
+  timeWindow?: TrendingTimeWindow;
+  examType?: string;
+  onlyRealReels?: boolean;
+}): CommunityReelFeedResponseDto {
+  const sortBy = options.sortBy ?? 'trending';
+  const timeWindow = options.timeWindow ?? '24h';
+  const onlyRealReels = options.onlyRealReels ?? true;
+
+  let pool = onlyRealReels
+    ? mockTrendingReels.filter((r) => !SAMPLE_VIDEOS.includes(r.videoUrl))
+    : [...mockTrendingReels];
+
+  if (options.examType && options.examType !== 'ALL') {
+    const allowedSubjects = new Set(
+      (options.examType === 'SCHOOL'
+        ? mockSubjectsByClass[10] ?? []
+        : mockSubjectsByExamType[options.examType] ?? []
+      ).map((s) => s.id)
+    );
+    const domainFiltered = pool.filter((r) => allowedSubjects.has(r.subject.id));
+    if (domainFiltered.length > 0) {
+      pool = domainFiltered;
+    }
+  }
+
+  const windowMultiplier =
+    timeWindow === '24h'
+      ? 0.28
+      : timeWindow === '7d'
+      ? 0.65
+      : timeWindow === '30d'
+      ? 0.88
+      : 1.0;
+
+  const scaled = pool.map((item) => ({
+    ...item,
+    metrics: {
+      ...item.metrics,
+      viewsCount: Math.max(420, Math.round(item.metrics.viewsCount * windowMultiplier)),
+      completionsCount: Math.max(
+        390,
+        Math.round(item.metrics.completionsCount * windowMultiplier)
+      ),
+      rewatchesCount: Math.max(
+        140,
+        Math.round(item.metrics.rewatchesCount * windowMultiplier)
+      ),
+      likesCount: Math.max(95, Math.round(item.metrics.likesCount * windowMultiplier)),
+      bookmarksCount: Math.max(
+        60,
+        Math.round(item.metrics.bookmarksCount * windowMultiplier)
+      ),
+      sharesCount: Math.max(25, Math.round(item.metrics.sharesCount * windowMultiplier)),
+    },
+  }));
+
+  scaled.sort((a, b) => {
+    if (sortBy === 'top_grossing') {
+      return b.metrics.viewsCount - a.metrics.viewsCount;
+    }
+    if (sortBy === 'most_rewatched') {
+      return (
+        b.metrics.rewatchesCount * b.metrics.completionRate -
+        a.metrics.rewatchesCount * a.metrics.completionRate
+      );
+    }
+    if (sortBy === 'community_picks') {
+      return (
+        b.metrics.likesCount +
+        b.metrics.sharesCount * 2 -
+        (a.metrics.likesCount + a.metrics.sharesCount * 2)
+      );
+    }
+    // default: 'trending' (velocity & trendingScore)
+    return b.metrics.trendingScore - a.metrics.trendingScore;
+  });
+
+  const ranked = scaled.map((item, index) => ({
+    ...item,
+    rank: index + 1,
+  }));
+
+  const activeLearnersNow = ranked.reduce(
+    (sum, r) => sum + r.metrics.activeLearnersNow,
+    0
+  );
+  const reelsWatchedToday = ranked.reduce((sum, r) => sum + r.metrics.viewsCount, 0);
+  const totalCommunityUpvotes = ranked.reduce((sum, r) => sum + r.metrics.likesCount, 0);
+  const avgCompletionRate =
+    ranked.length > 0
+      ? Math.round(
+          ranked.reduce((sum, r) => sum + r.metrics.completionRate, 0) / ranked.length
+        )
+      : 95;
+
+  return {
+    items: ranked,
+    communityPulse: {
+      activeLearnersNow,
+      reelsWatchedToday,
+      totalCommunityUpvotes,
+      topTrendingSubject: ranked[0]?.subject?.name ?? 'Physics (Mechanics & Electro)',
+      avgCompletionRate,
+    },
+    sortBy,
+    timeWindow,
+    nextCursor: null,
+  };
+}
+
 
