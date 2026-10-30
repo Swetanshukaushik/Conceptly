@@ -335,50 +335,81 @@ export const educationApi = {
   },
 
   async getSubjectsByClass(classId: number): Promise<SubjectDto[]> {
+    const localSubjects = mockSubjectsByClass[classId] ?? mockSubjectsByClass[10] ?? [];
     if (isMockMode()) {
-      await sleep(150);
-      return mockSubjectsByClass[classId] ?? mockSubjectsByClass[10] ?? [];
+      await sleep(100);
+      return localSubjects;
     }
 
-    const response = await apiGet<Array<{ id: string; name: string }>>(
-      `/v1/curriculum/classes/${classId}/subjects`
-    );
-    return response.map(mapSubjectResponse);
+    try {
+      const response = await apiGet<Array<{ id: string; name: string }>>(
+        `/v1/curriculum/classes/${classId}/subjects`
+      );
+      const mapped = response.map(mapSubjectResponse);
+      const seen = new Set(localSubjects.map((s) => s.id));
+      return [...localSubjects, ...mapped.filter((m) => !seen.has(m.id))];
+    } catch {
+      return localSubjects;
+    }
   },
 
   async getSubjectsByExamType(examType: string): Promise<SubjectDto[]> {
+    const localSubjects = mockSubjectsByExamType[examType] ?? [];
     if (isMockMode()) {
-      await sleep(150);
-      return mockSubjectsByExamType[examType] ?? [];
+      await sleep(100);
+      return localSubjects;
     }
 
-    const response = await apiGet<Array<{ id: string; name: string }>>(
-      `/v1/curriculum/exam-types/${examType}/subjects`
-    );
-    return response.map(mapSubjectResponse);
+    try {
+      const response = await apiGet<Array<{ id: string; name: string }>>(
+        `/v1/curriculum/exam-types/${examType}/subjects`
+      );
+      const mapped = response.map(mapSubjectResponse);
+      if (localSubjects.length > 0) return localSubjects;
+      return mapped;
+    } catch {
+      return localSubjects;
+    }
   },
 
   async getChaptersBySubject(subjectId: string): Promise<ChapterDto[]> {
+    const localChapters = mockChaptersBySubject[subjectId] ?? [];
     if (isMockMode()) {
-      await sleep(150);
-      return mockChaptersBySubject[subjectId] ?? mockChaptersBySubject['math-10'] ?? [];
+      await sleep(100);
+      return localChapters.length > 0
+        ? localChapters
+        : (mockChaptersBySubject['math-10'] ?? []);
     }
 
-    const response = await apiGet<Array<{ id: string; subjectId: string; title: string }>>(
-      `/v1/curriculum/subjects/${subjectId}/chapters`
-    );
-    return response.map(mapChapterResponse);
+    try {
+      const response = await apiGet<Array<{ id: string; subjectId: string; title: string }>>(
+        `/v1/curriculum/subjects/${subjectId}/chapters`
+      );
+      if (localChapters.length > 0) return localChapters;
+      return response.map(mapChapterResponse);
+    } catch {
+      return localChapters.length > 0
+        ? localChapters
+        : (mockChaptersBySubject['math-10'] ?? []);
+    }
   },
 
   async getTopicsByChapter(chapterId: string): Promise<TopicDto[]> {
+    const localTopics = mockTopics.filter((topic) => topic.chapterId === chapterId);
     if (isMockMode()) {
-      await sleep(180);
-      const matched = mockTopics.filter((topic) => topic.chapterId === chapterId);
-      if (matched.length > 0) return matched;
+      await sleep(100);
+      if (localTopics.length > 0) return localTopics;
       return mockTopics.slice(0, 3);
     }
 
-    return apiGet<TopicDto[]>(`/v1/curriculum/chapters/${chapterId}/topics`);
+    try {
+      const liveTopics = await apiGet<TopicDto[]>(`/v1/curriculum/chapters/${chapterId}/topics`);
+      if (localTopics.length > 0) return localTopics;
+      return liveTopics;
+    } catch {
+      if (localTopics.length > 0) return localTopics;
+      return mockTopics.slice(0, 3);
+    }
   },
 
   async getTopicById(topicId: string): Promise<TopicDetailDto> {

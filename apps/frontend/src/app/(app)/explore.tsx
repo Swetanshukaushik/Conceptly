@@ -21,7 +21,6 @@ import { ConstellationGraph } from '@/components/ui/ConstellationGraph';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useChaptersBySubjectQuery } from '@/services/api/hooks/useChaptersBySubjectQuery';
-import { useTopicsByChapterQuery } from '@/services/api/hooks/useTopicsByChapterQuery';
 import { educationApi } from '@/services/api/educationApi';
 import {
   mockTopics,
@@ -64,7 +63,7 @@ export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [onlyStudioHd, setOnlyStudioHd] = useState<boolean>(false);
   const [activeSubjectId, setActiveSubjectId] = useState<string>(selectedSubjectId);
-  const [activeChapterId, setActiveChapterId] = useState<string>('');
+  const [activeChapterId, setActiveChapterId] = useState<string>('ALL');
 
   const getDifficultyStyle = (diff: string) => {
     const d = (diff || '').toLowerCase();
@@ -98,6 +97,7 @@ export default function ExploreScreen() {
       if (!trackSubjects.some((s) => s.id === activeSubjectId)) {
         setActiveSubjectId(trackSubjects[0].id);
         setSubjectId(trackSubjects[0].id);
+        setActiveChapterId('ALL');
       }
     }
   }, [trackSubjects, activeSubjectId, setSubjectId]);
@@ -109,15 +109,12 @@ export default function ExploreScreen() {
     if (
       chapters &&
       chapters.length > 0 &&
-      (!activeChapterId || !chapters.some((c) => c.id === activeChapterId))
+      activeChapterId !== 'ALL' &&
+      !chapters.some((c) => c.id === activeChapterId)
     ) {
-      setActiveChapterId(chapters[0].id);
+      setActiveChapterId('ALL');
     }
   }, [chapters, activeChapterId]);
-
-  const { data: topics, isLoading: topicsLoading } = useTopicsByChapterQuery(
-    activeChapterId || ''
-  );
 
   useEffect(() => {
     educationApi.trackAnalyticsEvent('explore_opened', {
@@ -150,16 +147,21 @@ export default function ExploreScreen() {
     title: string;
     difficulty: string;
     reelCount: number;
+    chapterId?: string;
   }) => {
     const detail = mockTopicDetails.find((d) => d.id === t.id);
-    const firstReel = mockReels.find((r) => r.topicId === t.id);
+    const topicReels = mockReels.filter((r) => r.topicId === t.id);
+    const firstReel = topicReels[0];
     const hasStudioMp4 =
       STUDIO_MP4_TOPIC_IDS.has(t.id) ||
       Boolean(firstReel?.videoUrl?.startsWith('/physics_reels/'));
 
     return {
       ...t,
+      chapterId: t.chapterId ?? detail?.chapterId ?? '',
+      reelCount: Math.max(t.reelCount || 0, topicReels.length, 2),
       subjectName: detail?.subject?.name ?? '',
+      chapterTitle: detail?.chapter?.title ?? '',
       summary:
         detail?.cheatSheetSummary?.[0] ??
         `Master the core concepts and real-world applications of ${t.title}.`,
@@ -167,6 +169,18 @@ export default function ExploreScreen() {
       hasStudioMp4,
     };
   };
+
+  // Topics for the active subject (all modules or specific module)
+  const subjectTopics = useMemo(() => {
+    if (!chapters || chapters.length === 0) return [];
+    const validChapterIds =
+      activeChapterId === 'ALL'
+        ? new Set(chapters.map((c) => c.id))
+        : new Set([activeChapterId]);
+
+    const matched = mockTopics.filter((t) => validChapterIds.has(t.chapterId));
+    return matched.map((t) => enrichTopic(t));
+  }, [chapters, activeChapterId]);
 
   const isFiltering = searchQuery.trim().length > 0 || onlyStudioHd;
 
@@ -183,23 +197,28 @@ export default function ExploreScreen() {
         return (
           node.title.toLowerCase().includes(q) ||
           node.subjectName.toLowerCase().includes(q) ||
+          node.chapterTitle.toLowerCase().includes(q) ||
           node.summary.toLowerCase().includes(q)
         );
       });
   }, [searchQuery, onlyStudioHd, isFiltering]);
 
   const activeChapter = chapters?.find((c) => c.id === activeChapterId);
-
-  const enrichedModuleTopics = useMemo(() => {
-    if (!topics) return [];
-    return topics.map((t) => enrichTopic(t));
-  }, [topics]);
+  const activeSubject = availableSubjects.find((s) => s.id === activeSubjectId);
 
   const renderTopicCard = (
     node: ReturnType<typeof enrichTopic>,
-    showSubjectTag = false
+    breadcrumbMode: 'none' | 'chapter' | 'full' = 'none'
   ) => {
     const diffCol = getDifficultyStyle(node.difficulty);
+    const breadcrumbText =
+      breadcrumbMode === 'full'
+        ? node.subjectName && node.chapterTitle
+          ? `${node.subjectName} • ${node.chapterTitle}`
+          : node.subjectName || node.chapterTitle
+        : breadcrumbMode === 'chapter'
+        ? node.chapterTitle
+        : '';
 
     return (
       <Pressable
@@ -219,13 +238,13 @@ export default function ExploreScreen() {
       >
         <View style={styles.cardHeader}>
           <View style={{ flex: 1, marginRight: 8 }}>
-            {showSubjectTag && Boolean(node.subjectName) && (
+            {Boolean(breadcrumbText) && (
               <AppText
                 variant="micro"
                 tone="muted"
                 style={{ fontWeight: '600', marginBottom: 4 }}
               >
-                {node.subjectName}
+                {breadcrumbText}
               </AppText>
             )}
             <AppText variant="title" style={{ fontWeight: '700', fontSize: 16 }}>
@@ -330,7 +349,7 @@ export default function ExploreScreen() {
         subtitle="Browse topics, visual reels, and interactive notes"
       />
 
-      {/* 1. Clean Search Bar */}
+      {/* 1. Search Bar */}
       <View
         style={[
           styles.searchBar,
@@ -357,70 +376,74 @@ export default function ExploreScreen() {
       </View>
 
       {/* 2. Domain Strip + Studio HD Quick Filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.domainStrip}
-      >
-        <Pressable
-          onPress={() => setOnlyStudioHd((prev) => !prev)}
-          style={[
-            styles.domainPill,
-            {
-              backgroundColor: onlyStudioHd ? colors.accent : colors.surface,
-              borderColor: onlyStudioHd ? colors.accent : colors.border,
-            },
-          ]}
+      <View style={styles.stripWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0 }}
+          contentContainerStyle={styles.domainStrip}
         >
-          <AppText
-            variant="caption"
-            style={{
-              fontWeight: '700',
-              color: onlyStudioHd ? colors.textInverse : colors.accent,
-            }}
+          <Pressable
+            onPress={() => setOnlyStudioHd((prev) => !prev)}
+            style={[
+              styles.domainPill,
+              {
+                backgroundColor: onlyStudioHd ? colors.accent : colors.surface,
+                borderColor: onlyStudioHd ? colors.accent : colors.border,
+              },
+            ]}
           >
-            🎬 Physics HD Reels
-          </AppText>
-        </Pressable>
-
-        {DOMAINS.map((dm) => {
-          const isSelected = !onlyStudioHd && selectedExamType === dm.id;
-          return (
-            <Pressable
-              key={dm.id}
-              onPress={() => {
-                setOnlyStudioHd(false);
-                setExamType(dm.id);
-                const domainSubs =
-                  dm.id === 'SCHOOL'
-                    ? mockSubjectsByClass[10]
-                    : mockSubjectsByExamType[dm.id];
-                if (domainSubs && domainSubs.length > 0) {
-                  setActiveSubjectId(domainSubs[0].id);
-                  setSubjectId(domainSubs[0].id);
-                }
+            <AppText
+              variant="caption"
+              style={{
+                fontWeight: '700',
+                color: onlyStudioHd ? colors.textInverse : colors.accent,
               }}
-              style={[
-                styles.domainPill,
-                {
-                  backgroundColor: isSelected ? colors.primary : colors.surface,
-                  borderColor: isSelected ? colors.primary : colors.border,
-                },
-              ]}
             >
-              <AppText
-                variant="caption"
-                style={{
-                  fontWeight: '600',
-                  color: isSelected ? colors.textInverse : colors.textPrimary,
+              🎬 Physics HD Reels
+            </AppText>
+          </Pressable>
+
+          {DOMAINS.map((dm) => {
+            const isSelected = !onlyStudioHd && selectedExamType === dm.id;
+            return (
+              <Pressable
+                key={dm.id}
+                onPress={() => {
+                  setOnlyStudioHd(false);
+                  setExamType(dm.id);
+                  setActiveChapterId('ALL');
+                  const domainSubs =
+                    dm.id === 'SCHOOL'
+                      ? mockSubjectsByClass[10]
+                      : mockSubjectsByExamType[dm.id];
+                  if (domainSubs && domainSubs.length > 0) {
+                    setActiveSubjectId(domainSubs[0].id);
+                    setSubjectId(domainSubs[0].id);
+                  }
                 }}
+                style={[
+                  styles.domainPill,
+                  {
+                    backgroundColor: isSelected ? colors.primary : colors.surface,
+                    borderColor: isSelected ? colors.primary : colors.border,
+                  },
+                ]}
               >
-                {dm.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                <AppText
+                  variant="caption"
+                  style={{
+                    fontWeight: '600',
+                    color: isSelected ? colors.textInverse : colors.textPrimary,
+                  }}
+                >
+                  {dm.label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* 3. If Search or Studio HD Filter is Active */}
       {isFiltering ? (
@@ -457,7 +480,7 @@ export default function ExploreScreen() {
                 isDesktop ? 'flex-row flex-wrap gap-4 mt-2' : 'gap-3 mt-2'
               }
             >
-              {filteredResults.map((node) => renderTopicCard(node, true))}
+              {filteredResults.map((node) => renderTopicCard(node, 'full'))}
             </View>
           )}
         </View>
@@ -465,49 +488,53 @@ export default function ExploreScreen() {
         /* 4. Normal Clean Subject & Module View */
         <>
           {/* Subject Tabs */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.subjectStrip}
-          >
-            {availableSubjects.map((subject) => {
-              const isSelected = activeSubjectId === subject.id;
-              return (
-                <Pressable
-                  key={subject.id}
-                  onPress={() => {
-                    setActiveSubjectId(subject.id);
-                    setSubjectId(subject.id);
-                  }}
-                  style={[
-                    styles.subjectTab,
-                    {
-                      backgroundColor: isSelected
-                        ? colors.primarySoft
-                        : 'transparent',
-                      borderColor: isSelected
-                        ? colors.primary
-                        : colors.border,
-                    },
-                  ]}
-                >
-                  <AppText
-                    variant="caption"
-                    style={{
-                      fontWeight: isSelected ? '700' : '500',
-                      color: isSelected
-                        ? colors.primaryText
-                        : colors.textSecondary,
+          <View style={styles.stripWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={styles.subjectStrip}
+            >
+              {availableSubjects.map((subject) => {
+                const isSelected = activeSubjectId === subject.id;
+                return (
+                  <Pressable
+                    key={subject.id}
+                    onPress={() => {
+                      setActiveSubjectId(subject.id);
+                      setSubjectId(subject.id);
+                      setActiveChapterId('ALL');
                     }}
+                    style={[
+                      styles.subjectTab,
+                      {
+                        backgroundColor: isSelected
+                          ? colors.primarySoft
+                          : colors.surface,
+                        borderColor: isSelected
+                          ? colors.primary
+                          : colors.border,
+                      },
+                    ]}
                   >
-                    {subject.name}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                    <AppText
+                      variant="caption"
+                      style={{
+                        fontWeight: isSelected ? '700' : '500',
+                        color: isSelected
+                          ? colors.primaryText
+                          : colors.textSecondary,
+                      }}
+                    >
+                      {subject.name}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-          {/* Compact Chapter Pills + View Mode Toggle on One Clean Bar */}
+          {/* Compact Chapter Pills */}
           {chaptersLoading ? (
             <View className="py-8">
               <Loader />
@@ -515,13 +542,39 @@ export default function ExploreScreen() {
           ) : (
             chapters &&
             chapters.length > 0 && (
-              <View style={styles.chapterAndToggleBar}>
+              <View style={styles.stripWrapper}>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  style={{ flexGrow: 0 }}
                   contentContainerStyle={styles.chapterPillsRow}
-                  style={{ flex: 1 }}
                 >
+                  <Pressable
+                    onPress={() => setActiveChapterId('ALL')}
+                    style={[
+                      styles.chapterPill,
+                      {
+                        backgroundColor:
+                          activeChapterId === 'ALL'
+                            ? colors.textPrimary
+                            : colors.surfaceSubtle,
+                      },
+                    ]}
+                  >
+                    <AppText
+                      variant="micro"
+                      style={{
+                        fontWeight: '700',
+                        color:
+                          activeChapterId === 'ALL'
+                            ? colors.textInverse
+                            : colors.textSecondary,
+                      }}
+                    >
+                      All Modules
+                    </AppText>
+                  </Pressable>
+
                   {chapters.map((chap) => {
                     const isSelected = activeChapterId === chap.id;
                     const title =
@@ -556,107 +609,123 @@ export default function ExploreScreen() {
                     );
                   })}
                 </ScrollView>
-
-                {/* Simple Grid vs Path Switcher */}
-                <View
-                  style={[
-                    styles.viewToggle,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Pressable
-                    onPress={() => setExploreLayoutMode('grid')}
-                    style={[
-                      styles.viewToggleBtn,
-                      {
-                        backgroundColor:
-                          exploreLayoutMode === 'grid'
-                            ? colors.primary
-                            : 'transparent',
-                      },
-                    ]}
-                  >
-                    <Icon
-                      name="grid-outline"
-                      size={13}
-                      color={
-                        exploreLayoutMode === 'grid'
-                          ? colors.textInverse
-                          : colors.textSecondary
-                      }
-                    />
-                    <AppText
-                      variant="micro"
-                      style={{
-                        fontWeight: '700',
-                        color:
-                          exploreLayoutMode === 'grid'
-                            ? colors.textInverse
-                            : colors.textSecondary,
-                      }}
-                    >
-                      Cards
-                    </AppText>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => setExploreLayoutMode('constellation')}
-                    style={[
-                      styles.viewToggleBtn,
-                      {
-                        backgroundColor:
-                          exploreLayoutMode === 'constellation'
-                            ? colors.primary
-                            : 'transparent',
-                      },
-                    ]}
-                  >
-                    <Icon
-                      name="git-network"
-                      size={13}
-                      color={
-                        exploreLayoutMode === 'constellation'
-                          ? colors.textInverse
-                          : colors.textSecondary
-                      }
-                    />
-                    <AppText
-                      variant="micro"
-                      style={{
-                        fontWeight: '700',
-                        color:
-                          exploreLayoutMode === 'constellation'
-                            ? colors.textInverse
-                            : colors.textSecondary,
-                      }}
-                    >
-                      Path
-                    </AppText>
-                  </Pressable>
-                </View>
               </View>
             )
           )}
 
+          {/* Section Title + Cards/Path View Switcher */}
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <AppText variant="h3" numberOfLines={1}>
+                {activeChapterId === 'ALL'
+                  ? (activeSubject?.name ?? 'All Topics')
+                  : activeChapter
+                  ? typeof activeChapter.title === 'object'
+                    ? (activeChapter.title[language] ?? activeChapter.title.en)
+                    : activeChapter.title
+                  : 'Topics'}
+              </AppText>
+              <AppText variant="micro" tone="muted">
+                {subjectTopics.length}{' '}
+                {subjectTopics.length === 1 ? 'topic' : 'topics'} available
+              </AppText>
+            </View>
+
+            <View
+              style={[
+                styles.viewToggle,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Pressable
+                onPress={() => setExploreLayoutMode('grid')}
+                style={[
+                  styles.viewToggleBtn,
+                  {
+                    backgroundColor:
+                      exploreLayoutMode === 'grid'
+                        ? colors.primary
+                        : 'transparent',
+                  },
+                ]}
+              >
+                <Icon
+                  name="grid-outline"
+                  size={13}
+                  color={
+                    exploreLayoutMode === 'grid'
+                      ? colors.textInverse
+                      : colors.textSecondary
+                  }
+                />
+                <AppText
+                  variant="micro"
+                  style={{
+                    fontWeight: '700',
+                    color:
+                      exploreLayoutMode === 'grid'
+                        ? colors.textInverse
+                        : colors.textSecondary,
+                  }}
+                >
+                  Cards
+                </AppText>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setExploreLayoutMode('constellation')}
+                style={[
+                  styles.viewToggleBtn,
+                  {
+                    backgroundColor:
+                      exploreLayoutMode === 'constellation'
+                        ? colors.primary
+                        : 'transparent',
+                  },
+                ]}
+              >
+                <Icon
+                  name="git-network"
+                  size={13}
+                  color={
+                    exploreLayoutMode === 'constellation'
+                      ? colors.textInverse
+                      : colors.textSecondary
+                  }
+                />
+                <AppText
+                  variant="micro"
+                  style={{
+                    fontWeight: '700',
+                    color:
+                      exploreLayoutMode === 'constellation'
+                        ? colors.textInverse
+                        : colors.textSecondary,
+                  }}
+                >
+                  Path
+                </AppText>
+              </Pressable>
+            </View>
+          </View>
+
           {/* Topic Cards or Clean Learning Path */}
-          <View className="mt-2 mb-8">
-            {topicsLoading ? (
-              <View className="py-8">
-                <Loader />
-              </View>
-            ) : !topics || topics.length === 0 ? (
+          <View className="mt-1 mb-8">
+            { subjectTopics.length === 0 ? (
               <EmptyState
                 title="No topics in this module"
                 description="Select another module above to view visual lessons."
               />
             ) : exploreLayoutMode === 'constellation' ? (
               <ConstellationGraph
-                topics={topics}
+                topics={subjectTopics}
                 chapterTitle={
-                  activeChapter
+                  activeChapterId === 'ALL'
+                    ? (activeSubject?.name ?? 'Learning Path')
+                    : activeChapter
                     ? typeof activeChapter.title === 'object'
                       ? (activeChapter.title[language] ?? activeChapter.title.en)
                       : activeChapter.title
@@ -669,8 +738,11 @@ export default function ExploreScreen() {
                   isDesktop ? 'flex-row flex-wrap gap-4' : 'gap-3'
                 }
               >
-                {enrichedModuleTopics.map((node) =>
-                  renderTopicCard(node, false)
+                {subjectTopics.map((node) =>
+                  renderTopicCard(
+                    node,
+                    activeChapterId === 'ALL' ? 'chapter' : 'none'
+                  )
                 )}
               </View>
             )}
@@ -689,7 +761,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
     borderWidth: 1,
-    marginTop: 8,
+    marginTop: 4,
     marginBottom: 12,
   },
   searchInput: {
@@ -698,9 +770,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  stripWrapper: {
+    marginBottom: 10,
+  },
   domainStrip: {
     gap: 8,
-    paddingBottom: 10,
+    alignItems: 'center',
   },
   domainPill: {
     paddingHorizontal: 14,
@@ -710,21 +785,13 @@ const styles = StyleSheet.create({
   },
   subjectStrip: {
     gap: 8,
-    paddingBottom: 10,
+    alignItems: 'center',
   },
   subjectTab: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-  },
-  chapterAndToggleBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginBottom: 10,
-    flexWrap: 'wrap',
   },
   chapterPillsRow: {
     gap: 6,
@@ -734,6 +801,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 10,
   },
   viewToggle: {
     flexDirection: 'row',

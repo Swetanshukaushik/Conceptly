@@ -63,15 +63,6 @@ export function ConstellationGraph({
         },
       ]}
     >
-      <View style={styles.headerRow}>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          {chapterTitle}
-        </Text>
-        <Text style={[styles.headerCount, { color: colors.textMuted }]}>
-          {nodes.length} {nodes.length === 1 ? 'Topic' : 'Topics'}
-        </Text>
-      </View>
-
       <View style={styles.timelineList}>
         {nodes.map((node, i) => {
           const isDone = node.completion >= 100;

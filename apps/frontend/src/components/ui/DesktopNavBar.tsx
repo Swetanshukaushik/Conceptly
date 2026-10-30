@@ -11,8 +11,8 @@ import { useAppStore } from '@/store/useAppStore';
 const NAV_ITEMS = [
   { label: 'Home', path: '/feed', icon: 'home-outline', activeIcon: 'home' },
   { label: 'Explore', path: '/explore', icon: 'compass-outline', activeIcon: 'compass' },
-  { label: 'Saved Lessons', path: '/bookmarks', icon: 'bookmark-outline', activeIcon: 'bookmark' },
-  { label: 'Mastery Progress', path: '/progress', icon: 'stats-chart-outline', activeIcon: 'stats-chart' },
+  { label: 'Saved', path: '/bookmarks', icon: 'bookmark-outline', activeIcon: 'bookmark' },
+  { label: 'Progress', path: '/progress', icon: 'stats-chart-outline', activeIcon: 'stats-chart' },
   { label: 'Profile', path: '/profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
@@ -130,7 +130,7 @@ export function DesktopNavBar() {
             </View>
           </Pressable>
           <BionicToggle compact={true} />
-          <ThemeToggle compact={false} />
+          <ThemeToggle compact={true} />
           <ViewportToggle inline={true} />
         </View>
       </View>
@@ -154,8 +154,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   brandRow: {
     flexDirection: 'row',
@@ -189,14 +189,14 @@ const styles = StyleSheet.create({
   linksRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   linkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'transparent',
@@ -207,6 +207,6 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
 });

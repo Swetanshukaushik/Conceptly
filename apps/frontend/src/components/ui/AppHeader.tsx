@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { AppText } from "./AppText";
 import { IconButton } from "./IconButton";
 import { ThemeToggle } from "./ThemeToggle";
@@ -16,9 +16,10 @@ export function AppHeader({
   title,
   subtitle,
   onBack,
-  showThemeToggle = true,
+  showThemeToggle = false,
 }: AppHeaderProps) {
   const { colors } = useTheme();
+  const shouldShowToggle = showThemeToggle && Platform.OS !== "web";
 
   return (
     <View
@@ -26,7 +27,7 @@ export function AppHeader({
         styles.header,
         {
           backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
+          borderColor: colors.border,
         },
       ]}
     >
@@ -53,7 +54,7 @@ export function AppHeader({
         </View>
       </View>
 
-      {showThemeToggle && (
+      {shouldShowToggle && (
         <View style={styles.rightGroup}>
           <ThemeToggle compact={true} />
         </View>
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
+    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 14,

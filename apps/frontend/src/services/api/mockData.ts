@@ -858,7 +858,7 @@ export const mockReels: ReelDto[] = [
     'Parallel Axis Theorem (I = I_cm + Md²): The Center-of-Mass Reference Trap',
     '/physics_reels/reel-jee-rotational-1.mp4',
     45,
-    mockTopicDetails[25],
+    'topic-moment-inertia',
     'Parallel Axis shift d must ALWAYS be measured from the Center of Mass (COM) axis, never between two non-COM axes!',
     [
       'Parallel Axis Theorem: I = I_cm + M * d² (valid for ANY 2D or 3D rigid body).',
@@ -881,7 +881,7 @@ export const mockReels: ReelDto[] = [
     'Perpendicular Axis Theorem (Iz = Ix + Iy): Why It Fails on 3D Bodies',
     '/physics_reels/reel-jee-rotational-2.mp4',
     45,
-    mockTopicDetails[25],
+    'topic-moment-inertia',
     'Perpendicular Axis Theorem (Iz = Ix + Iy) applies ONLY to flat 2D planar laminas (z = 0), never 3D spheres or cylinders!',
     [
       'Perpendicular Axis Theorem: I_z = I_x + I_y where X and Y lie in the flat plane of the lamina and Z is perpendicular.',
@@ -950,7 +950,7 @@ export const mockReels: ReelDto[] = [
     "Ohm's Law (V = IR) & Resistivity (R = ρL/A): The Wire-Stretching Trap",
     '/physics_reels/reel-school-ohm-1.mp4',
     45,
-    mockTopicDetails[35],
+    'topic-ohms-law',
     'Stretching a wire to 2x length increases its resistance by 4x (R ∝ L² at constant volume), while resistivity ρ stays unchanged!',
     [
       'Ohm Law: V = I * R at constant temperature.',
@@ -971,7 +971,7 @@ export const mockReels: ReelDto[] = [
     'Series vs Parallel Circuits: Why Home Appliances Are Wired in Parallel',
     '/physics_reels/reel-school-ohm-2.mp4',
     45,
-    mockTopicDetails[35],
+    'topic-ohms-law',
     'Home circuits are wired in Parallel so every appliance gets full 220V and works independently if another appliance turns off.',
     [
       'Series: R_eq = R₁ + R₂ + R₃ (Current I is constant, Voltage V divides).',

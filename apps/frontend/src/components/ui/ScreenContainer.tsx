@@ -10,6 +10,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { ViewportToggle } from './ViewportToggle';
+import { ThemeToggle } from './ThemeToggle';
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 export type ScreenContainerProps = ViewProps & {
@@ -32,19 +33,26 @@ export function ScreenContainer({
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && viewMode === 'desktop';
 
-  const containerBg = isDesktop ? colors.screenBg : colors.screenBg;
+  const containerBg = colors.screenBg;
   const outerBg = colors.canvasBg;
 
-  return (
-    <View
-      style={[
-        styles.outerRoot,
-        { backgroundColor: outerBg },
-      ]}
-    >
-      {/* Floating Viewport Toggle on Web when in mobile view */}
-      {isWeb && !hideToggle && !isDesktop && <ViewportToggle />}
+  const mobileTopUtilityBar =
+    isWeb && !hideToggle && !isDesktop ? (
+      <View
+        style={[
+          styles.mobileUtilityBar,
+          {
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
+        <ThemeToggle compact={true} />
+        <ViewportToggle inline={true} />
+      </View>
+    ) : null;
 
+  return (
+    <View style={[styles.outerRoot, { backgroundColor: outerBg }]}>
       <SafeAreaView style={styles.safeArea}>
         {scroll ? (
           <ScrollView
@@ -68,11 +76,11 @@ export function ScreenContainer({
               ]}
               {...props}
             >
+              {mobileTopUtilityBar}
               <View
                 style={{
                   paddingHorizontal: 16,
                   paddingTop: 12,
-                  flex: 1,
                   paddingBottom: isDesktop ? 60 : 100,
                 }}
               >
@@ -97,6 +105,7 @@ export function ScreenContainer({
               ]}
               {...props}
             >
+              {mobileTopUtilityBar}
               <View
                 style={{
                   flex: 1,
@@ -156,5 +165,13 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
+  },
+  mobileUtilityBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
   },
 });
