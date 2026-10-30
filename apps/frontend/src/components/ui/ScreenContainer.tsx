@@ -7,10 +7,13 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
+import { usePathname } from 'expo-router';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { ViewportToggle } from './ViewportToggle';
 import { ThemeToggle } from './ThemeToggle';
+import { DesktopNavBar } from './DesktopNavBar';
+import { MobileBottomNav } from './MobileBottomNav';
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 export type ScreenContainerProps = ViewProps & {
@@ -28,10 +31,15 @@ export function ScreenContainer({
   style,
   ...props
 }: ScreenContainerProps) {
+  const pathname = usePathname();
   const viewMode = useAppStore((s) => s.viewMode);
   const { colors, isDark } = useTheme();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && viewMode === 'desktop';
+
+  // Standalone study routes outside (app)/_layout.tsx that still belong to the main study experience
+  const isStandaloneAppPage =
+    pathname.startsWith('/topic') || pathname.startsWith('/quiz');
 
   const containerBg = colors.screenBg;
   const outerBg = colors.canvasBg;
@@ -53,6 +61,7 @@ export function ScreenContainer({
 
   return (
     <View style={[styles.outerRoot, { backgroundColor: outerBg }]}>
+      {isDesktop && isStandaloneAppPage && <DesktopNavBar />}
       <SafeAreaView style={styles.safeArea}>
         {scroll ? (
           <ScrollView
@@ -81,7 +90,7 @@ export function ScreenContainer({
                 style={{
                   paddingHorizontal: 16,
                   paddingTop: 12,
-                  paddingBottom: isDesktop ? 60 : 100,
+                  paddingBottom: isDesktop ? 48 : 36,
                 }}
               >
                 <AppErrorBoundary>{children}</AppErrorBoundary>
@@ -93,7 +102,7 @@ export function ScreenContainer({
             <View
               style={[
                 styles.innerContent,
-                styles.flex1,
+                styles.nonScrollInner,
                 isDesktop ? styles.desktopWidth : styles.mobileWidth,
                 {
                   backgroundColor: containerBg,
@@ -111,7 +120,8 @@ export function ScreenContainer({
                   flex: 1,
                   paddingHorizontal: 16,
                   paddingTop: 12,
-                  paddingBottom: 24,
+                  paddingBottom: 20,
+                  overflow: 'hidden',
                 }}
               >
                 <AppErrorBoundary>{children}</AppErrorBoundary>
@@ -120,6 +130,7 @@ export function ScreenContainer({
           </View>
         )}
       </SafeAreaView>
+      {!isDesktop && isStandaloneAppPage && <MobileBottomNav />}
     </View>
   );
 }
@@ -152,19 +163,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   innerContent: {
     width: '100%',
     minHeight: '100%',
+  },
+  nonScrollInner: {
+    flex: 1,
+    height: '100%',
+    maxHeight: '100%',
+    overflow: 'hidden',
   },
   mobileWidth: {
     maxWidth: 500,
   },
   desktopWidth: {
     maxWidth: 1200,
-  },
-  flex1: {
-    flex: 1,
   },
   mobileUtilityBar: {
     flexDirection: 'row',

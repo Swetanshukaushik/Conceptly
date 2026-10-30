@@ -35,18 +35,19 @@ export default function ClassSelectScreen() {
   });
 
   return (
-    <ScreenContainer className="justify-between">
+    <ScreenContainer scroll>
       <View>
         <AppHeader
           title="Select Class Level"
           subtitle="NCERT Board Curriculum"
+          fallbackRoute="/exam-type-select"
           onBack={() => router.back()}
         />
         <AppText variant="body" tone="secondary" className="mt-2">
           Choose your current class to unlock curriculum-aligned visual chapters.
         </AppText>
 
-        <View className="mt-6 gap-3">
+        <View className="mt-6 gap-3 mb-6">
           {isLoading ? (
             <Loader />
           ) : (

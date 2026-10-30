@@ -70,7 +70,12 @@ export default function BookmarksScreen() {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <AppHeader title="Saved & Synaptic Vault" subtitle="Bookmarks & Spaced Repetition" />
+        <AppHeader
+          title="Saved & Synaptic Vault"
+          subtitle="Bookmarks & Spaced Repetition"
+          fallbackRoute="/feed"
+          onBack={!isDesktop ? () => router.back() : undefined}
+        />
         <View className="py-20">
           <Loader />
         </View>
@@ -87,6 +92,8 @@ export default function BookmarksScreen() {
       <AppHeader
         title="Saved & Synaptic Vault"
         subtitle={`${bookmarks?.length ?? 0} saved topics • ${dueCount} flashcards due`}
+        fallbackRoute="/feed"
+        onBack={!isDesktop ? () => router.back() : undefined}
       />
 
       <CognitiveTelemetryBar />

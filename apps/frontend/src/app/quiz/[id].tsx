@@ -271,11 +271,17 @@ export default function QuizScreen() {
     );
     const avgSecPerQ = Math.max(1, Math.round(totalElapsedSec / Math.max(totalQ, 1)));
 
+    const fallback = topicId ? `/topic/${topicId}` : '/feed';
+
     return (
-      <ScreenContainer>
-        <AppHeader title="Synaptic Assessment Report" onBack={() => router.back()} />
+      <ScreenContainer scroll>
+        <AppHeader
+          title="Synaptic Assessment Report"
+          fallbackRoute={fallback}
+          onBack={() => router.back()}
+        />
         <CognitiveTelemetryBar />
-        <ScrollView className="flex-1 py-2" showsVerticalScrollIndicator={false}>
+        <View className="py-2">
           <AppCard
             tone="default"
             style={{
@@ -347,166 +353,157 @@ export default function QuizScreen() {
             Detailed Answer Diagnostics
           </AppText>
 
-          <FlatList
-            scrollEnabled={false}
-            data={quiz.questions}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item: question, index }) => {
-              const userAnswer = selectedAnswers[question.id];
-              const resultItem = submissionResult?.results.find((r) => r.questionId === question.id);
-              const correctOptId = resultItem ? resultItem.correctOptionId : question.correctOptionId;
-              const isSkipped = !userAnswer;
-              const isCorrect = !isSkipped && userAnswer === correctOptId;
+          {quiz.questions.map((question, index) => {
+            const userAnswer = selectedAnswers[question.id];
+            const resultItem = submissionResult?.results.find((r) => r.questionId === question.id);
+            const correctOptId = resultItem ? resultItem.correctOptionId : question.correctOptionId;
+            const isSkipped = !userAnswer;
+            const isCorrect = !isSkipped && userAnswer === correctOptId;
 
-              return (
-                <AppCard tone="default" style={{ marginBottom: 14, padding: 16 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
-                      Question {index + 1}
-                    </AppText>
-                    <View
+            return (
+              <AppCard key={question.id} tone="default" style={{ marginBottom: 14, padding: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <AppText variant="caption" tone="primary" style={{ fontWeight: '700' }}>
+                    Question {index + 1}
+                  </AppText>
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 6,
+                      backgroundColor: isSkipped
+                        ? colors.surfaceSubtle
+                        : isCorrect
+                        ? colors.successSoft
+                        : colors.dangerSoft,
+                      borderWidth: 1,
+                      borderColor: isSkipped
+                        ? colors.border
+                        : isCorrect
+                        ? colors.success
+                        : colors.danger,
+                    }}
+                  >
+                    <AppText
+                      variant="micro"
                       style={{
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: 6,
-                        backgroundColor: isSkipped
-                          ? colors.surfaceSubtle
+                        fontWeight: '800',
+                        color: isSkipped
+                          ? colors.textMuted
                           : isCorrect
-                          ? colors.successSoft
-                          : colors.dangerSoft,
-                        borderWidth: 1,
-                        borderColor: isSkipped
-                          ? colors.border
-                          : isCorrect
-                          ? colors.success
-                          : colors.danger,
+                          ? colors.successText
+                          : colors.dangerText,
                       }}
                     >
-                      <AppText
-                        variant="micro"
-                        style={{
-                          fontWeight: '800',
-                          color: isSkipped
-                            ? colors.textMuted
-                            : isCorrect
-                            ? colors.successText
-                            : colors.dangerText,
-                        }}
-                      >
-                        {isSkipped
-                          ? '0.0 PTS (SKIPPED)'
-                          : isCorrect
-                          ? `+${markingScheme.correctPts} PTS`
-                          : examMode
-                          ? `-${markingScheme.wrongPenalty} PTS (PENALTY)`
-                          : '0.0 PTS'}
-                      </AppText>
-                    </View>
+                      {isSkipped
+                        ? '0.0 PTS (SKIPPED)'
+                        : isCorrect
+                        ? `+${markingScheme.correctPts} PTS`
+                        : examMode
+                        ? `-${markingScheme.wrongPenalty} PTS (PENALTY)`
+                        : '0.0 PTS'}
+                    </AppText>
                   </View>
+                </View>
 
-                  <View style={{ marginTop: 6 }}>
-                    <BionicText
-                      text={question.text}
-                      style={{ fontSize: 15, lineHeight: 22, color: colors.textPrimary }}
-                    />
-                  </View>
-
-                  <FlatList
-                    scrollEnabled={false}
-                    data={question.options}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item: option, index: optIdx }) => {
-                      const isSelected = userAnswer === option.id;
-                      const isCorrectAnswer = option.id === correctOptId;
-                      const showAsCorrect = isCorrectAnswer;
-                      const showAsIncorrect = isSelected && !isCorrect;
-
-                      let optBg = colors.surfaceSubtle;
-                      let optBorder = colors.border;
-                      let optText = colors.textPrimary;
-
-                      if (showAsCorrect) {
-                        optBg = colors.successSoft;
-                        optBorder = colors.success;
-                        optText = colors.successText;
-                      } else if (showAsIncorrect) {
-                        optBg = colors.dangerSoft;
-                        optBorder = colors.danger;
-                        optText = colors.dangerText;
-                      }
-
-                      return (
-                        <View
-                          style={{
-                            marginTop: 8,
-                            padding: 12,
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            backgroundColor: optBg,
-                            borderColor: optBorder,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}
-                        >
-                          <View
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: 6,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: colors.surface,
-                              borderWidth: 1,
-                              borderColor: optBorder,
-                            }}
-                          >
-                            <AppText variant="micro" style={{ color: optText, fontWeight: '800' }}>
-                              {OPTION_LETTERS[optIdx] ?? optIdx + 1}
-                            </AppText>
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <AppText
-                              variant="caption"
-                              style={{
-                                color: optText,
-                                fontWeight: showAsCorrect ? '700' : '500',
-                              }}
-                            >
-                              {option.text} {showAsCorrect && '✓ (Correct)'}{' '}
-                              {showAsIncorrect && '✗ (Your answer)'}
-                            </AppText>
-                          </View>
-                        </View>
-                      );
-                    }}
+                <View style={{ marginTop: 6 }}>
+                  <BionicText
+                    text={question.text}
+                    style={{ fontSize: 15, lineHeight: 22, color: colors.textPrimary }}
                   />
+                </View>
 
-                  {/* 💡 Concept Insight / Explanation */}
-                  {(resultItem?.explanation || (question as any).explanation) && (
+                {question.options.map((option, optIdx) => {
+                  const isSelected = userAnswer === option.id;
+                  const isCorrectAnswer = option.id === correctOptId;
+                  const showAsCorrect = isCorrectAnswer;
+                  const showAsIncorrect = isSelected && !isCorrect;
+
+                  let optBg = colors.surfaceSubtle;
+                  let optBorder = colors.border;
+                  let optText = colors.textPrimary;
+
+                  if (showAsCorrect) {
+                    optBg = colors.successSoft;
+                    optBorder = colors.success;
+                    optText = colors.successText;
+                  } else if (showAsIncorrect) {
+                    optBg = colors.dangerSoft;
+                    optBorder = colors.danger;
+                    optText = colors.dangerText;
+                  }
+
+                  return (
                     <View
+                      key={option.id}
                       style={{
-                        marginTop: 12,
+                        marginTop: 8,
                         padding: 12,
-                        backgroundColor: colors.primarySoft,
                         borderRadius: 12,
                         borderWidth: 1,
-                        borderColor: colors.primaryBorder,
+                        backgroundColor: optBg,
+                        borderColor: optBorder,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
                       }}
                     >
-                      <AppText variant="micro" tone="primary" style={{ fontWeight: '700', marginBottom: 4 }}>
-                        💡 Conceptual Takeaway:
-                      </AppText>
-                      <BionicText
-                        text={resultItem?.explanation || (question as any).explanation}
-                        style={{ fontSize: 13, lineHeight: 19, color: colors.textSecondary }}
-                      />
+                      <View
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 6,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: colors.surface,
+                          borderWidth: 1,
+                          borderColor: optBorder,
+                        }}
+                      >
+                        <AppText variant="micro" style={{ color: optText, fontWeight: '800' }}>
+                          {OPTION_LETTERS[optIdx] ?? optIdx + 1}
+                        </AppText>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <AppText
+                          variant="caption"
+                          style={{
+                            color: optText,
+                            fontWeight: showAsCorrect ? '700' : '500',
+                          }}
+                        >
+                          {option.text} {showAsCorrect && '✓ (Correct)'}{' '}
+                          {showAsIncorrect && '✗ (Your answer)'}
+                        </AppText>
+                      </View>
                     </View>
-                  )}
-                </AppCard>
-              );
-            }}
-          />
+                  );
+                })}
+
+                {/* 💡 Concept Insight / Explanation */}
+                {(resultItem?.explanation || (question as any).explanation) && (
+                  <View
+                    style={{
+                      marginTop: 12,
+                      padding: 12,
+                      backgroundColor: colors.primarySoft,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: colors.primaryBorder,
+                    }}
+                  >
+                    <AppText variant="micro" tone="primary" style={{ fontWeight: '700', marginBottom: 4 }}>
+                      💡 Conceptual Takeaway:
+                    </AppText>
+                    <BionicText
+                      text={resultItem?.explanation || (question as any).explanation}
+                      style={{ fontSize: 13, lineHeight: 19, color: colors.textSecondary }}
+                    />
+                  </View>
+                )}
+              </AppCard>
+            );
+          })}
 
           <View className="my-6 flex-row gap-3">
             <View className="flex-1">
@@ -527,27 +524,35 @@ export default function QuizScreen() {
               <AppButton
                 label="Back to Topic"
                 variant="primary"
-                onPress={() => router.back()}
+                onPress={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace(fallback as any);
+                  }
+                }}
               />
             </View>
           </View>
-        </ScrollView>
+        </View>
       </ScreenContainer>
     );
   }
 
   const isLowTime = examMode && timeLeftSec <= 10;
+  const fallback = topicId ? `/topic/${topicId}` : '/feed';
 
   return (
-    <ScreenContainer>
+    <ScreenContainer scroll>
       <AppHeader
         title={`Quiz Checkpoint (${currentQuestionIndex + 1}/${totalQuestions})`}
+        fallbackRoute={fallback}
         onBack={() => router.back()}
       />
 
       <CognitiveTelemetryBar />
 
-      <ScrollView className="flex-1 py-2" showsVerticalScrollIndicator={false}>
+      <View className="py-2">
         {/* High-Stakes Exam Mode Control & Timer HUD */}
         <AppCard tone="muted" style={{ marginBottom: 14, padding: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -749,7 +754,7 @@ export default function QuizScreen() {
             )}
           </View>
         </View>
-      </ScrollView>
+      </View>
     </ScreenContainer>
   );
 }

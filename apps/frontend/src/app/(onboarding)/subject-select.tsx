@@ -68,14 +68,15 @@ export default function SubjectSelectScreen() {
   }
 
   return (
-    <ScreenContainer className="justify-between">
+    <ScreenContainer scroll>
       <AppHeader
         title="Choose Your Subject"
         subtitle="Step 2 of 3 • Core Discipline"
+        fallbackRoute="/exam-type-select"
         onBack={() => router.back()}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 mt-2">
+      <View className="mt-2">
         <AppText variant="body" tone="secondary">
           Select the subject module you want to focus on first. You can switch subjects anytime from Explore or Search.
         </AppText>
@@ -138,7 +139,7 @@ export default function SubjectSelectScreen() {
             })
           )}
         </View>
-      </ScrollView>
+      </View>
 
       <View className="pt-2 pb-4">
         <AppButton

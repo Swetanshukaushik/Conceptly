@@ -45,14 +45,15 @@ export default function ChapterSelectScreen() {
   }
 
   return (
-    <ScreenContainer className="justify-between">
+    <ScreenContainer scroll>
       <AppHeader
         title="Choose Starting Chapter"
         subtitle="Step 3 of 3 • Launch Feed"
+        fallbackRoute="/subject-select"
         onBack={() => router.back()}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 mt-2">
+      <View className="mt-2">
         <AppText variant="body" tone="secondary">
           Pick your starting chapter to initialize your personalized 45-second visual revision stream.
         </AppText>
@@ -122,7 +123,7 @@ export default function ChapterSelectScreen() {
             })
           )}
         </View>
-      </ScrollView>
+      </View>
 
       <View className="pt-2 pb-4">
         <AppButton

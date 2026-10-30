@@ -1,5 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Platform } from "react-native";
+import { useRouter } from "expo-router";
 import { AppText } from "./AppText";
 import { IconButton } from "./IconButton";
 import { ThemeToggle } from "./ThemeToggle";
@@ -9,6 +10,7 @@ export type AppHeaderProps = {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  fallbackRoute?: string;
   showThemeToggle?: boolean;
 };
 
@@ -16,10 +18,39 @@ export function AppHeader({
   title,
   subtitle,
   onBack,
+  fallbackRoute = "/feed",
   showThemeToggle = false,
 }: AppHeaderProps) {
+  const router = useRouter();
   const { colors } = useTheme();
   const shouldShowToggle = showThemeToggle && Platform.OS !== "web";
+
+  const handleBackPress = () => {
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      if (window.history.length > 1 && router.canGoBack()) {
+        if (onBack) {
+          onBack();
+        } else {
+          router.back();
+        }
+        return;
+      }
+      router.replace(fallbackRoute as any);
+      return;
+    }
+
+    if (onBack) {
+      if (router.canGoBack()) {
+        onBack();
+      } else {
+        router.replace(fallbackRoute as any);
+      }
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace(fallbackRoute as any);
+    }
+  };
 
   return (
     <View
@@ -35,9 +66,9 @@ export function AppHeader({
         {onBack && (
           <IconButton
             icon="arrow-back"
-            onPress={onBack}
+            onPress={handleBackPress}
             size="sm"
-            variant="ghost"
+            variant="inverse"
             accessibilityLabel="Go back"
             accessibilityRole="button"
           />

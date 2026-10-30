@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -13,6 +13,7 @@ import { QuickStatsRow } from '@/components/patterns/QuickStatsRow';
 import { Icon } from '@/components/ui/Icon';
 import { CognitiveTelemetryBar } from '@/components/ui/CognitiveTelemetryBar';
 
+import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useProgressQuery } from '@/services/api/hooks/useProgressQuery';
 import { educationApi } from '@/services/api/educationApi';
@@ -20,6 +21,8 @@ import { educationApi } from '@/services/api/educationApi';
 export default function ProgressScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const viewMode = useAppStore((s) => s.viewMode);
+  const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
   const { data: progress, isLoading } = useProgressQuery();
 
   useEffect(() => {
@@ -39,7 +42,12 @@ export default function ProgressScreen() {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <AppHeader title="Learning Journey" subtitle="Track your mastery" />
+        <AppHeader
+          title="Learning Journey"
+          subtitle="Track your mastery"
+          fallbackRoute="/feed"
+          onBack={!isDesktop ? () => router.back() : undefined}
+        />
         <View style={{ paddingVertical: 80 }}>
           <Loader />
         </View>
@@ -50,7 +58,12 @@ export default function ProgressScreen() {
   if (!progress || progress.length === 0) {
     return (
       <ScreenContainer>
-        <AppHeader title="Learning Journey" subtitle="Track your mastery" />
+        <AppHeader
+          title="Learning Journey"
+          subtitle="Track your mastery"
+          fallbackRoute="/feed"
+          onBack={!isDesktop ? () => router.back() : undefined}
+        />
         <View style={{ marginTop: 32 }}>
           <EmptyState
             title="No progress yet"
@@ -63,7 +76,12 @@ export default function ProgressScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader title="Learning Journey" subtitle="Track your mastery" />
+      <AppHeader
+        title="Learning Journey"
+        subtitle="Track your mastery"
+        fallbackRoute="/feed"
+        onBack={!isDesktop ? () => router.back() : undefined}
+      />
 
       <CognitiveTelemetryBar />
 

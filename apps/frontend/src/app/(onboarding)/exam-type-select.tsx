@@ -62,14 +62,15 @@ export default function ExamTypeSelectScreen() {
     : domainCategories;
 
   return (
-    <ScreenContainer className="justify-between">
+    <ScreenContainer scroll>
       <AppHeader
         title="Target Learning Track"
         subtitle="Step 1 of 3 • Cognitive Calibration"
+        fallbackRoute="/welcome"
         onBack={() => router.back()}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 mt-2">
+      <View className="mt-2">
         <AppText variant="body" tone="secondary">
           Select your primary target domain to calibrate high-yield 45-second visual reels, interactive schematics, and exam marking schemes.
         </AppText>
@@ -115,7 +116,7 @@ export default function ExamTypeSelectScreen() {
             );
           })}
         </View>
-      </ScrollView>
+      </View>
 
       <View className="pt-2 pb-4">
         <AppButton

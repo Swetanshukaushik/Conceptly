@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Pressable, Modal, TextInput, StyleSheet } from 'react-native';
+import { View, Pressable, Modal, TextInput, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -67,7 +67,9 @@ export default function ProfileScreen() {
     logout,
     onlyTopicsWithReels,
     setOnlyTopicsWithReels,
+    viewMode,
   } = useAppStore();
+  const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
   const { data: progress } = useProgressQuery();
   const { data: bookmarks } = useBookmarksQuery();
 
@@ -171,6 +173,8 @@ export default function ProfileScreen() {
       <AppHeader
         title="Profile & Settings"
         subtitle="Customization & Study Preferences"
+        fallbackRoute="/feed"
+        onBack={!isDesktop ? () => router.back() : undefined}
       />
 
       {/* User Card */}

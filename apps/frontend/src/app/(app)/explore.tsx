@@ -374,6 +374,19 @@ export default function ExploreScreen() {
       <AppHeader
         title="Explore"
         subtitle="Browse topics, visual reels, and interactive notes"
+        fallbackRoute="/feed"
+        onBack={
+          !isDesktop
+            ? () => {
+                if (isFiltering) {
+                  setSearchQuery('');
+                  setOnlyStudioHd(false);
+                } else {
+                  router.back();
+                }
+              }
+            : undefined
+        }
       />
 
       {/* 1. Search Bar */}

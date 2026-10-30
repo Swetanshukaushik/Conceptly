@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 
@@ -25,6 +25,23 @@ export default function ReelPlayerScreen() {
   });
 
   const effectiveTopicId = topicId || singleReel?.topicId || '';
+
+  const handleSafeBack = () => {
+    const fallback = effectiveTopicId ? `/topic/${effectiveTopicId}` : '/feed';
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (window.history.length > 1 && router.canGoBack()) {
+        router.back();
+        return;
+      }
+      router.replace(fallback as any);
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace(fallback as any);
+    }
+  };
 
   // Fetch all reels for the topic so user can vertically swipe through them
   const { data: topicReels, isLoading: topicReelsLoading } = useReelsByTopicQuery(effectiveTopicId);
@@ -61,7 +78,7 @@ export default function ReelPlayerScreen() {
   if (reelsToDisplay.length === 0) {
     return (
       <ScreenContainer>
-        <AppHeader title="Lesson Reel" onBack={() => router.back()} />
+        <AppHeader title="Lesson Reel" fallbackRoute={effectiveTopicId ? `/topic/${effectiveTopicId}` : '/feed'} onBack={handleSafeBack} />
         <View className="flex-1 justify-center items-center px-4">
           <AppText tone="muted">No video reel found</AppText>
         </View>
@@ -74,7 +91,7 @@ export default function ReelPlayerScreen() {
       key={`${id}-${effectiveTopicId}`}
       reels={reelsToDisplay}
       initialReelId={id}
-      onBack={() => router.back()}
+      onBack={handleSafeBack}
       onQuizPress={(targetTopicId) => {
         router.push(`/quiz/${targetTopicId}`);
       }}

@@ -80,7 +80,7 @@ export default function TopicDetailScreen() {
   if (!id) {
     return (
       <ScreenContainer>
-        <AppHeader title="Topic" onBack={() => router.back()} />
+        <AppHeader title="Topic" fallbackRoute="/explore" onBack={() => router.back()} />
         <View className="flex-1 justify-center items-center px-4">
           <AppText tone="muted">Topic not specified</AppText>
         </View>
@@ -91,7 +91,7 @@ export default function TopicDetailScreen() {
   if (topicLoading || reelsLoading) {
     return (
       <ScreenContainer>
-        <AppHeader title="Topic Revision" onBack={() => router.back()} />
+        <AppHeader title="Topic Revision" fallbackRoute="/explore" onBack={() => router.back()} />
         <View className="py-20">
           <Loader />
         </View>
@@ -102,7 +102,7 @@ export default function TopicDetailScreen() {
   if (topicError || !topic) {
     return (
       <ScreenContainer>
-        <AppHeader title="Topic Revision" onBack={() => router.back()} />
+        <AppHeader title="Topic Revision" fallbackRoute="/explore" onBack={() => router.back()} />
         <View className="mt-8">
           <ErrorState
             title="Failed to load topic details"
@@ -125,7 +125,7 @@ export default function TopicDetailScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader title="Topic Revision" onBack={() => router.back()} />
+      <AppHeader title="Topic Revision" fallbackRoute="/explore" onBack={() => router.back()} />
 
       <CognitiveTelemetryBar />
 
