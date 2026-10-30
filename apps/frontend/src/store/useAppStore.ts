@@ -24,6 +24,7 @@ export type ViewMode = 'mobile' | 'desktop';
 export type ApiDataSource = 'mock' | 'live';
 
 const STORAGE_KEY = 'conceptly-app-storage';
+const DEFAULTS_VERSION = 2;
 const LEGACY_STORAGE_KEY = 'revisex-app-storage';
 
 function loadPersistedState(): Partial<AppState> {
@@ -35,6 +36,13 @@ function loadPersistedState(): Partial<AppState> {
         window.localStorage.getItem(LEGACY_STORAGE_KEY);
       if (raw) {
         state = JSON.parse(raw);
+        // Defaults migration: older saved sessions (any view mode) may hold stale values.
+        // Reset to Offline Mock + "Only Show Topics With Reels" once; user choices afterwards persist.
+        if ((state as any).defaultsVersion !== DEFAULTS_VERSION) {
+          (state as any).apiDataSource = 'mock';
+          (state as any).onlyTopicsWithReels = true;
+          (state as any).defaultsVersion = DEFAULTS_VERSION;
+        }
       }
     } catch (e) {
       console.warn('Failed to load persisted state from localStorage:', e);
@@ -71,6 +79,7 @@ function savePersistedState(state: AppState) {
     watchedReels: state.watchedReels,
     userBookmarks: state.userBookmarks,
     userProgress: state.userProgress,
+    defaultsVersion: DEFAULTS_VERSION,
     viewMode: state.viewMode,
     apiDataSource: state.apiDataSource,
     authToken: state.authToken,
