@@ -28,6 +28,9 @@ import {
   mockReels,
   mockSubjectsByExamType,
   mockSubjectsByClass,
+  TOPICS_WITH_REAL_REELS,
+  SUBJECTS_WITH_REAL_REELS,
+  EXAM_TYPES_WITH_REAL_REELS,
 } from '@/services/api/mockData';
 
 const DOMAINS = [
@@ -56,6 +59,7 @@ export default function ExploreScreen() {
   const viewMode = useAppStore((s) => s.viewMode);
   const exploreLayoutMode = useAppStore((s) => s.exploreLayoutMode);
   const setExploreLayoutMode = useAppStore((s) => s.setExploreLayoutMode);
+  const onlyTopicsWithReels = useAppStore((s) => s.onlyTopicsWithReels);
   const { colors } = useTheme();
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
   const language = useAppStore((s) => s.language) ?? 'en';
@@ -82,8 +86,17 @@ export default function ExploreScreen() {
     }
   }, [selectedSubjectId]);
 
+  useEffect(() => {
+    if (onlyTopicsWithReels && !EXAM_TYPES_WITH_REAL_REELS.has(selectedExamType)) {
+      setExamType('IIT_JEE');
+      setSubjectId('jee-physics');
+      setActiveSubjectId('jee-physics');
+      setActiveChapterId('ALL');
+    }
+  }, [onlyTopicsWithReels, selectedExamType, setExamType, setSubjectId]);
+
   const { data: trackSubjects } = useQuery({
-    queryKey: ['explore-subjects', selectedExamType],
+    queryKey: ['explore-subjects', selectedExamType, onlyTopicsWithReels],
     queryFn: async () => {
       if (selectedExamType === 'SCHOOL') {
         return educationApi.getSubjectsByClass(10);
@@ -131,16 +144,20 @@ export default function ExploreScreen() {
       }));
     }
 
-    const primary =
+    const rawPrimary =
       selectedExamType === 'SCHOOL'
         ? (mockSubjectsByClass[10] ?? [])
         : (mockSubjectsByExamType[selectedExamType] ?? []);
+
+    const primary = onlyTopicsWithReels
+      ? rawPrimary.filter((s) => SUBJECTS_WITH_REAL_REELS.has(s.id))
+      : rawPrimary;
 
     return primary.map((s) => ({
       id: s.id,
       name: (s.label as any)?.[language] || (s.label as any)?.en || s.id,
     }));
-  }, [trackSubjects, selectedExamType, language]);
+  }, [trackSubjects, selectedExamType, language, onlyTopicsWithReels]);
 
   const enrichTopic = (t: {
     id: string;
@@ -178,9 +195,13 @@ export default function ExploreScreen() {
         ? new Set(chapters.map((c) => c.id))
         : new Set([activeChapterId]);
 
-    const matched = mockTopics.filter((t) => validChapterIds.has(t.chapterId));
+    const matched = mockTopics.filter(
+      (t) =>
+        validChapterIds.has(t.chapterId) &&
+        (!onlyTopicsWithReels || TOPICS_WITH_REAL_REELS.has(t.id))
+    );
     return matched.map((t) => enrichTopic(t));
-  }, [chapters, activeChapterId]);
+  }, [chapters, activeChapterId, onlyTopicsWithReels]);
 
   const isFiltering = searchQuery.trim().length > 0 || onlyStudioHd;
 
@@ -192,7 +213,7 @@ export default function ExploreScreen() {
     return pool
       .map((item) => enrichTopic(item))
       .filter((node) => {
-        if (onlyStudioHd && !node.hasStudioMp4) return false;
+        if ((onlyStudioHd || onlyTopicsWithReels) && !node.hasStudioMp4) return false;
         if (!q) return true;
         return (
           node.title.toLowerCase().includes(q) ||
@@ -201,7 +222,13 @@ export default function ExploreScreen() {
           node.summary.toLowerCase().includes(q)
         );
       });
-  }, [searchQuery, onlyStudioHd, isFiltering]);
+  }, [searchQuery, onlyStudioHd, onlyTopicsWithReels, isFiltering]);
+
+  const visibleDomains = useMemo(() => {
+    return onlyTopicsWithReels
+      ? DOMAINS.filter((d) => EXAM_TYPES_WITH_REAL_REELS.has(d.id))
+      : DOMAINS;
+  }, [onlyTopicsWithReels]);
 
   const activeChapter = chapters?.find((c) => c.id === activeChapterId);
   const activeSubject = availableSubjects.find((s) => s.id === activeSubjectId);
@@ -404,7 +431,7 @@ export default function ExploreScreen() {
             </AppText>
           </Pressable>
 
-          {DOMAINS.map((dm) => {
+          {visibleDomains.map((dm) => {
             const isSelected = !onlyStudioHd && selectedExamType === dm.id;
             return (
               <Pressable
@@ -413,10 +440,13 @@ export default function ExploreScreen() {
                   setOnlyStudioHd(false);
                   setExamType(dm.id);
                   setActiveChapterId('ALL');
-                  const domainSubs =
+                  const rawSubs =
                     dm.id === 'SCHOOL'
                       ? mockSubjectsByClass[10]
                       : mockSubjectsByExamType[dm.id];
+                  const domainSubs = onlyTopicsWithReels
+                    ? (rawSubs ?? []).filter((s) => SUBJECTS_WITH_REAL_REELS.has(s.id))
+                    : rawSubs;
                   if (domainSubs && domainSubs.length > 0) {
                     setActiveSubjectId(domainSubs[0].id);
                     setSubjectId(domainSubs[0].id);

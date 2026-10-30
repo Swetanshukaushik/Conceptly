@@ -15,6 +15,10 @@ import {
   mockFlashcards,
   mockProgress,
   mockBookmarks,
+  TOPICS_WITH_REAL_REELS,
+  CHAPTERS_WITH_REAL_REELS,
+  SUBJECTS_WITH_REAL_REELS,
+  EXAM_TYPES_WITH_REAL_REELS,
 } from './mockData';
 import type {
   ChapterDto,
@@ -186,6 +190,14 @@ export function isMockMode(): boolean {
   return runtimeConfig.useMockData;
 }
 
+export function isOnlyTopicsWithReels(): boolean {
+  try {
+    return Boolean(useAppStore.getState().onlyTopicsWithReels);
+  } catch {
+    return false;
+  }
+}
+
 export const educationApi = {
   async createGuestSession(dto?: GuestSessionRequestDto): Promise<AuthResponseDto> {
     if (isMockMode()) {
@@ -266,7 +278,7 @@ export const educationApi = {
   async getExamTypes(): Promise<Array<{ examType: string; label: string }>> {
     if (isMockMode()) {
       await sleep(150);
-      return [
+      const allExamTypes = [
         { examType: 'TECH_INTERVIEW', label: 'Tech & System Design' },
         { examType: 'PM_INTERVIEW', label: 'Product Management' },
         { examType: 'FINANCE_CONSULTING', label: 'Finance & Consulting' },
@@ -275,6 +287,10 @@ export const educationApi = {
         { examType: 'NEET', label: 'NEET (Medical)' },
         { examType: 'SCHOOL', label: 'School Curriculum' },
       ];
+      if (isOnlyTopicsWithReels()) {
+        return allExamTypes.filter((item) => EXAM_TYPES_WITH_REAL_REELS.has(item.examType));
+      }
+      return allExamTypes;
     }
 
     const response = await apiGet<any[]>('/v1/curriculum/exam-types');
@@ -327,6 +343,11 @@ export const educationApi = {
   async getClasses(): Promise<ClassLevelDto[]> {
     if (isMockMode()) {
       await sleep(150);
+      if (isOnlyTopicsWithReels()) {
+        return mockClasses.filter((c) =>
+          (mockSubjectsByClass[c.id] ?? []).some((s) => SUBJECTS_WITH_REAL_REELS.has(s.id))
+        );
+      }
       return mockClasses;
     }
 
@@ -335,7 +356,10 @@ export const educationApi = {
   },
 
   async getSubjectsByClass(classId: number): Promise<SubjectDto[]> {
-    const localSubjects = mockSubjectsByClass[classId] ?? mockSubjectsByClass[10] ?? [];
+    const rawSubjects = mockSubjectsByClass[classId] ?? mockSubjectsByClass[10] ?? [];
+    const localSubjects = isOnlyTopicsWithReels()
+      ? rawSubjects.filter((s) => SUBJECTS_WITH_REAL_REELS.has(s.id))
+      : rawSubjects;
     if (isMockMode()) {
       await sleep(100);
       return localSubjects;
@@ -354,7 +378,15 @@ export const educationApi = {
   },
 
   async getSubjectsByExamType(examType: string): Promise<SubjectDto[]> {
-    const localSubjects = mockSubjectsByExamType[examType] ?? [];
+    const rawSubjects = mockSubjectsByExamType[examType] ?? [];
+    let localSubjects = isOnlyTopicsWithReels()
+      ? rawSubjects.filter((s) => SUBJECTS_WITH_REAL_REELS.has(s.id))
+      : rawSubjects;
+    if (isOnlyTopicsWithReels() && localSubjects.length === 0) {
+      localSubjects = Object.values(mockSubjectsByExamType)
+        .flat()
+        .filter((s) => SUBJECTS_WITH_REAL_REELS.has(s.id));
+    }
     if (isMockMode()) {
       await sleep(100);
       return localSubjects;
@@ -373,9 +405,19 @@ export const educationApi = {
   },
 
   async getChaptersBySubject(subjectId: string): Promise<ChapterDto[]> {
-    const localChapters = mockChaptersBySubject[subjectId] ?? [];
+    const rawChapters = mockChaptersBySubject[subjectId] ?? [];
+    const localChapters = isOnlyTopicsWithReels()
+      ? rawChapters.filter((c) => CHAPTERS_WITH_REAL_REELS.has(c.id))
+      : rawChapters;
     if (isMockMode()) {
       await sleep(100);
+      if (isOnlyTopicsWithReels()) {
+        return localChapters.length > 0
+          ? localChapters
+          : Object.values(mockChaptersBySubject)
+              .flat()
+              .filter((c) => CHAPTERS_WITH_REAL_REELS.has(c.id));
+      }
       return localChapters.length > 0
         ? localChapters
         : (mockChaptersBySubject['math-10'] ?? []);
@@ -395,10 +437,16 @@ export const educationApi = {
   },
 
   async getTopicsByChapter(chapterId: string): Promise<TopicDto[]> {
-    const localTopics = mockTopics.filter((topic) => topic.chapterId === chapterId);
+    const rawTopics = mockTopics.filter((topic) => topic.chapterId === chapterId);
+    const localTopics = isOnlyTopicsWithReels()
+      ? rawTopics.filter((topic) => TOPICS_WITH_REAL_REELS.has(topic.id))
+      : rawTopics;
     if (isMockMode()) {
       await sleep(100);
       if (localTopics.length > 0) return localTopics;
+      if (isOnlyTopicsWithReels()) {
+        return mockTopics.filter((topic) => TOPICS_WITH_REAL_REELS.has(topic.id));
+      }
       return mockTopics.slice(0, 3);
     }
 
@@ -781,14 +829,39 @@ export const educationApi = {
   },
 
   async getHomeFeed(examType?: string, classLevel?: number): Promise<HomeFeedDto> {
+    const onlyReels = isOnlyTopicsWithReels();
     const effectiveExamType =
       examType ?? useAppStore.getState().selectedExamType ?? 'TECH_INTERVIEW';
     const effectiveClassId =
       classLevel ?? useAppStore.getState().selectedClassId ?? 10;
-    const cacheKey = `homefeed:${effectiveExamType}:${effectiveClassId}`;
+    const cacheKey = `homefeed:${effectiveExamType}:${effectiveClassId}:${onlyReels ? 'reels' : 'all'}`;
 
     if (isMockMode()) {
       await sleep(200);
+
+      if (onlyReels) {
+        const realTopics = mockTopicDetails.filter((t) =>
+          TOPICS_WITH_REAL_REELS.has(t.id)
+        );
+        const allReelSubjects = Object.values(mockSubjectsByExamType)
+          .flat()
+          .filter((s) => SUBJECTS_WITH_REAL_REELS.has(s.id));
+
+        const subjectShortcuts = allReelSubjects.map((s) => ({
+          id: s.id,
+          name: s.label.en,
+          classLevel: s.id.endsWith('-10') ? 10 : 0,
+        }));
+
+        const feedResult: HomeFeedDto = {
+          subjectShortcuts,
+          continueLearning: realTopics.slice(0, 2),
+          recommended: realTopics,
+          quickRevision: realTopics.slice(1, 4),
+        };
+        offlineCache.set(cacheKey, feedResult);
+        return feedResult;
+      }
 
       let subjects: SubjectDto[] = [];
       if (effectiveExamType === 'SCHOOL') {
@@ -856,7 +929,25 @@ export const educationApi = {
     if (isMockMode()) {
       await sleep(150);
       const userProgress = useAppStore.getState().userProgress;
-      return userProgress && userProgress.length > 0 ? userProgress : mockProgress;
+      const list = userProgress && userProgress.length > 0 ? userProgress : mockProgress;
+      if (isOnlyTopicsWithReels()) {
+        const filtered = list.filter((p) => TOPICS_WITH_REAL_REELS.has(p.topicId));
+        if (filtered.length > 0) return filtered;
+        return mockTopicDetails
+          .filter((t) => TOPICS_WITH_REAL_REELS.has(t.id))
+          .slice(0, 2)
+          .map((t, idx) => ({
+            id: `prog-reel-${t.id}`,
+            topicId: t.id,
+            completionPercent: idx === 0 ? 100 : 65,
+            createdAt: new Date('2026-10-20'),
+            updatedAt: new Date('2026-10-25'),
+            topic: { id: t.id, title: t.title, difficulty: t.difficulty },
+            chapter: t.chapter,
+            subject: t.subject,
+          }));
+      }
+      return list;
     }
 
     try {
@@ -907,7 +998,11 @@ export const educationApi = {
     if (isMockMode()) {
       await sleep(150);
       const userBookmarks = useAppStore.getState().userBookmarks;
-      return userBookmarks && userBookmarks.length > 0 ? userBookmarks : mockBookmarks;
+      const list = userBookmarks && userBookmarks.length > 0 ? userBookmarks : mockBookmarks;
+      if (isOnlyTopicsWithReels()) {
+        return list.filter((b) => TOPICS_WITH_REAL_REELS.has(b.topicId));
+      }
+      return list;
     }
 
     try {

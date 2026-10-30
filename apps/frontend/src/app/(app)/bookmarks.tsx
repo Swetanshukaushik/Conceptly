@@ -15,7 +15,7 @@ import { BionicText } from '@/components/ui/BionicText';
 
 import { useBookmarksQuery } from '@/services/api/hooks/useBookmarksQuery';
 import { educationApi } from '@/services/api/educationApi';
-import { mockFlashcards } from '@/services/api/mockData';
+import { mockFlashcards, TOPICS_WITH_REAL_REELS } from '@/services/api/mockData';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
 
@@ -26,6 +26,7 @@ export default function BookmarksScreen() {
   const viewMode = useAppStore((s) => s.viewMode);
   const flashcardSRS = useAppStore((s) => s.flashcardSRS);
   const rateFlashcard = useAppStore((s) => s.rateFlashcard);
+  const onlyTopicsWithReels = useAppStore((s) => s.onlyTopicsWithReels);
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'srs'>('bookmarks');
@@ -38,7 +39,10 @@ export default function BookmarksScreen() {
 
   // Build unified SM-2 Review Queue across all bookmarked topics & global flashcards
   const reviewDeck = useMemo(() => {
-    const allCards = Object.values(mockFlashcards).flat();
+    const rawCards = Object.values(mockFlashcards).flat();
+    const allCards = onlyTopicsWithReels
+      ? rawCards.filter((c) => TOPICS_WITH_REAL_REELS.has(c.topicId))
+      : rawCards;
     const now = Date.now();
 
     return [...allCards].sort((a, b) => {
@@ -49,7 +53,7 @@ export default function BookmarksScreen() {
       if (dueA !== dueB) return dueA - dueB;
       return (srsA?.box ?? 1) - (srsB?.box ?? 1);
     });
-  }, [flashcardSRS]);
+  }, [flashcardSRS, onlyTopicsWithReels]);
 
   const dueCount = useMemo(() => {
     const now = Date.now();

@@ -12,7 +12,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { mockTopicDetails, mockTopics } from '@/services/api/mockData';
+import {
+  mockTopicDetails,
+  mockTopics,
+  TOPICS_WITH_REAL_REELS,
+} from '@/services/api/mockData';
 import { Icon } from './Icon';
 
 interface OmnibarCommand {
@@ -35,6 +39,7 @@ export function NeuralOmnibar() {
   const toggleCaptions = useAppStore((s) => s.toggleCaptions);
   const captionsEnabled = useAppStore((s) => s.captionsEnabled);
   const setExploreLayoutMode = useAppStore((s) => s.setExploreLayoutMode);
+  const onlyTopicsWithReels = useAppStore((s) => s.onlyTopicsWithReels);
 
   const isDesktop = Platform.OS === 'web' && viewMode === 'desktop';
 
@@ -68,6 +73,7 @@ export function NeuralOmnibar() {
     const topicMap = new Map<string, { id: string; title: string; subtitle: string; diff: string }>();
 
     mockTopicDetails.forEach((t) => {
+      if (onlyTopicsWithReels && !TOPICS_WITH_REAL_REELS.has(t.id)) return;
       topicMap.set(t.id, {
         id: t.id,
         title: t.title,
@@ -77,6 +83,7 @@ export function NeuralOmnibar() {
     });
 
     mockTopics.forEach((t) => {
+      if (onlyTopicsWithReels && !TOPICS_WITH_REAL_REELS.has(t.id)) return;
       if (!topicMap.has(t.id)) {
         topicMap.set(t.id, {
           id: t.id,
@@ -153,7 +160,15 @@ export function NeuralOmnibar() {
     ];
 
     return [...sysCommands, ...topicCommands];
-  }, [captionsEnabled, router, setExploreLayoutMode, setOpen, setTheme, toggleCaptions]);
+  }, [
+    captionsEnabled,
+    onlyTopicsWithReels,
+    router,
+    setExploreLayoutMode,
+    setOpen,
+    setTheme,
+    toggleCaptions,
+  ]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

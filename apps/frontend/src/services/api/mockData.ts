@@ -1898,3 +1898,35 @@ export const mockBookmarks: BookmarkDto[] = [
     subject: { id: 'jee-physics', name: 'Physics (Mechanics & Electro)', classLevel: 0 },
   },
 ];
+
+// ==========================================
+// 11. REAL REEL AVAILABILITY HELPERS
+// ==========================================
+export const TOPICS_WITH_REAL_REELS = new Set<string>(
+  mockReels
+    .filter((r) => !SAMPLE_VIDEOS.includes(r.videoUrl))
+    .map((r) => r.topicId)
+);
+
+export const CHAPTERS_WITH_REAL_REELS = new Set<string>(
+  mockTopics
+    .filter((t) => TOPICS_WITH_REAL_REELS.has(t.id))
+    .map((t) => t.chapterId)
+);
+
+export const SUBJECTS_WITH_REAL_REELS = new Set<string>(
+  Object.entries(mockChaptersBySubject)
+    .filter(([, chapters]) => chapters.some((c) => CHAPTERS_WITH_REAL_REELS.has(c.id)))
+    .map(([subjectId]) => subjectId)
+);
+
+export const EXAM_TYPES_WITH_REAL_REELS = new Set<string>(
+  Object.entries(mockSubjectsByExamType)
+    .filter(([, subjects]) => subjects.some((s) => SUBJECTS_WITH_REAL_REELS.has(s.id)))
+    .map(([examType]) => examType)
+);
+
+export function hasRealReel(topicId: string): boolean {
+  return TOPICS_WITH_REAL_REELS.has(topicId);
+}
+

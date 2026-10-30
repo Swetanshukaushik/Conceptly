@@ -65,6 +65,8 @@ export default function ProfileScreen() {
     userName,
     setUserInfo,
     logout,
+    onlyTopicsWithReels,
+    setOnlyTopicsWithReels,
   } = useAppStore();
   const { data: progress } = useProgressQuery();
   const { data: bookmarks } = useBookmarksQuery();
@@ -79,6 +81,11 @@ export default function ProfileScreen() {
 
   const handleToggleApiSource = (source: 'mock' | 'live') => {
     setApiDataSource(source);
+    queryClient.invalidateQueries();
+  };
+
+  const handleToggleOnlyTopicsWithReels = (enabled: boolean) => {
+    setOnlyTopicsWithReels(enabled);
     queryClient.invalidateQueries();
   };
 
@@ -454,6 +461,83 @@ export default function ProfileScreen() {
                 style={{ fontWeight: '700' }}
               >
                 🌐 Live Backend
+              </AppText>
+            </Pressable>
+          </View>
+        </AppCard>
+
+        {/* 🎬 Only Show Topics With Reels Option */}
+        <AppCard tone="default" style={{ marginTop: 12 }}>
+          <View style={styles.accountRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <Icon name="film-outline" size={20} color={colors.primaryText} />
+              <AppText variant="title">Only Show Topics With Reels</AppText>
+            </View>
+            <View
+              style={[
+                styles.syncBadge,
+                {
+                  backgroundColor: onlyTopicsWithReels
+                    ? colors.successSoft
+                    : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <AppText
+                variant="micro"
+                style={{
+                  fontWeight: '700',
+                  color: onlyTopicsWithReels ? colors.successText : colors.textMuted,
+                }}
+              >
+                {onlyTopicsWithReels ? '● ACTIVE (4 TOPICS)' : '● ALL TOPICS'}
+              </AppText>
+            </View>
+          </View>
+
+          <AppText variant="caption" tone="secondary" style={{ marginBottom: 16 }}>
+            {onlyTopicsWithReels
+              ? 'Showing only mock topics for which real generated reels exist (Physics: Rotational Motion, Gauss Law, Total Internal Reflection, and Ohms Law).'
+              : 'Showing all mock curriculum topics across every domain. Toggle to filter the app to only topics with real video reels.'}
+          </AppText>
+
+          <View style={styles.langRow}>
+            <Pressable
+              onPress={() => handleToggleOnlyTopicsWithReels(true)}
+              style={[
+                styles.langButton,
+                {
+                  backgroundColor: onlyTopicsWithReels ? colors.primary : colors.surface,
+                  borderColor: onlyTopicsWithReels ? colors.primary : colors.border,
+                },
+              ]}
+            >
+              <AppText
+                variant="bodyMedium"
+                tone={onlyTopicsWithReels ? 'inverse' : 'default'}
+                style={{ fontWeight: '700' }}
+              >
+                🎬 Only With Reels
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => handleToggleOnlyTopicsWithReels(false)}
+              style={[
+                styles.langButton,
+                {
+                  backgroundColor: !onlyTopicsWithReels ? colors.primary : colors.surface,
+                  borderColor: !onlyTopicsWithReels ? colors.primary : colors.border,
+                },
+              ]}
+            >
+              <AppText
+                variant="bodyMedium"
+                tone={!onlyTopicsWithReels ? 'inverse' : 'default'}
+                style={{ fontWeight: '700' }}
+              >
+                📚 All Mock Topics
               </AppText>
             </Pressable>
           </View>

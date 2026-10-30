@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { BookmarkDto, TopicProgressDto } from '@/services/api/types';
-import { mockBookmarks, mockProgress } from '@/services/api/mockData';
+import {
+  mockBookmarks,
+  mockProgress,
+  EXAM_TYPES_WITH_REAL_REELS,
+  SUBJECTS_WITH_REAL_REELS,
+} from '@/services/api/mockData';
 import type { ThemeMode } from '@/theme/types';
 
 export type DomainCategory =
@@ -75,6 +80,7 @@ function savePersistedState(state: AppState) {
     bionicReading: state.bionicReading,
     flashcardSRS: state.flashcardSRS,
     exploreLayoutMode: state.exploreLayoutMode,
+    onlyTopicsWithReels: state.onlyTopicsWithReels,
   };
 
   const jsonStr = JSON.stringify(toSave);
@@ -147,6 +153,9 @@ export type AppState = {
   setCommandPaletteOpen: (open: boolean) => void;
   exploreLayoutMode: 'grid' | 'constellation';
   setExploreLayoutMode: (mode: 'grid' | 'constellation') => void;
+  onlyTopicsWithReels: boolean;
+  setOnlyTopicsWithReels: (enabled: boolean) => void;
+  toggleOnlyTopicsWithReels: () => void;
   flashcardSRS: Record<string, FlashcardSRSRecord>;
   rateFlashcard: (cardId: string, grade: FlashcardGrade) => void;
   apiDataSource: ApiDataSource;
@@ -238,6 +247,37 @@ export const useAppStore = create<AppState>((set) => ({
     setTimeout(() => {
       savePersistedState(useAppStore.getState());
     }, 0);
+  },
+  onlyTopicsWithReels: Boolean((initialPersisted as any).onlyTopicsWithReels ?? false),
+  setOnlyTopicsWithReels: (enabled: boolean) => {
+    set((state) => {
+      const updates: Partial<AppState> = { onlyTopicsWithReels: enabled };
+      if (enabled) {
+        if (!state.selectedExamType || !EXAM_TYPES_WITH_REAL_REELS.has(state.selectedExamType)) {
+          updates.selectedExamType = 'IIT_JEE';
+          updates.selectedSubjectId = 'jee-physics';
+          updates.selectedChapterId = 'ch-jee-rotational';
+        } else if (
+          !state.selectedSubjectId ||
+          !SUBJECTS_WITH_REAL_REELS.has(state.selectedSubjectId)
+        ) {
+          updates.selectedSubjectId =
+            state.selectedExamType === 'NEET'
+              ? 'neet-physics'
+              : state.selectedExamType === 'SCHOOL'
+              ? 'science-10'
+              : 'jee-physics';
+        }
+      }
+      return updates;
+    });
+    setTimeout(() => {
+      savePersistedState(useAppStore.getState());
+    }, 0);
+  },
+  toggleOnlyTopicsWithReels: () => {
+    const next = !useAppStore.getState().onlyTopicsWithReels;
+    useAppStore.getState().setOnlyTopicsWithReels(next);
   },
   flashcardSRS: (initialPersisted as any).flashcardSRS ?? {},
   rateFlashcard: (cardId: string, grade: FlashcardGrade) => {

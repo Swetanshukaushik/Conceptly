@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon';
 
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { EXAM_TYPES_WITH_REAL_REELS } from '@/services/api/mockData';
 
 const domainCategories = [
   {
@@ -54,6 +55,11 @@ export default function ExamTypeSelectScreen() {
   const { colors } = useTheme();
   const selectedExamType = useAppStore((s) => s.selectedExamType);
   const setExamType = useAppStore((s) => s.setExamType);
+  const onlyTopicsWithReels = useAppStore((s) => s.onlyTopicsWithReels);
+
+  const visibleCategories = onlyTopicsWithReels
+    ? domainCategories.filter((cat) => EXAM_TYPES_WITH_REAL_REELS.has(cat.id))
+    : domainCategories;
 
   return (
     <ScreenContainer className="justify-between">
@@ -69,7 +75,7 @@ export default function ExamTypeSelectScreen() {
         </AppText>
 
         <View className="mt-4 gap-3 mb-6">
-          {domainCategories.map((cat) => {
+          {visibleCategories.map((cat) => {
             const isSelected = selectedExamType === cat.id;
             return (
               <Pressable
