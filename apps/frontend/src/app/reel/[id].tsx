@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Platform } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useIsFocused } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -17,6 +17,7 @@ import type { TrendingReelSortBy } from '@/services/api/types';
 
 export default function ReelPlayerScreen() {
   const router = useRouter();
+  const isFocused = useIsFocused();
   const { id, topicId, playlist, sortBy } = useLocalSearchParams<{
     id: string;
     topicId?: string;
@@ -75,6 +76,12 @@ export default function ReelPlayerScreen() {
   const isLoading =
     reelLoading ||
     (isTrendingPlaylist ? trendingLoading : effectiveTopicId ? topicReelsLoading : false);
+
+  // When this screen is no longer focused (e.g. user opened the quiz), unmount the player so
+  // video stops and its global wheel/keyboard listeners are released.
+  if (!isFocused) {
+    return <View style={{ flex: 1, backgroundColor: '#000000' }} />;
+  }
 
   if (isLoading) {
     return (

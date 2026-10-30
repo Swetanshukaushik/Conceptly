@@ -304,7 +304,7 @@ function MobileVerticalReelPlayer({
   const isTurboHoldRef = useRef<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isBuffering, setIsBuffering] = useState<boolean>(true);
-  const [isMuted, setIsMuted] = useState<boolean>(isWeb);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [showNotesDrawer, setShowNotesDrawer] = useState<boolean>(false);
   const [showMicroCheck, setShowMicroCheck] = useState<boolean>(false);
@@ -344,7 +344,11 @@ function MobileVerticalReelPlayer({
   useEffect(() => {
     isPlayingRef.current = true;
     setIsPlaying(true);
-    videoRef.current?.playAsync().catch(() => {});
+    videoRef.current?.playAsync().catch(() => {
+      // Browser autoplay policy blocked audio: fall back to muted playback so the reel still plays
+      setIsMuted(true);
+      setTimeout(() => videoRef.current?.playAsync().catch(() => {}), 50);
+    });
     videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     if (reel?.id) {
       markReelWatched(reel.id);
@@ -1055,7 +1059,7 @@ function DesktopStudioPlayer({
   const isTurboHoldRef = useRef<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isBuffering, setIsBuffering] = useState<boolean>(true);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [showMicroCheck, setShowMicroCheck] = useState<boolean>(false);
   const [showPitchMode, setShowPitchMode] = useState<boolean>(false);
@@ -1094,7 +1098,10 @@ function DesktopStudioPlayer({
   useEffect(() => {
     isPlayingRef.current = true;
     setIsPlaying(true);
-    videoRef.current?.playAsync().catch(() => {});
+    videoRef.current?.playAsync().catch(() => {
+      setIsMuted(true);
+      setTimeout(() => videoRef.current?.playAsync().catch(() => {}), 50);
+    });
     videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     if (reel?.id) {
       markReelWatched(reel.id);

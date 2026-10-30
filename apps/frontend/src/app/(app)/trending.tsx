@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Platform, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useIsFocused } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { VerticalReelPlayer } from '@/components/ui/VerticalReelPlayer';
 
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { AppText } from '@/components/ui/AppText';
@@ -46,6 +47,7 @@ function formatCompactNumber(num: number): string {
 
 export default function TrendingReelsScreen() {
   const router = useRouter();
+  const isFocused = useIsFocused();
   const queryClient = useQueryClient();
   const { colors } = useTheme();
   const viewMode = useAppStore((s) => s.viewMode);
@@ -132,6 +134,22 @@ export default function TrendingReelsScreen() {
     queryClient.invalidateQueries({ queryKey: ['trendingReels'] });
     queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
   };
+
+  if (!isDesktop) {
+    // Mobile: Instagram-style full-screen reel feed, no surrounding text or cards.
+    // Unmount the player when the tab isn't focused so playback and gesture listeners stop.
+    if (!isFocused || isLoading || !data || data.items.length === 0) {
+      return <View style={{ flex: 1, backgroundColor: '#000000' }} />;
+    }
+    return (
+      <VerticalReelPlayer
+        key={`trending-${sortBy}-${timeWindow}-${selectedTrackFilter}`}
+        reels={data.items}
+        onQuizPress={(targetTopicId) => router.push(`/quiz/${targetTopicId}`)}
+        onFlashcardPress={(targetTopicId) => router.push(`/topic/${targetTopicId}`)}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
