@@ -344,15 +344,26 @@ function MobileVerticalReelPlayer({
   useEffect(() => {
     isPlayingRef.current = true;
     setIsPlaying(true);
-    videoRef.current?.playAsync().catch(() => {
-      // Browser autoplay policy blocked audio: fall back to muted playback so the reel still plays
-      setIsMuted(true);
-      setTimeout(() => videoRef.current?.playAsync().catch(() => {}), 50);
-    });
+    videoRef.current?.playAsync().catch(() => {});
+    // Browser autoplay policy may block audio: if the visible video is still paused shortly after,
+    // fall back to muted playback so the reel still plays.
+    const autoplayGuard =
+      Platform.OS === 'web' && typeof document !== 'undefined'
+        ? setTimeout(() => {
+            if (!isPlayingRef.current) return;
+            const blocked = Array.from(document.querySelectorAll('video')).some(
+              (v) => v.clientWidth > 50 && v.paused && !v.muted
+            );
+            if (blocked) setIsMuted(true);
+          }, 1500)
+        : undefined;
     videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     if (reel?.id) {
       markReelWatched(reel.id);
     }
+    return () => {
+      if (autoplayGuard) clearTimeout(autoplayGuard);
+    };
   }, [reel?.id, markReelWatched]);
 
   useEffect(() => {
@@ -1098,14 +1109,26 @@ function DesktopStudioPlayer({
   useEffect(() => {
     isPlayingRef.current = true;
     setIsPlaying(true);
-    videoRef.current?.playAsync().catch(() => {
-      setIsMuted(true);
-      setTimeout(() => videoRef.current?.playAsync().catch(() => {}), 50);
-    });
+    videoRef.current?.playAsync().catch(() => {});
+    // Browser autoplay policy may block audio: if the visible video is still paused shortly after,
+    // fall back to muted playback so the reel still plays.
+    const autoplayGuard =
+      Platform.OS === 'web' && typeof document !== 'undefined'
+        ? setTimeout(() => {
+            if (!isPlayingRef.current) return;
+            const blocked = Array.from(document.querySelectorAll('video')).some(
+              (v) => v.clientWidth > 50 && v.paused && !v.muted
+            );
+            if (blocked) setIsMuted(true);
+          }, 1500)
+        : undefined;
     videoRef.current?.setRateAsync(playbackSpeed, true).catch(() => {});
     if (reel?.id) {
       markReelWatched(reel.id);
     }
+    return () => {
+      if (autoplayGuard) clearTimeout(autoplayGuard);
+    };
   }, [reel?.id, markReelWatched]);
 
   useEffect(() => {
